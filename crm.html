@@ -720,6 +720,9 @@ tbody tr:last-child td { border-bottom: none; }
 @keyframes breathe { 0%,100%{opacity:.9;transform:scale(1);}50%{opacity:1;transform:scale(1.015);} }
 @keyframes expand  { from{width:0;opacity:0;}to{width:48px;opacity:1;} }
 
+/* Analytics bar chart */
+.rate-bar { height: 6px; background: var(--border2); border-radius: 1px; margin-top: 6px; overflow: hidden; }
+.rate-fill { height: 100%; border-radius: 1px; transition: width .6s ease; }
 </style>
 </head>
 <body>
@@ -758,9 +761,11 @@ tbody tr:last-child td { border-bottom: none; }
       <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
       <button class="tab" onclick="switchTab('import',this)">Import</button>
       <button class="tab" onclick="switchTab('broadcast',this)">Broadcast</button>
+      <button class="tab" onclick="switchTab('analytics',this)">Email Analytics</button>
       <button class="tab" onclick="switchTab('directory',this)">Directory</button>
       <button class="tab" onclick="switchTab('tools',this)">Tools</button>
     </div>
+
     <!-- DASHBOARD -->
     <div class="tab-pane active" id="tab-dashboard">
       <div id="auto-banner" class="auto-banner" style="display:none;">
@@ -799,13 +804,14 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
       </div>
     </div>
+
     <!-- IMPORT -->
     <div class="tab-pane" id="tab-import">
       <div class="grid2">
         <div class="panel">
           <div class="ph"><div class="pt">Paste Any Sheet</div></div>
           <div class="pb">
-            <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Paste from Google Sheets, Gymdesk, CSV — any headers. Sector and columns detected automatically. DOB parsed to identify minors and parent contacts.</p>
+            <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Paste from Google Sheets, Gymdesk, CSV — any headers. Sector and columns detected automatically.</p>
             <label>Raw Data — headers on first line</label>
             <textarea id="sheet-input" style="min-height:160px;" placeholder="Timestamp&#9;Email address&#9;Name&#9;Surname&#9;Date of Birth&#9;Weight (Kg)..."></textarea>
             <button class="btn" onclick="startImport()"><span>Analyse &amp; Import →</span></button>
@@ -813,10 +819,11 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
         <div class="panel">
           <div class="ph"><div class="pt">Saved Layouts</div><button class="btn btn-ghost btn-sm" onclick="clearProfiles()"><span>Clear All</span></button></div>
-          <div class="pb" id="profiles-list"><p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No saved layouts yet.<br>Import a sheet to create one.</p></div>
+          <div class="pb" id="profiles-list"><p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No saved layouts yet.</p></div>
         </div>
       </div>
     </div>
+
     <!-- BROADCAST -->
     <div class="tab-pane" id="tab-broadcast">
       <div class="grid2">
@@ -834,18 +841,21 @@ tbody tr:last-child td { border-bottom: none; }
             <label>Engagement Filter</label>
             <select id="b-tier" onchange="updateBroadcastCount()">
               <option value="all">All contacts</option>
-              <option value="hot">Hot only — last 30 days</option>
-              <option value="hot,warm">Hot + Warm — last 6 months</option>
+              <option value="hot">Hot only</option>
+              <option value="hot,warm">Hot + Warm</option>
               <option value="hot,warm,cold">Active — exclude dormant</option>
               <option value="dormant">Dormant — re-engage</option>
               <option value="parents">Parents only</option>
               <option value="adults">Adult athletes only</option>
             </select>
             <div id="b-count" style="font-family:var(--cormorant);font-size:16px;font-weight:600;color:var(--muted2);margin-bottom:14px;"></div>
-            <label>Subject — variables: [FirstName] [ChildName] [EventName]</label>
+            <label>Subject</label>
             <input type="text" id="b-subject" placeholder="Subject line...">
-            <label>Message Body</label>
-            <textarea id="b-body" placeholder="Hi [FirstName],&#10;&#10;Your message here...&#10;&#10;Dafydd Sanders&#10;Eagle DS"></textarea>
+            <label>Message Body — [FirstName] [ChildName] [EventName]</label>
+            <textarea id="b-body" placeholder="Hi [FirstName],&#10;&#10;Your message...&#10;&#10;Dafydd Sanders&#10;Eagle DS"></textarea>
+            <div style="background:var(--black);border:1px solid rgba(200,150,12,.15);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:9px;color:var(--gold-dk);line-height:1.7;">
+              ⚡ Open &amp; click tracking active — each recipient gets a unique tracked email. Results appear in Email Analytics tab.
+            </div>
             <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
           </div>
         </div>
@@ -855,6 +865,45 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
       </div>
     </div>
+
+    <!-- EMAIL ANALYTICS -->
+    <div class="tab-pane" id="tab-analytics">
+      <div class="panel">
+        <div class="ph">
+          <div class="pt">Email Performance</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadEmailAnalytics()"><span>↻ Refresh</span></button>
+        </div>
+        <div style="padding:14px 18px;background:var(--black);border-bottom:1px solid var(--border);display:flex;gap:24px;flex-wrap:wrap;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.8;">
+            <span style="color:var(--green);">■</span> Open rate ≥30% · 
+            <span style="color:var(--orange);">■</span> 15–29% · 
+            <span style="color:var(--red);">■</span> &lt;15%
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.8;">
+            Click-to-open: <span style="color:var(--green);">■</span> ≥10% · <span style="color:var(--orange);">■</span> 3–9% · <span style="color:var(--muted2);">■</span> &lt;3%
+          </div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Sector</th>
+                <th>Sent</th>
+                <th>Recipients</th>
+                <th>Opens</th>
+                <th>Clicks</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="analytics-body">
+              <tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- DIRECTORY -->
     <div class="tab-pane" id="tab-directory">
       <div class="panel">
@@ -873,6 +922,7 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
       </div>
     </div>
+
     <!-- TOOLS -->
     <div class="tab-pane" id="tab-tools">
       <div class="grid2">
@@ -921,6 +971,7 @@ tbody tr:last-child td { border-bottom: none; }
     <span class="sf-copy">Eagle DS · East Tāmaki · Internal Operations</span>
   </footer>
 </div>
+
 <!-- MAP MODAL -->
 <div class="modal" id="map-modal">
   <div class="mbox">
@@ -938,11 +989,12 @@ tbody tr:last-child td { border-bottom: none; }
       <div class="map-r"><span class="map-l">Sector</span>
         <select id="m-sector"><option value="gym">🥋 Gym Academy</option><option value="cgs">⚔ CGS Circuit</option><option value="school">🏫 Institutional</option><option value="corp">💼 Commercial</option></select>
       </div>
-      <div style="margin-top:16px;"><label>Save layout as</label><input type="text" id="m-profile" placeholder="e.g. CGS Google Form, Gymdesk Export, SAYN Sheet…" style="margin-bottom:0;"></div>
+      <div style="margin-top:16px;"><label>Save layout as</label><input type="text" id="m-profile" placeholder="e.g. CGS Google Form, Gymdesk Export…" style="margin-bottom:0;"></div>
     </div>
     <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('map-modal')"><span>Cancel</span></button><button class="btn" onclick="confirmMap()"><span>Confirm &amp; Import →</span></button></div></div>
   </div>
 </div>
+
 <!-- EDIT MODAL -->
 <div class="modal" id="edit-modal">
   <div class="mbox">
@@ -963,27 +1015,59 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('edit-modal')"><span>Cancel</span></button><button class="btn" onclick="saveEdit()"><span>Save Changes</span></button></div></div>
   </div>
 </div>
+
+<!-- ENGAGED MODAL -->
+<div class="modal" id="engaged-modal">
+  <div class="mbox">
+    <div class="mh"><div class="mt">Who Engaged</div><button class="mc" onclick="closeModal('engaged-modal')">✕</button></div>
+    <div class="mb">
+      <p style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:16px;">Contacts who opened or clicked this broadcast. Click data also updates their Last Activity in the directory.</p>
+      <div id="engaged-list"></div>
+    </div>
+  </div>
+</div>
+
 <script>
+
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
-let db={},pendingRows=[],pendingHeaders=[];
+const TRACK_BASE="https://eagleds.github.io/track.html";
+let db={},pendingRows=[],pendingHeaders=[],emailAnalytics={};
+
+// ─── HELPERS ───
 function getTier(r){const s=r.lastActivity||r.added||null;if(!s)return"new";const d=(Date.now()-new Date(s))/86400000;if(d<=30)return"hot";if(d<=180)return"warm";if(d<=730)return"cold";return"dormant";}
 function tierBadge(t){const m={hot:"Hot",warm:"Warm",cold:"Cold",dormant:"Dormant",new:"New"};return`<span class="tb tb-${t}">${m[t]||t}</span>`;}
 function calcAge(dob){if(!dob)return null;const d=new Date(dob);if(isNaN(d))return null;return Math.floor((Date.now()-d.getTime())/31557600000);}
 function isMinor(r){const a=calcAge(r.dob);return a!==null&&a<18;}
 function isParent(r){return!!(r.children&&r.children.length>0);}
 function buildFamilyLinks(){const em={};for(const k in db){const e=db[k].email;if(!em[e])em[e]=[];em[e].push(k);}for(const e in em){const keys=em[e];if(keys.length<2)continue;keys.sort((a,b)=>(calcAge(db[b].dob)||0)-(calcAge(db[a].dob)||0));db[keys[0]].children=keys.slice(1).map(k=>db[k].name||db[k].email);}}
-function unlock(){const v=document.getElementById("pin").value.trim();if(CryptoJS.MD5(v).toString()===HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";log("Access granted — Eagle DS","gold");syncFromCloud();renderProfiles();}else{const e=document.getElementById("gerr");e.textContent="Invalid passcode.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2500);}}
+function generateBid(){return"bcast_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);}
+
+// ─── TRACKING ───
+function trackPixel(bid,email){const cid=encodeURIComponent(email);return`<img src="${TRACK_BASE}?bid=${encodeURIComponent(bid)}&cid=${cid}&type=open" width="1" height="1" style="display:none;" alt="">`;}
+function wrapLinks(htmlBody,bid,email){const cid=encodeURIComponent(email);return htmlBody.replace(/href="(https?:\/\/[^"]+)"/g,(match,url)=>{const wrapped=`${TRACK_BASE}?bid=${encodeURIComponent(bid)}&cid=${cid}&type=click&url=${encodeURIComponent(url)}`;return`href="${wrapped}"`;}); }
+function buildTrackedEmail(rawBody,bid,email){let html=rawBody.replace(/\n/g,"<br>");html=wrapLinks(html,bid,email);html+=trackPixel(bid,email);return html;}
+
+// ─── GATE / UI ───
+function unlock(){const v=document.getElementById("pin").value.trim();if(CryptoJS.MD5(v).toString()===HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";log("Access granted — Eagle DS Command CRM","gold");syncFromCloud();renderProfiles();}else{const e=document.getElementById("gerr");e.textContent="Invalid passcode.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2500);}}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
+
+// ─── FIREBASE ───
 async function syncFromCloud(){setStatus("","syncing…");try{const r=await fetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
 async function pushToCloud(){try{const r=await fetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
+
+// ─── STATS ───
 function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,cold:0,dormant:0,parents:0,minors:0,multi:0,adults:0};for(const k in db){t.master++;const arms=db[k].arms||[];if(arms.includes("gym"))t.gym++;if(arms.includes("cgs"))t.cgs++;if(arms.includes("school"))t.school++;if(arms.includes("corp"))t.corp++;const tier=getTier(db[k]);if(t[tier]!==undefined)t[tier]++;const age=calcAge(db[k].dob);if(age!==null&&age<18)t.minors++;else if(age!==null&&age>=18)t.adults++;if(db[k].children&&db[k].children.length>0){t.parents++;if(db[k].children.length>1)t.multi++;}}["master","gym","cgs","school","corp","hot","warm","cold","dormant","parents","minors","multi","adults"].forEach(k=>{const el=document.getElementById("cnt-"+k);if(el)el.textContent=t[k];});}
+
+// ─── AUTOMATION ───
 async function checkAutomationQueue(){try{const r=await fetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
-async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await fetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}try{await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(t=>t.email),subject:item.subject,html:item.body.replace(/\n/g,"<br>")})});queue[i].status="sent";queue[i].sentAt=new Date().toISOString();fired++;}catch(e){queue[i].status="error";}}await fetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
+async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await fetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await fetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
 function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
+
+// ─── IMPORT ───
 const COL={name:["name","student","fighter","athlete","first","full name","fullname","contact","participant"],email:["email","e-mail","mail","email address"],phone:["phone","mobile","cell","contact number","tel"],dob:["date of birth","dob","birth","birthday","born","mm/dd","dd/mm"],ts:["timestamp","date","time","submitted","registered","created"]};
 const SECTOR_FP={cgs:["weight","division","martial art","style","rank","competing","registration","fighter","tournament","competition"],gym:["belt","grade","membership","fee","attendance","stripe","grading"],school:["school","teacher","class","year group","programme","block","trust"],corp:["company","organisation","business","corporate","seminar","invoice"]};
 function scoreCol(h,kws){const hl=h.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();let b=0;for(const kw of kws){if(hl===kw)b=Math.max(b,100);else if(hl.includes(kw))b=Math.max(b,60);else if(kw.split(" ").some(w=>w.length>3&&hl.includes(w)))b=Math.max(b,30);}return b;}
@@ -1002,14 +1086,125 @@ function startImport(){const raw=document.getElementById("sheet-input").value.tr
 function openMapModal(colMap,fp){const noneOpt='<option value="-1">— not in this sheet —</option>',opts=pendingHeaders.map((h,i)=>'<option value="'+i+'">'+h+'</option>').join("");["m-name","m-email","m-phone","m-dob","m-ts"].forEach((id,idx)=>{const el=document.getElementById(id),field=["name","email","phone","dob","ts"][idx];el.innerHTML=noneOpt+opts;el.value=colMap[field];});if(fp){document.getElementById("m-sector").value=fp.sector;const labels={cgs:"⚔ CGS Circuit",gym:"🥋 Gym Academy",school:"🏫 Institutional",corp:"💼 Commercial"},b=document.getElementById("detected-banner");b.innerHTML="🤖 Auto-detected: <strong style='color:var(--gold-lt);margin-left:4px;'>"+(labels[fp.sector]||fp.sector)+"</strong> — confirm or change";b.style.display="flex";}else document.getElementById("detected-banner").style.display="none";const allH=pendingHeaders.join(" ").toLowerCase(),terms=["email","timestamp","weight","dob","martial art","belt","school","company","phone","name","birth"];document.getElementById("fp-indicators").innerHTML=terms.map(t=>'<span class="fp-tag '+(allH.includes(t)?"match":"")+'">'+ t+'</span>').join("");document.getElementById("map-prev").textContent="Preview:\n"+pendingRows.slice(0,3).map(r=>r.slice(0,6).join(" | ")).join("\n");document.getElementById("m-profile").value=fp?(fp.sector==="cgs"?"CGS Registration Form":fp.sector==="gym"?"Gymdesk Export":""):"";document.getElementById("map-modal").classList.add("open");}
 function confirmMap(){const colMap={name:parseInt(document.getElementById("m-name").value),email:parseInt(document.getElementById("m-email").value),phone:parseInt(document.getElementById("m-phone").value),dob:parseInt(document.getElementById("m-dob").value),ts:parseInt(document.getElementById("m-ts").value)},sector=document.getElementById("m-sector").value,label=document.getElementById("m-profile").value.trim();if(colMap.email===-1){alert("Email column required.");return;}if(label)saveProfile(label,pendingHeaders,colMap,sector);closeModal("map-modal");runImport(colMap,sector);}
 async function runImport(colMap,sector){let added=0,merged=0,skipped=0;for(const cells of pendingRows){const rawEmail=colMap.email>=0&&cells[colMap.email]?cells[colMap.email].trim():"";if(!rawEmail||!rawEmail.includes("@")){skipped++;continue;}const email=rawEmail.toLowerCase(),key=email.replace(/\./g,"%2E");let name="";if(colMap.name>=0&&cells[colMap.name])name=cells[colMap.name].trim();else{const fi=pendingHeaders.findIndex(h=>/\bfirst\b/i.test(h)),li=pendingHeaders.findIndex(h=>/\b(last|surname)\b/i.test(h));if(fi>=0&&cells[fi])name=cells[fi].trim();if(li>=0&&cells[li])name+=(name?" ":"")+cells[li].trim();}const phone=colMap.phone>=0&&cells[colMap.phone]?cells[colMap.phone].trim():"",dob=parseDOB(colMap.dob>=0&&cells[colMap.dob]?cells[colMap.dob].trim():""),ts=parseTS(colMap.ts>=0&&cells[colMap.ts]?cells[colMap.ts].trim():"");if(db[key]){if(!db[key].arms.includes(sector)){db[key].arms.push(sector);merged++;}if(name&&!db[key].name)db[key].name=name;if(phone&&!db[key].phone)db[key].phone=phone;if(dob&&!db[key].dob)db[key].dob=dob;if(ts&&(!db[key].lastActivity||ts>db[key].lastActivity))db[key].lastActivity=ts;}else{db[key]={email,name,phone,dob,arms:[sector],lastActivity:ts||null,added:new Date().toISOString()};added++;}}buildFamilyLinks();log("Import: "+added+" new, "+merged+" merged, "+skipped+" skipped.","ok");document.getElementById("sheet-input").value="";updateStats();renderTable();await pushToCloud();switchTab("dashboard",document.querySelector(".tab"));}
+
+// ─── TARGETING ───
 function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierStr.split(",");return Object.values(db).filter(r=>{const inS=sector==="all"||(r.arms||[]).includes(sector);if(tierStr==="parents")return inS&&isParent(r);if(tierStr==="adults"){const a=calcAge(r.dob);return inS&&(a===null||a>=18)&&!isParent(r);}return inS&&(!tiers||tiers.includes(getTier(r)));});}
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
-async function sendBroadcast(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();if(!subject||!body){alert("Subject and message required.");return;}const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr);if(!targets.length){alert("No contacts match.");return;}if(!confirm("Send to "+targets.length+" contacts?"))return;const needsPersonal=body.includes("[FirstName]")||body.includes("[ChildName]")||subject.includes("[FirstName]");log("Sending to "+targets.length+"...");if(needsPersonal){let sent=0;for(const c of targets){try{await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(subject,c,""),html:replaceVars(body,c,"").replace(/\n/g,"<br>")})});sent++;}catch(e){}}log("✓ Personalised broadcast: "+sent+" sent.","ok");}else{const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(r=>r.email),subject,html:body.replace(/\n/g,"<br>")})});const data=await res.json();if(res.ok)log("✓ Broadcast sent. ID: "+data.id,"ok");else log("Resend: "+data.message,"err");}document.getElementById("b-subject").value="";document.getElementById("b-body").value="";}
+
+// ─── BROADCAST (with tracking) ───
+async function sendBroadcast(){
+  let k=localStorage.getItem("RESEND_KEY");
+  if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
+  const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();
+  if(!subject||!body){alert("Subject and message required.");return;}
+  const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr);
+  if(!targets.length){alert("No contacts match.");return;}
+  if(!confirm("Send to "+targets.length+" contacts?"))return;
+  const bid=generateBid();
+  const needsPersonal=body.includes("[FirstName]")||body.includes("[ChildName]")||subject.includes("[FirstName]");
+  log("Sending to "+targets.length+"... (tracking ID: "+bid+")");
+
+  // Store broadcast record in Firebase
+  const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
+  await fetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
+
+  let sent=0;
+  if(needsPersonal){
+    for(const c of targets){
+      try{
+        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(subject,c,""),html})});
+        sent++;
+      }catch(e){}
+    }
+    log("✓ Personalised broadcast sent to "+sent+" (tracked).","ok");
+  } else {
+    // For BCC sends we track per-recipient by sending individually with tracking
+    // This also means each person gets their own pixel — proper per-contact tracking
+    for(const c of targets){
+      try{
+        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject,html})});
+        sent++;
+      }catch(e){}
+    }
+    log("✓ Broadcast sent to "+sent+" with per-contact tracking.","ok");
+  }
+  document.getElementById("b-subject").value="";
+  document.getElementById("b-body").value="";
+}
+
+// ─── EMAIL ANALYTICS ───
+async function loadEmailAnalytics(){
+  const el=document.getElementById("analytics-body");
+  el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>';
+  try{
+    const[br,tr]=await Promise.all([fetch(FB+"/email_broadcasts.json"),fetch(FB+"/email_tracking.json")]);
+    const broadcasts=await br.json()||{};
+    const tracking=await tr.json()||{};
+
+    // Compute opens/clicks per broadcast from tracking data
+    const bids=Object.keys(broadcasts);
+    if(!bids.length){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">No broadcasts sent yet.</td></tr>';return;}
+
+    bids.sort((a,b)=>(broadcasts[b].sentAt||"").localeCompare(broadcasts[a].sentAt||""));
+
+    el.innerHTML=bids.map(bid=>{
+      const b=broadcasts[bid];
+      const td=tracking[encodeURIComponent(bid)]||tracking[bid]||{};
+      const opens=Object.keys(td.open||{}).length;
+      const clicks=Object.keys(td.click||{}).length;
+      const recipients=b.recipients||1;
+      const openRate=recipients>0?Math.round((opens/recipients)*100):0;
+      const clickRate=opens>0?Math.round((clicks/opens)*100):0;
+      const openColor=openRate>=30?"var(--green)":openRate>=15?"var(--orange)":"var(--red)";
+      const clickColor=clickRate>=10?"var(--green)":clickRate>=3?"var(--orange)":"var(--muted2)";
+      const dateStr=b.sentAt?new Date(b.sentAt).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";
+      return'<tr>'
+        +'<td style="font-family:var(--cormorant);font-size:14px;font-weight:600;color:var(--text);">'+b.subject+'</td>'
+        +'<td><span class="badge b-'+(b.sector||"cgs")+'">'+( b.sector||"all")+'</span></td>'
+        +'<td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td>'
+        +'<td style="font-family:var(--bebas);font-size:22px;color:var(--muted2);">'+recipients+'</td>'
+        +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+openColor+';">'+opens+'</span><span style="font-family:var(--mono);font-size:9px;color:'+openColor+';margin-left:4px;">'+openRate+'%</span></td>'
+        +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+clickColor+';">'+clicks+'</span><span style="font-family:var(--mono);font-size:9px;color:'+clickColor+';margin-left:4px;">'+clickRate+'%</span></td>'
+        +'<td><button class="btn btn-ghost btn-sm" onclick="showEngaged(\''+encodeURIComponent(bid)+'\')"><span>Who opened →</span></button></td>'
+        +'</tr>';
+    }).join("");
+  }catch(e){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--red);">Failed to load analytics.</td></tr>';log("Analytics error: "+e.message,"err");}
+}
+
+async function showEngaged(bidEncoded){
+  try{
+    const r=await fetch(FB+"/email_tracking/"+bidEncoded+".json");
+    const td=await r.json()||{};
+    const opens=Object.values(td.open||{});
+    const clicks=Object.values(td.click||{});
+    const clickEmails=new Set(clicks.map(c=>c.email));
+    if(!opens.length){alert("No opens recorded yet.");return;}
+    const modal=document.getElementById("engaged-modal");
+    document.getElementById("engaged-list").innerHTML=opens.map(o=>{
+      const clicked=clickEmails.has(o.email);
+      const contact=Object.values(db).find(c=>c.email===o.email);
+      const name=contact?.name||o.email;
+      return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">'
+        +'<div><div style="font-family:var(--cormorant);font-size:14px;font-weight:600;color:var(--text);">'+name+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+o.email+'</div></div>'
+        +'<div style="display:flex;gap:8px;align-items:center;">'
+        +(clicked?'<span style="font-family:var(--mono);font-size:8px;padding:2px 8px;border:1px solid rgba(34,182,74,.4);color:var(--green);background:rgba(34,182,74,.06);">CLICKED</span>':'')
+        +'<span style="font-family:var(--mono);font-size:8px;padding:2px 8px;border:1px solid rgba(200,150,12,.3);color:var(--gold);background:rgba(200,150,12,.06);">OPENED</span>'
+        +'</div></div>';
+    }).join("");
+    modal.classList.add("open");
+  }catch(e){log("Could not load engagements: "+e.message,"err");}
+}
+
+// ─── DIRECTORY ───
 function renderTable(){const tbody=document.getElementById("dir-body"),q=(document.getElementById("dir-search")||{value:""}).value.toLowerCase().trim(),sf=(document.getElementById("dir-sector")||{value:"all"}).value,tf=(document.getElementById("dir-tier")||{value:"all"}).value,ff=(document.getElementById("dir-family")||{value:"all"}).value,keys=Object.keys(db);const filtered=keys.filter(k=>{const r=db[k];if(sf!=="all"&&!(r.arms||[]).includes(sf))return false;if(tf!=="all"&&getTier(r)!==tf)return false;if(ff==="parents"&&!isParent(r))return false;if(ff==="minors"&&!isMinor(r))return false;if(ff==="adults"){const a=calcAge(r.dob);if(a!==null&&a<18)return false;}if(!q)return true;return(r.name||"").toLowerCase().includes(q)||(r.email||"").toLowerCase().includes(q)||(r.arms||[]).join(" ").includes(q);});document.getElementById("dir-count").textContent=filtered.length+" / "+keys.length;if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">'+(keys.length?"No matches.":"No contacts yet.")+'</td></tr>';return;}filtered.sort((a,b)=>(db[b].lastActivity||db[b].added||"").localeCompare(db[a].lastActivity||db[a].added||""));tbody.innerHTML=filtered.map(k=>{const r=db[k],badges=(r.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join(""),tier=getTier(r),age=calcAge(r.dob);let fh="";if(r.children&&r.children.length>0)fh='<span class="p-badge">Parent · '+r.children.length+' child'+(r.children.length>1?"ren":"")+'</span>';else if(age!==null&&age<18)fh='<span class="c-badge">Minor · '+age+'y</span>';else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";return'<tr><td class="nc"><strong>'+(r.name||'<span style="color:var(--muted)">No name</span>')+'</strong><span>'+r.email+'</span>'+(r.phone?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+r.phone+'</span>':'')+'</td><td>'+badges+'</td><td>'+tierBadge(tier)+'</td><td>'+fh+'</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td><td style="white-space:nowrap;"><button class="edit-btn" onclick="openEdit(\''+k+'\')" title="Edit">✎</button><button class="dbtn" onclick="deleteContact(\''+k+'\')" title="Remove">✕</button></td></tr>';}).join("");}
 async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushToCloud();log("Removed: "+n,"warn");}
 function openEdit(key){const r=db[key];document.getElementById("edit-key").value=key;document.getElementById("edit-modal-name").textContent=r.name||r.email;document.getElementById("edit-name").value=r.name||"";document.getElementById("edit-email").value=r.email||"";document.getElementById("edit-phone").value=r.phone||"";document.querySelectorAll(".sector-tiles .stile").forEach(el=>{el.className="stile";if((r.arms||[]).includes(el.dataset.s))el.classList.add("on-"+el.dataset.s);});document.getElementById("edit-modal").classList.add("open");}
 function toggleEditSector(el){const s=el.dataset.s;if(el.classList.contains("on-"+s))el.className="stile";else{el.className="stile";el.classList.add("on-"+s);}}
 async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});db[key].name=document.getElementById("edit-name").value.trim();db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushToCloud();log("Updated: "+db[key].name,"ok");}
+
+// ─── TOOLS ───
 function previewFix(){const from=document.getElementById("fix-from").value,scope=document.getElementById("fix-scope").value,n=Object.values(db).filter(r=>{const arms=r.arms||[];return scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);}).length;document.getElementById("fix-preview").textContent=n+" contacts will be affected.";}
 async function executeFix(){const from=document.getElementById("fix-from").value,to=document.getElementById("fix-to").value,scope=document.getElementById("fix-scope").value;let count=0;for(const k in db){const arms=db[k].arms||[],m=scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);if(!m)continue;db[k].arms=arms.filter(a=>a!==from);if(!db[k].arms.includes(to))db[k].arms.push(to);count++;}if(!count){alert("No contacts matched.");return;}if(!confirm("Move "+count+" contacts: "+from+" → "+to+"?"))return;updateStats();renderTable();await pushToCloud();log("Fixed "+count+": "+from+" → "+to,"ok");}
 function previewStrip(){const s=document.getElementById("strip-sector").value,n=Object.values(db).filter(r=>(r.arms||[]).includes(s)).length;document.getElementById("strip-preview").textContent=n+" contacts have ["+s+"] tag.";}
