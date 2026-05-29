@@ -3,323 +3,376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eagle DS Secured CRM</title>
+<title>Eagle DS Master CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
   :root {
-    --bg: #08080a; --surf: #0f0f12; --surf2: #16161a; --border: #222228;
+    --bg: #08080a; --surf: #0f0f12; --border: #222228;
     --text: #f0f0f4; --muted: #64646e; --gold: #f0b429; --gold-dk: #c89010;
     --mono: 'IBM Plex Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; padding: 20px; }
   .container { max-width: 1200px; margin: 0 auto; display: none; }
-  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--gold); margin-bottom: 4px; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--gold); margin-bottom: 4px; }
   p.subtitle { color: var(--muted); font-family: var(--mono); font-size: 11px; margin-bottom: 20px; text-transform: uppercase; }
   
-  /* Security Lock Screen Styles */
   #security-gate { position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999; }
   .lock-box { background: var(--surf); border: 1px solid var(--border); padding: 30px; border-radius: 4px; text-align: center; max-width: 320px; width: 100%; }
   
-  .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
-  .stat-card { background: var(--surf); border: 1px solid var(--border); border-radius: 4px; padding: 12px; text-align: center; border-top: 2px solid var(--border); }
-  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; }
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media(max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+  .stat-card { background: var(--surf); border: 1px solid var(--border); border-radius: 4px; padding: 12px; text-align: center; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); }
   .stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  .stat-card.master { border-color: var(--gold-dk); }
   
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
   @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
   
-  .panel { background: var(--surf); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 16px; }
+  .panel { background: var(--surf); border: 1px solid var(--border); border-radius: 4px; padding: 16px; height: fit-content; }
   .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--gold); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
   
-  textarea { width: 100%; height: 160px; background: #0a0a0d; border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 2px; font-family: var(--mono); font-size: 11px; resize: vertical; margin-bottom: 10px; }
-  textarea:focus, select:focus, input:focus { outline: none; border-color: var(--gold); }
-  
-  .btn { background: var(--gold-dk); color: #000; border: none; font-family: var(--mono); font-weight: 600; font-size: 11px; padding: 10px 16px; border-radius: 2px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; }
+  .btn { background: var(--gold-dk); color: #000; border: none; font-family: var(--mono); font-weight: 600; font-size: 11px; padding: 10px 16px; border-radius: 2px; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 5px; }
   .btn:hover { background: var(--gold); }
-  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--muted); }
-  .btn-ghost:hover { border-color: #555; color: var(--text); }
   
-  .log-box { background: #0a0a0d; border: 1px solid var(--border); border-radius: 2px; padding: 10px; font-family: var(--mono); font-size: 11px; color: #888; height: 80px; overflow-y: auto; margin-top: 10px; }
-  
-  select, input[type="text"], input[type="password"] { width: 100%; background: #0a0a0d; border: 1px solid var(--border); color: #fff; padding: 8px; font-family: var(--mono); font-size: 11px; margin-bottom: 12px; border-radius: 2px; }
+  select, input[type="text"], textarea, input[type="password"] { width: 100%; background: #0a0a0d; border: 1px solid var(--border); color: #fff; padding: 8px; font-family: var(--mono); font-size: 11px; margin-bottom: 12px; border-radius: 2px; }
+  textarea { height: 120px; resize: none; }
   label { font-family: var(--mono); font-size: 9px; color: var(--muted); display: block; margin-bottom: 4px; text-transform: uppercase; }
+  
+  /* Console Log Box */
+  #console-box { background: #050507; border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: #a0a0ab; padding: 10px; height: 100px; overflow-y: auto; border-radius: 2px; white-space: pre-wrap; }
+  
+  /* Master Data Viewer Table */
+  .search-wrapper { display: flex; gap: 10px; margin-bottom: 12px; }
+  .table-wrapper { overflow-x: auto; max-height: 400px; overflow-y: auto; border: 1px solid var(--border); background: #0a0a0d; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-family: var(--mono); font-size: 11px; }
+  th { background: #050507; color: var(--muted); font-size: 9px; text-transform: uppercase; padding: 10px; sticky: top; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: #fff; vertical-align: middle; }
+  tr:hover td { background: #131317; }
+  
+  .arm-badge { display: inline-block; padding: 2px 5px; font-size: 9px; border-radius: 2px; font-weight: bold; text-transform: uppercase; margin: 2px; }
+  .badge-gym { background: #1a2634; color: #52a3ff; border: 1px solid #2b4c7e; }
+  .badge-cgs { background: #2d1a1a; color: #ff5252; border: 1px solid #7e2b2b; }
+  .badge-school { background: #2c1a34; color: #d352ff; border: 1px solid #6b2b7e; }
+  .badge-corp { background: #1a3424; color: #52ff8a; border: 1px solid #2b7e43; }
+  
+  .delete-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; }
+  .delete-x:hover { color: #ff5252; }
 </style>
 </head>
 <body>
 
 <div id="security-gate">
   <div class="lock-box">
-    <div style="font-family:'Bebas Neue', sans-serif; font-size:22px; color:var(--gold); margin-bottom:5px; letter-spacing:1px;">🔐 EAGLE DS CRM LOCK</div>
-    <p style="font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:15px; text-transform:uppercase;">Input Dashboard Access PIN</p>
-    <input type="password" id="gate-pin" placeholder="••••" style="text-align:center; font-size:16px; letter-spacing:4px; margin-bottom:15px;" onkeydown="if(event.key === 'Enter') verifyGatePasscode()">
-    <button class="btn" onclick="verifyGatePasscode()" style="width:100%;">Verify Credentials</button>
-    <div id="gate-error" style="font-family:var(--mono); font-size:10px; color:#ff6060; margin-top:10px; display:none;">Invalid Passcode Verification Token.</div>
+    <div style="font-family:'Bebas Neue', sans-serif; font-size:22px; color:var(--gold); margin-bottom:5px; letter-spacing:1px;">🔐 MASTER ENGINE GATE</div>
+    <input type="password" id="gate-pin" placeholder="••••" style="text-align:center; font-size:16px; letter-spacing:4px;" onkeydown="if(event.key === 'Enter') verifyGatePasscode()">
+    <button class="btn" onclick="verifyGatePasscode()">Unlock Engine</button>
+    <div id="gate-error" style="font-family:var(--mono); font-size:10px; color:#ff5252; margin-top:10px; display:none;">Invalid Passcode.</div>
   </div>
 </div>
 
 <div class="container" id="crm-workspace">
-  <h1>🦅 Eagle DS Cloud Business CRM</h1>
-  <p class="subtitle">Secure Firebase-Backed Data Consolidator &amp; Resend API Outbound Portal</p>
+  <h1>🦅 Eagle DS Command Hub</h1>
+  <p class="subtitle">Unified CRM Engine &amp; Broadcast Pipeline</p>
 
-  <div class="stat-row">
-    <div class="stat-card" style="border-color:#fff"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Master Directory</div></div>
-    <div class="stat-card" style="border-color:var(--gold)"><div class="stat-val" id="st-gym">0</div><div class="stat-lbl">Gym Members</div></div>
-    <div class="stat-card" style="border-color:#2a7fd4"><div class="stat-val" id="st-cgs">0</div><div class="stat-lbl">CGS Tournament</div></div>
-    <div class="stat-card" style="border-color:#f07020"><div class="stat-val" id="st-school">0</div><div class="stat-lbl">Schools/Trust</div></div>
-    <div class="stat-card" style="border-color:#20b040"><div class="stat-val" id="st-comm">0</div><div class="stat-lbl">Sponsors/Crew</div></div>
+  <div class="stats-grid">
+    <div class="stat-card master"><div class="stat-val" id="cnt-master">0</div><div class="stat-lbl">Master Directory</div></div>
+    <div class="stat-card"><div class="stat-val" id="cnt-gym">0</div><div class="stat-lbl">🥋 Gym Members</div></div>
+    <div class="stat-card"><div class="stat-val" id="cnt-cgs">0</div><div class="stat-lbl">⚔ CGS Circuit</div></div>
+    <div class="stat-card"><div class="stat-val" id="cnt-school">0</div><div class="stat-lbl">🏫 School Track</div></div>
+    <div class="stat-card"><div class="stat-val" id="cnt-corp">0</div><div class="stat-lbl">💼 Commercial</div></div>
   </div>
 
   <div class="grid">
     <div class="panel">
       <div class="panel-title">1. Ingest &amp; Segregate Incoming Sheets</div>
-      
-      <label>Target Core Sector</label>
-      <select id="sheet-arm">
-        <option value="Gym Academy">🥋 Gym Academy Memberships</option>
-        <option value="CGS Tournament">⚔ CGS Tournament Circuit (Community Neutral)</option>
-        <option value="Schools/Trust">🏫 Institutional Tracks (Schools / Trust / Youth)</option>
-        <option value="Commercial">💼 Commercial Network (Sponsors / Partners / Crew)</option>
+      <label>Target Sector Assignment</label>
+      <select id="ingest-arm">
+        <option value="gym">🥋 Gym Academy Memberships</option>
+        <option value="cgs">⚔ CGS Tournament Circuit</option>
+        <option value="school">🏫 Institutional Tracks</option>
+        <option value="corp">💼 Commercial Network</option>
       </select>
-
-      <label>Paste Raw Spreadsheet Rows (Include Header Line)</label>
-      <textarea id="raw-input" placeholder="Paste columns directly from Google Sheets here..."></textarea>
       
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <button class="btn" onclick="processIncomingSheet()" style="flex:1;">Clean &amp; Push to Cloud Network</button>
-        <button class="btn btn-ghost" onclick="syncFromFirebase()" style="padding:0 20px;">Force Sync ↻</button>
-      </div>
-      <div class="log-box" id="log-console">Awaiting Cloud Authentication Hook...</div>
+      <label>Paste Raw Spreadsheet Rows (Must include "Email" header row)</label>
+      <textarea id="sheet-input" placeholder="Name\tEmail\tPhone...\nJohn Doe\tjohn@example.com\t021..."></textarea>
+      <button class="btn" onclick="processIncomingSheet()">Clean &amp; Push to Cloud Network</button>
     </div>
 
     <div class="panel">
-      <div class="panel-title">2. Compose Target Audience Campaign</div>
+      <div class="panel-title">2. Composed Campaign Blast</div>
+      <label>Target Audience Segment Isolation</label>
+      <select id="campaign-filter">
+        <option value="gym">Target: Gym Academy Only</option>
+        <option value="cgs">Target: CGS Tournament Circuit Only</option>
+        <option value="school">Target: Institutional Track Only</option>
+        <option value="corp">Target: Commercial Network Only</option>
+      </select>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-          <label>Target Audience Segment</label>
-          <select id="campaign-filter" onchange="calculateRecipientCount()">
-            <option value="Gym Academy">Gym Academy Segment Only</option>
-            <option value="CGS Tournament">CGS Tournament Segment Only (Community Safe)</option>
-            <option value="Schools/Trust">Schools &amp; Trust Contacts</option>
-            <option value="Commercial">Sponsors &amp; Event Crew</option>
-          </select>
-        </div>
-        <div>
-          <label>Email Campaign Subject</label>
-          <input type="text" id="campaign-subject" placeholder="E.g., Series 4 Tournament Grid Live">
-        </div>
-      </div>
+      <label>Campaign Subject Line</label>
+      <input type="text" id="campaign-subject" placeholder="Official Announcement Update">
+      
+      <label>Message Content Body (Supports standard space layout)</label>
+      <textarea id="campaign-body" placeholder="Type your formal announcement update parameters here..."></textarea>
+      <button class="btn" onclick="executeResendBroadcast()">Execute Campaign Drop</button>
+    </div>
+  </div>
 
-      <label>Email Message HTML Body Context</label>
-      <textarea id="campaign-body" style="height:120px;" placeholder="Type your core content text fields here..."></textarea>
-      
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-family:var(--mono); font-size:11px;">Target Loop: <strong id="recipient-count" style="color:var(--gold);">0</strong> verified accounts</div>
-        <button class="btn" onclick="executeResendBroadcast()">Execute Campaign Drop</button>
-      </div>
+  <div class="panel" style="margin-bottom: 20px;">
+    <div class="panel-title">System Console Engine Feed</div>
+    <div id="console-box">System online. Awaiting authorization pipeline...</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">3. Live Master Data Directory Stream</div>
+    <div class="search-wrapper">
+      <input type="text" id="table-search" placeholder="🔍 Filter database by email, name, or sector arm..." oninput="renderMasterTableUI()" style="margin-bottom:0;">
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Profile Identity Details</th>
+            <th>Assigned Sector Arms</th>
+            <th style="width: 50px; text-align: center;">Wipe</th>
+          </tr>
+        </thead>
+        <tbody id="master-table-body">
+          <tr><td colspan="3" style="color: var(--muted); text-align: center; padding: 20px;">Awaiting secure data stream...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
 <script>
-// ── SECURE HARDCODED LOGISTICS CONFIGURATION MATRIX BLOCK ──
 const FIREBASE_DB_URL = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
-const MASTER_ACCESS_PIN = "1234"; // <-- CHANGE THIS TO YOUR PRIVATELY SELECTED 4-DIGIT COMBINATION CODE
-
-// Future API parameters (Leave empty strings until you configure your Resend domain records)
-const RESEND_API_KEY = "";         // <-- Put your "re_xxxxxxx" string here once verified
-const VERIFIED_SENDER_EMAIL = "info@eagleds.co.nz";
+const HASHED_ACCESS_PIN = "81dc9bdb52d04dc20036dbd8313ed055"; // Passcode: 1234
+const VERIFIED_SENDER_EMAIL = "info@eagleds.co.nz"; 
 
 let masterCrm = {};
 
 function verifyGatePasscode() {
-  const enteredPin = document.getElementById("gate-pin").value.trim();
-  const errorAlert = document.getElementById("gate-error");
-  
-  if (enteredPin === MASTER_ACCESS_PIN) {
-    // Demolish lock screen panel layout structures safely
+  const code = document.getElementById("gate-pin").value.trim();
+  if (CryptoJS.MD5(code).toString() === HASHED_ACCESS_PIN) {
     document.getElementById("security-gate").style.display = "none";
     document.getElementById("crm-workspace").style.display = "block";
-    syncFromFirebase();
+    writeConsole("Security gate cleared. Mounting live Firebase stream...");
+    syncFromFirebaseCloud();
   } else {
-    errorAlert.style.display = "block";
+    document.getElementById("gate-error").style.display = "block";
     document.getElementById("gate-pin").value = "";
-    setTimeout(() => { errorAlert.style.display = "none"; }, 3000);
+    setTimeout(() => { document.getElementById("gate-error").style.display = "none"; }, 2000);
   }
 }
 
 function writeConsole(msg) {
-  const c = document.getElementById("log-console");
-  if(c) {
-    c.innerHTML += `<div>&gt; ${msg}</div>`;
-    c.scrollTop = c.scrollHeight;
-  }
+  const box = document.getElementById("console-box");
+  box.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.scrollTop = box.scrollHeight;
 }
 
-async function syncFromFirebase() {
-  if(!FIREBASE_DB_URL) { writeConsole("✕ Error: Database pointer configuration missing."); return; }
-
+async function syncFromFirebaseCloud() {
   try {
     const res = await fetch(`${FIREBASE_DB_URL}/directory_crm_master.json`);
     const data = await res.json();
-    
     masterCrm = data || {};
-    
-    for(let key in masterCrm) {
-      if(!Array.isArray(masterCrm[key].arms)) masterCrm[key].arms = [];
-    }
-    
-    writeConsole("✓ Business registry dataset mapped down safely from cloud repository storage.");
-    updateDashboardUI();
+    calculateMetricsAndCounters();
+    renderMasterTableUI();
+    writeConsole("✓ Cloud Database successfully mapped to system memory.");
   } catch(e) {
-    writeConsole("✕ Cloud pipeline authentication timeout error.");
+    writeConsole("✕ Sync Failure: Cloud framework refused connection stream.");
   }
 }
 
-function findEmailIndex(headers) {
-  return headers.findIndex(h => {
-    const c = h.toLowerCase().trim();
-    return c.includes('mail') || c.includes('address');
-  });
+function calculateMetricsAndCounters() {
+  let totals = { master: 0, gym: 0, cgs: 0, school: 0, corp: 0 };
+  for(let key in masterCrm) {
+    totals.master++;
+    const arms = masterCrm[key].arms || [];
+    if(arms.includes("gym")) totals.gym++;
+    if(arms.includes("cgs")) totals.cgs++;
+    if(arms.includes("school")) totals.school++;
+    if(arms.includes("corp")) totals.corp++;
+  }
+  document.getElementById("cnt-master").textContent = totals.master;
+  document.getElementById("cnt-gym").textContent = totals.gym;
+  document.getElementById("cnt-cgs").textContent = totals.cgs;
+  document.getElementById("cnt-school").textContent = totals.school;
+  document.getElementById("cnt-corp").textContent = totals.corp;
+}
+
+function renderMasterTableUI() {
+  const tbody = document.getElementById("master-table-body");
+  const query = document.getElementById("table-search").value.toLowerCase().trim();
+  tbody.innerHTML = "";
+  
+  let matches = 0;
+  
+  for(let key in masterCrm) {
+    const record = masterCrm[key];
+    const name = (record.name || "").toLowerCase();
+    const email = record.email.toLowerCase();
+    const armsString = (record.arms || []).join(" ");
+    
+    // Filter matching matrix
+    if(query && !name.includes(query) && !email.includes(query) && !armsString.includes(query)) continue;
+    
+    matches++;
+    const row = document.createElement("tr");
+    
+    // Generate sector visual badges
+    let badgesHtml = "";
+    if(record.arms.includes("gym")) badgesHtml += `<span class="arm-badge badge-gym">Gym</span>`;
+    if(record.arms.includes("cgs")) badgesHtml += `<span class="arm-badge badge-cgs">CGS Circuit</span>`;
+    if(record.arms.includes("school")) badgesHtml += `<span class="arm-badge badge-school">School</span>`;
+    if(record.arms.includes("corp")) badgesHtml += `<span class="arm-badge badge-corp">Commercial</span>`;
+    
+    row.innerHTML = `
+      <td>
+        <strong style="font-size:12px; color:#fff;">${record.name || "Unknown Identity"}</strong><br>
+        <span style="color:var(--muted); font-size:11px;">${record.email}</span>
+      </td>
+      <td>${badgesHtml}</td>
+      <td style="text-align:center;"><button class="delete-x" onclick="deleteMasterIdentity('${key}')">✕</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+  
+  if(matches === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--muted); padding:20px;">No matching framework data inside directory parameters.</td></tr>`;
+  }
 }
 
 async function processIncomingSheet() {
-  const selectedArm = document.getElementById("sheet-arm").value;
-  const rawText = document.getElementById("raw-input").value.trim();
+  const targetArm = document.getElementById("ingest-arm").value;
+  const rawData = document.getElementById("sheet-input").value;
+  if(!rawData.trim()) { alert("Input data string parameters void."); return; }
   
-  if(!rawText) { alert("Paste spreadsheet data matrix rows."); return; }
-
-  const lines = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
-  if(lines.length < 2) { alert("Insufficient line height parsed."); return; }
-
-  const separator = lines[0].includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(separator).map(h => h.trim().replace(/^["']|["']$/g, ''));
-  const emailIdx = findEmailIndex(headers);
-
-  if(emailIdx === -1) { alert("Fuzzy parser failed to identify an email tracking index."); return; }
-
-  let fresh = 0; let updated = 0;
-
-  for(let i = 1; i < lines.length; i++) {
-    const columns = lines[i].split(separator).map(c => c.trim().replace(/^["']|["']$/g, ''));
-    if(columns.length <= emailIdx) continue;
-
-    const rawEmail = columns[emailIdx].toLowerCase().trim();
-    if(!rawEmail || !rawEmail.includes('@')) continue;
-    
-    const fbSafeEmailKey = rawEmail.replace(/\./g, '%2E');
-
-    if(!masterCrm[fbSafeEmailKey]) {
-      masterCrm[fbSafeEmailKey] = { email: rawEmail, arms: [] };
-      fresh++;
-    } else {
-      updated++;
-    }
-
-    if(!masterCrm[fbSafeEmailKey].arms.includes(selectedArm)) {
-      masterCrm[fbSafeEmailKey].arms.push(selectedArm);
-    }
-  }
-
-  try {
-    writeConsole("Syncing localized data additions directly with cloud database node streams...");
-    const syncRes = await fetch(`${FIREBASE_DB_URL}/directory_crm_master.json`, {
-      method: "PUT",
-      body: JSON.stringify(masterCrm)
-    });
-    
-    if(syncRes.ok) {
-      document.getElementById("raw-input").value = "";
-      writeConsole(`✓ SYNC OK! Cataloged ${fresh} new entries, cross-referenced ${updated} profiles directly to cloud repository.`);
-      updateDashboardUI();
-    } else {
-      writeConsole("✕ Sync request authentication payload reject failure.");
-    }
-  } catch(err) {
-    writeConsole(`✕ Cloud pipe delivery handshake interrupt error: ${err.message}`);
-  }
-}
-
-function updateDashboardUI() {
-  const tally = { total: 0, gym: 0, cgs: 0, school: 0, comm: 0 };
+  const lines = rawData.split("\n");
+  const headers = lines[0].toLowerCase().split("\t");
+  const emailIdx = headers.findIndex(h => h.includes("email"));
   
-  for(let em in masterCrm) {
-    tally.total++;
-    const a = masterCrm[em].arms;
-    if(a.includes("Gym Academy")) tally.gym++;
-    if(a.includes("CGS Tournament")) tally.cgs++;
-    if(a.includes("Schools/Trust")) tally.school++;
-    if(a.includes("Commercial")) tally.comm++;
-  }
-
-  document.getElementById("st-total").textContent = tally.total;
-  document.getElementById("st-gym").textContent = tally.gym;
-  document.getElementById("st-cgs").textContent = tally.cgs;
-  document.getElementById("st-school").textContent = tally.school;
-  document.getElementById("st-comm").textContent = tally.comm;
-
-  calculateRecipientCount();
-}
-
-function calculateRecipientCount() {
-  const currentFilter = document.getElementById("campaign-filter").value;
-  let count = 0;
-  for(let em in masterCrm) {
-    if(masterCrm[em].arms.includes(currentFilter)) count++;
-  }
-  document.getElementById("recipient-count").textContent = count;
-}
-
-async function executeResendBroadcast() {
-  if(!RESEND_API_KEY) {
-    alert("Outbound mail delivery engine offline: You must hardcode your RESEND_API_KEY parameter token inside the script configuration block lines first.");
+  if(emailIdx === -1) {
+    alert("Error: Script mapping failed. Could not locate a valid column containing the word 'Email' in header row 1.");
     return;
   }
   
+  let added = 0, merged = 0;
+  
+  // Start line row parser loops
+  for(let i = 1; i < lines.length; i++) {
+    if(!lines[i].trim()) continue;
+    const cells = lines[i].split("\t");
+    const rawEmail = cells[emailIdx] ? cells[emailIdx].trim() : "";
+    
+    if(!rawEmail || !rawEmail.includes("@")) continue; 
+    
+    const cleanEmail = rawEmail.toLowerCase();
+    const fbSafeKey = cleanEmail.replace(/\./g, '%2E');
+    
+    // Pull Name details if column exists
+    let extractedName = "";
+    const nameIdx = headers.findIndex(h => h.includes("name") || h.includes("first"));
+    if(nameIdx !== -1 && cells[nameIdx]) extractedName = cells[nameIdx].trim();
+
+    if(masterCrm[fbSafeKey]) {
+      // Identity exists - safely scale vector tags without overwriting existing sectors
+      if(!masterCrm[fbSafeKey].arms.includes(targetArm)) {
+        masterCrm[fbSafeKey].arms.push(targetArm);
+        merged++;
+      }
+      if(extractedName && !masterCrm[fbSafeKey].name) {
+        masterCrm[fbSafeKey].name = extractedName;
+      }
+    } else {
+      // New Profile Matrix Insertion
+      masterCrm[fbSafeKey] = {
+        email: cleanEmail,
+        name: extractedName,
+        arms: [targetArm],
+        timestamp: new Date().toISOString()
+      };
+      added++;
+    }
+  }
+
+  writeConsole(`Pushing packet metadata arrays... Processing: +${added} New | +${merged} Merges.`);
+  
+  try {
+    const response = await fetch(`${FIREBASE_DB_URL}/directory_crm_master.json`, {
+      method: "PUT",
+      body: JSON.stringify(masterCrm)
+    });
+    if(response.ok) {
+      document.getElementById("sheet-input").value = "";
+      calculateMetricsAndCounters();
+      renderMasterTableUI();
+      writeConsole(`✓ Firebase database successfully committed. Master scale upgraded.`);
+    }
+  } catch(e) {
+    writeConsole(`✕ Cloud sync interrupt: Server transaction rejected.`);
+  }
+}
+
+async function deleteMasterIdentity(key) {
+  if(!confirm("Completely wipe this user's profile and segments from your business?")) return;
+  delete masterCrm[key];
+  try {
+    await fetch(`${FIREBASE_DB_URL}/directory_crm_master.json`, { method: "PUT", body: JSON.stringify(masterCrm) });
+    calculateMetricsAndCounters();
+    renderMasterTableUI();
+    writeConsole("✓ Record safely removed from cloud parameters.");
+  } catch(e) { alert("Wipe transaction failed."); }
+}
+
+async function executeResendBroadcast() {
+  let secureApiKey = localStorage.getItem("SECRET_RESEND_KEY");
+  if (!secureApiKey) {
+    const userInput = prompt("Enter your private Resend API Key (starts with re_):");
+    if (!userInput) { alert("API Key required to execute broadcast."); return; }
+    localStorage.setItem("SECRET_RESEND_KEY", userInput.trim());
+    secureApiKey = userInput.trim();
+  }
+
   const subject = document.getElementById("campaign-subject").value.trim();
   const bodyContent = document.getElementById("campaign-body").value.trim();
   const targetFilter = document.getElementById("campaign-filter").value;
 
-  if(!subject || !bodyContent) { alert("Missing operational messaging parameters."); return; }
+  if(!subject || !bodyContent) { alert("Missing transmission parameters."); return; }
 
   const emailList = [];
-  for(let em in masterCrm) {
-    if(masterCrm[em].arms.includes(targetFilter)) {
-      emailList.push(masterCrm[em].email);
-    }
-  }
+  for(let em in masterCrm) { if(masterCrm[em].arms.includes(targetFilter)) emailList.push(masterCrm[em].email); }
+  if(!emailList.length) { alert("No valid target recipient records in this sector layout branch."); return; }
+  
+  if(!confirm(`Send broadcast transmission to all ${emailList.length} entities flagged as [${targetFilter}]?`)) return;
 
-  if(!emailList.length) { alert("Zero verified records link to query tracking criteria filters."); return; }
-  if(!confirm(`Verify: Ship outbound broadcast campaign execution loop immediately to all ${emailList.length} unique profiles matching list segment path: [${targetFilter}]?`)) return;
+  writeConsole(`Bundling payload array for ${emailList.length} nodes via Resend pipeline...`);
 
-  writeConsole(`Deploying network telemetry data bundles to ${emailList.length} secure target points...`);
-
-  const payload = {
-    from: VERIFIED_SENDER_EMAIL,
-    to: VERIFIED_SENDER_EMAIL,
-    bcc: emailList,
-    subject: subject,
-    html: bodyContent.replace(/\n/g, '<br>')
-  };
+  // Payload defaults: maps target list safely to hidden bcc blocks so parents never see other emails
+  const payload = { from: VERIFIED_SENDER_EMAIL, to: VERIFIED_SENDER_EMAIL, bcc: emailList, subject: subject, html: bodyContent.replace(/\n/g, '<br>') };
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${secureApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-
     const result = await response.json();
     if(response.ok) {
-      writeConsole(`✓ DELIVERY COMPLETED SECURELY! API tracker token: ${result.id}`);
+      writeConsole(`✓ PACKET SENT VIA RESEND NETWORK! Tracking Reference: ${result.id}`);
+      writeConsole(`👉 Open Resend.com dashboard logs to see real-time open-rates, bounces, and deliveries.`);
       document.getElementById("campaign-subject").value = "";
       document.getElementById("campaign-body").value = "";
     } else {
-      writeConsole(`✕ Mail distribution tracking rejection response: ${result.message}`);
+      writeConsole(`✕ System Rejection: ${result.message}`);
     }
   } catch(err) {
-    writeConsole(`✕ Pipeline processing communication failure fault error: ${err.message}`);
+    writeConsole(`✕ Transmission Failure: ${err.message}`);
   }
 }
 </script>
