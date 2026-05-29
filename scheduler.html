@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+:root{--bg:#06060a;--surf:#0c0c11;--surf2:#111116;--border:#1c1c24;--border2:#262632;--text:#ececf0;--muted:#4e4e5c;--muted2:#72727e;--gold:#e8aa20;--gold-lt:#f5c842;--gold-dk:#b08010;--red:#e84040;--blue:#3d8eff;--purple:#9d55f5;--green:#1fc863;--orange:#f07020;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bebas Neue',sans-serif;--r:3px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.gate-wrap{width:280px;text-align:center;}
+.gate-eagle{font-family:var(--disp);font-size:52px;color:var(--gold);letter-spacing:4px;line-height:1;}
+.gate-name{font-family:var(--disp);font-size:16px;letter-spacing:6px;color:var(--muted2);margin-bottom:40px;}
+.gate-input{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:24px;text-align:center;letter-spacing:10px;padding:14px;outline:none;}
+.gate-btn{margin-top:10px;width:100%;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:13px;cursor:pointer;}
+.gate-btn:hover{background:var(--gold);}
+.gate-err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:10px;height:14px;}
+#app{display:none;}
+.topbar{position:sticky;top:0;z-index:200;height:50px;background:rgba(6,6,10,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+.t-logo{font-family:var(--disp);font-size:20px;color:var(--gold);letter-spacing:2px;}
+.t-nav{display:flex;gap:2px;}
+.t-nav a{font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 10px;border-radius:var(--r);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.t-nav a:hover{color:var(--gold);}
+.t-nav a.here{color:var(--gold);}
+.status-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
+.sdot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+.ws{max-width:1320px;margin:0 auto;padding:24px;}
+.page-title{font-family:var(--disp);font-size:28px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
+.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:24px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:768px){.grid2{grid-template-columns:1fr;}}
+.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.ph{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-family:var(--disp);font-size:13px;letter-spacing:1.5px;color:var(--gold);}
+.pb{padding:16px;}
+label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+select,input[type="text"],input[type="date"],textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:11px;padding:9px 11px;outline:none;transition:border-color .15s;margin-bottom:13px;}
+textarea{resize:vertical;min-height:100px;}
+.btn{display:inline-block;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background .15s;width:100%;text-align:center;}
+.btn:hover{background:var(--gold-lt);}
+.btn-sm{padding:6px 12px;font-size:9px;width:auto;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
+.btn-ghost:hover{border-color:var(--gold-dk);color:var(--gold);background:transparent;}
+.btn-red{background:transparent;border:1px solid #3a1010;color:#ff6060;}
+.btn-red:hover{background:#180808;}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+
+/* QUEUE TABLE */
+.twrap{overflow-x:auto;max-height:460px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+thead th{background:var(--bg);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:9px 13px;border-bottom:1px solid var(--border);position:sticky;top:0;}
+tbody td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:hover td{background:var(--surf2);}
+tbody tr:last-child td{border-bottom:none;}
+
+.q-status{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:20px;}
+.qs-pending{background:#2a1400;color:var(--orange);border:1px solid #5a3000;}
+.qs-sent{background:#020d05;color:var(--green);border:1px solid #0a3a1a;}
+.qs-due{background:#2a0a00;color:var(--red);border:1px solid #6a1a00;animation:blink .8s infinite;}
+.qs-skipped{background:#141414;color:var(--muted2);border:1px solid var(--border2);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* SEQUENCE TEMPLATES */
+.template-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
+.template-card:hover{border-color:var(--gold-dk);}
+.tc-name{font-family:var(--disp);font-size:14px;letter-spacing:1px;color:var(--gold);margin-bottom:4px;}
+.tc-meta{font-family:var(--mono);font-size:9px;color:var(--muted2);}
+.tc-steps{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
+.tc-step{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;background:var(--surf);border:1px solid var(--border2);color:var(--muted2);}
+
+.var-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px;}
+.var-chip{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:2px;background:var(--surf2);border:1px solid var(--border2);color:var(--gold-dk);cursor:pointer;transition:all .15s;}
+.var-chip:hover{border-color:var(--gold);color:var(--gold);}
+
+.console{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:10px;padding:10px 12px;height:70px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.l-ok{color:var(--green);}.l-err{color:var(--red);}.l-warn{color:var(--orange);}.l-info{color:var(--muted2);}.l-gold{color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-wrap">
+    <div class="gate-eagle">🦅</div>
+    <div class="gate-name">EAGLE DS</div>
+    <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="gate-btn" onclick="unlock()">Unlock</button>
+    <div class="gate-err" id="gerr"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🦅 EAGLE DS</div>
+    <div class="t-nav">
+      <a href="crm.html">CRM</a><a href="events.html">Events</a>
+      <a href="scheduler.html" class="here">Automation</a><a href="blog.html">Blog</a>
+    </div>
+    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
+  </div>
+  <div class="ws">
+    <div class="page-title">Automation Engine</div>
+    <div class="page-sub">Schedule emails · Build sequences · Set retention rules · All fires automatically</div>
+
+    <div class="grid2">
+      <!-- COMPOSE ONE-OFF SCHEDULED EMAIL -->
+      <div class="panel">
+        <div class="ph"><div class="pt">Schedule a Single Email</div></div>
+        <div class="pb">
+          <label>Sector Target</label>
+          <select id="s-sector">
+            <option value="all">All Sectors</option><option value="gym">🥋 Gym</option>
+            <option value="cgs">⚔ CGS Circuit</option><option value="school">🏫 Institutional</option><option value="corp">💼 Commercial</option>
+          </select>
+          <label>Engagement Filter</label>
+          <select id="s-tier">
+            <option value="all">All contacts</option><option value="hot,warm">Hot + Warm</option>
+            <option value="hot,warm,cold">Active only</option><option value="dormant">Dormant — re-engage</option>
+            <option value="parents">Parents only</option><option value="adults">Adult athletes only</option>
+          </select>
+          <label>Send Date</label>
+          <input type="date" id="s-date">
+          <label>Subject — click variables below to insert</label>
+          <div class="var-chips">
+            <span class="var-chip" onclick="insertVar('s-subject','[FirstName]')">[FirstName]</span>
+            <span class="var-chip" onclick="insertVar('s-subject','[ChildName]')">[ChildName]</span>
+            <span class="var-chip" onclick="insertVar('s-subject','[EventName]')">[EventName]</span>
+          </div>
+          <input type="text" id="s-subject" placeholder="Subject line...">
+          <label>Message Body</label>
+          <div class="var-chips">
+            <span class="var-chip" onclick="insertVar('s-body','[FirstName]')">[FirstName]</span>
+            <span class="var-chip" onclick="insertVar('s-body','[ChildName]')">[ChildName]</span>
+            <span class="var-chip" onclick="insertVar('s-body','[ChildCount]')">[ChildCount]</span>
+            <span class="var-chip" onclick="insertVar('s-body','[EventName]')">[EventName]</span>
+          </div>
+          <textarea id="s-body" placeholder="Hi [FirstName],&#10;&#10;Write your message here...&#10;&#10;Eagle DS Team"></textarea>
+          <button class="btn" onclick="scheduleEmail()">Add to Queue →</button>
+        </div>
+      </div>
+
+      <!-- RETENTION AUTOMATION -->
+      <div class="panel">
+        <div class="ph"><div class="pt">Retention Automations</div></div>
+        <div class="pb">
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.7;">These run automatically when you open the CRM. Set them once and forget.</p>
+          <div id="retention-list"></div>
+          <button class="btn btn-ghost" onclick="openRetentionBuilder()" style="margin-top:8px;">+ Add Retention Rule</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUEUE -->
+    <div class="panel">
+      <div class="ph">
+        <div class="pt">Automation Queue</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="queue-due-count" style="font-family:var(--mono);font-size:9px;color:var(--orange);"></span>
+          <button class="btn btn-sm" onclick="fireQueue()">▶ Fire Due Now</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearSentQueue()">Clear Sent</button>
+        </div>
+      </div>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Send Date</th><th>Subject</th><th>Sector</th><th>Filter</th><th>Status</th><th></th></tr></thead>
+          <tbody id="queue-body"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Loading queue...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SEQUENCE TEMPLATES -->
+    <div class="panel">
+      <div class="ph"><div class="pt">Sequence Templates</div><button class="btn btn-ghost btn-sm" onclick="openTemplateBuilder()">+ New Template</button></div>
+      <div class="pb">
+        <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:14px;line-height:1.7;">Reusable multi-step sequences. Attach to any event in the Events tab.</p>
+        <div id="templates-list"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="pt">Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button></div>
+      <div class="pb"><div class="console" id="console"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+const HASH="81dc9bdb52d04dc20036dbd8313ed055";
+const FROM="info@eagleds.co.nz";
+let queue={},db={},retention=[];
+
+function unlock(){
+  const v=document.getElementById("pin").value.trim();
+  if(CryptoJS.MD5(v).toString()===HASH){
+    document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";
+    log("Connected.","ok");loadAll();
+  }else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}
+}
+function log(msg,type="info"){const b=document.getElementById("console");const s=document.createElement("span");s.className=`l-${type}`;s.textContent=`[${new Date().toLocaleTimeString()}] ${msg}\n`;b.appendChild(s);b.scrollTop=b.scrollHeight;}
+function clearLog(){document.getElementById("console").innerHTML="";}
+function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
+
+async function loadAll(){
+  setStatus("","loading…");
+  try{
+    const[qr,cr,rr]=await Promise.all([
+      fetch(`${FB}/automation_queue.json`),
+      fetch(`${FB}/directory_crm_master.json`),
+      fetch(`${FB}/retention_rules.json`)
+    ]);
+    queue=await qr.json()||{};
+    db=await cr.json()||{};
+    retention=await rr.json()||[];
+    setStatus("live","live");
+    log(`Queue: ${Object.keys(queue).length} items · CRM: ${Object.keys(db).length} contacts`,"ok");
+    renderQueue();renderRetention();
+    checkAndRunRetention();
+  }catch(e){setStatus("err","offline");log("Load failed.","err");}
+}
+
+function insertVar(fieldId,v){const el=document.getElementById(fieldId);const s=el.selectionStart,e=el.selectionEnd;el.value=el.value.slice(0,s)+v+el.value.slice(e);el.focus();el.setSelectionRange(s+v.length,s+v.length);}
+
+function getTier(r){
+  if(!r.lastActivity&&!r.added)return"new";
+  const days=(Date.now()-new Date(r.lastActivity||r.added))/86400000;
+  if(days<=30)return"hot";if(days<=180)return"warm";if(days<=730)return"cold";return"dormant";
+}
+
+function getTargets(sector,tierStr){
+  const tiers=tierStr==="all"?null:tierStr.split(",");
+  return Object.values(db).filter(r=>{
+    const inS=sector==="all"||(r.arms||[]).includes(sector);
+    if(tierStr==="parents")return inS&&r.children&&r.children.length>0;
+    if(tierStr==="adults"){const a=r.dob?(Date.now()-new Date(r.dob))/31557600000:null;return inS&&(a===null||a>=18);}
+    return inS&&(!tiers||tiers.includes(getTier(r)));
+  });
+}
+
+function replaceVars(text,contact,eventName){
+  const name=contact.name||(contact.email||"").split("@")[0];
+  const first=name.split(" ")[0];
+  const child=(contact.children&&contact.children[0])||first;
+  const cc=(contact.children&&contact.children.length)||1;
+  return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,eventName||"");
+}
+
+async function scheduleEmail(){
+  const sector=document.getElementById("s-sector").value;
+  const tier=document.getElementById("s-tier").value;
+  const date=document.getElementById("s-date").value;
+  const subject=document.getElementById("s-subject").value.trim();
+  const body=document.getElementById("s-body").value.trim();
+  if(!date||!subject||!body){alert("Date, subject, and message required.");return;}
+  const targets=getTargets(sector,tier);
+  if(!targets.length){alert("No contacts match this filter.");return;}
+  const key="manual_"+Date.now();
+  queue[key]={sector,tier,subject,body,sendAt:date,status:"pending",targets:targets.length,created:new Date().toISOString()};
+  try{
+    await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
+    log(`Scheduled: "${subject}" for ${date} → ${targets.length} contacts`,"ok");
+    renderQueue();
+    document.getElementById("s-subject").value="";document.getElementById("s-body").value="";document.getElementById("s-date").value="";
+  }catch(e){log("Schedule failed.","err");}
+}
+
+async function fireQueue(){
+  let apiKey=localStorage.getItem("RESEND_KEY");
+  if(!apiKey){apiKey=prompt("Enter Resend API key:");if(!apiKey)return;localStorage.setItem("RESEND_KEY",apiKey.trim());apiKey=apiKey.trim();}
+  const today=new Date();today.setHours(0,0,0,0);
+  const due=Object.keys(queue).filter(k=>{
+    const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";
+  });
+  if(!due.length){log("Nothing due today.","info");return;}
+  log(`Firing ${due.length} queued email(s)...`,"gold");
+  let fired=0;
+  for(const k of due){
+    const item=queue[k];
+    const targets=getTargets(item.sector,item.tier);
+    if(!targets.length){queue[k].status="skipped";continue;}
+    const needsPersonal=(item.subject||"").includes("[FirstName]")||(item.body||"").includes("[FirstName]")||(item.body||"").includes("[ChildName]");
+    try{
+      if(needsPersonal){
+        for(const contact of targets){
+          await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:contact.email,subject:replaceVars(item.subject,contact,item.eventName||""),html:replaceVars(item.body,contact,item.eventName||"").replace(/\n/g,"<br>")})});
+        }
+      }else{
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(t=>t.email),subject:item.subject,html:item.body.replace(/\n/g,"<br>")})});
+      }
+      queue[k].status="sent";queue[k].sentAt=new Date().toISOString();fired++;
+      log(`✓ Sent: "${item.subject}" → ${targets.length} contacts`,"ok");
+    }catch(e){queue[k].status="error";log(`Error: ${e.message}`,"err");}
+  }
+  await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
+  renderQueue();log(`Done. ${fired} email(s) fired.`,"ok");
+}
+
+async function clearSentQueue(){
+  if(!confirm("Remove all sent items from queue?"))return;
+  Object.keys(queue).forEach(k=>{if(queue[k].status==="sent"||queue[k].status==="skipped")delete queue[k];});
+  await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
+  renderQueue();log("Sent items cleared.","ok");
+}
+
+function renderQueue(){
+  const tbody=document.getElementById("queue-body");
+  const keys=Object.keys(queue).sort((a,b)=>(queue[a].sendAt||"").localeCompare(queue[b].sendAt||""));
+  const today=new Date();today.setHours(0,0,0,0);
+  let dueCount=0;
+  if(!keys.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);font-family:var(--mono);font-size:10px;">Queue empty.</td></tr>`;document.getElementById("queue-due-count").textContent="";return;}
+  tbody.innerHTML=keys.map(k=>{
+    const item=queue[k];
+    const d=new Date(item.sendAt);d.setHours(0,0,0,0);
+    const isDue=d<=today&&item.status==="pending";
+    if(isDue)dueCount++;
+    const statusClass=isDue?"qs-due":item.status==="sent"?"qs-sent":item.status==="skipped"?"qs-skipped":"qs-pending";
+    const statusLabel=isDue?"DUE NOW":item.status.toUpperCase();
+    return`<tr>
+      <td style="white-space:nowrap;">${new Date(item.sendAt).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"})}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.subject||"—"}</td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">${item.sector||"all"}</span></td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">${item.tier||"all"}</span></td>
+      <td><span class="q-status ${statusClass}">${statusLabel}</span></td>
+      <td><button onclick="deleteQueueItem('${k}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;" title="Remove">✕</button></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("queue-due-count").textContent=dueCount?`${dueCount} due today`:"";
+}
+
+async function deleteQueueItem(key){delete queue[key];await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});renderQueue();}
+
+// RETENTION RULES
+const RETENTION_TEMPLATES=[
+  {id:"warm-winback",label:"Warm Win-Back",desc:"Contacts going cold (90 days no activity)",trigger:"days_inactive",triggerValue:90,tier:"warm",subject:"We miss you at Eagle DS, [FirstName]",body:"Hi [FirstName],\n\nWe noticed it's been a while since we've seen you.\n\nWhat's going on? We'd love to have you back on the mats.\n\nReply to this email or come in this week — first session back is on us.\n\nEagle DS Team"},
+  {id:"dormant-reactivate",label:"Dormant Re-Activation",desc:"Contacts 1+ year inactive",trigger:"days_inactive",triggerValue:365,tier:"cold",subject:"Are you still interested in martial arts, [FirstName]?",body:"Hi [FirstName],\n\nIt's been over a year since we last connected.\n\nWe have new classes, new events, and new opportunities — and we'd love to reconnect.\n\nIf you're no longer interested, no problem — just let us know and we'll stop.\n\nBut if the fire is still there, come back. We're here.\n\nEagle DS"},
+  {id:"multi-child-upsell",label:"Multi-Child Family Offer",desc:"Parents with 2+ children registered",trigger:"child_count",triggerValue:2,subject:"Family discount for [FirstName]",body:"Hi [FirstName],\n\nWith [ChildCount] children training with us, we'd like to offer you our family membership rate.\n\nReply to this email to find out more.\n\nEagle DS Team"},
+];
+
+function renderRetention(){
+  const el=document.getElementById("retention-list");
+  const saved=getSavedRetention();
+  if(!saved.length){el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:10px 0;">No retention rules active. Add one below.</div>`;return;}
+  el.innerHTML=saved.map((r,i)=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text);">${r.label}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:2px;">${r.desc}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;background:#020d05;color:var(--green);border:1px solid #0a3a1a;">ACTIVE</span>
+        <button onclick="removeRetention(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function getSavedRetention(){try{return JSON.parse(localStorage.getItem("eagle_retention")||"[]");}catch{return[];}}
+function removeRetention(i){const r=getSavedRetention();r.splice(i,1);localStorage.setItem("eagle_retention",JSON.stringify(r));renderRetention();}
+
+function openRetentionBuilder(){
+  const choice=prompt("Choose a template:\n1. Warm Win-Back (90 days inactive)\n2. Dormant Re-Activation (1 year)\n3. Multi-Child Family Offer\n\nType 1, 2, or 3:");
+  if(!choice)return;
+  const t=RETENTION_TEMPLATES[parseInt(choice)-1];
+  if(!t){alert("Invalid choice.");return;}
+  const saved=getSavedRetention();
+  if(saved.find(r=>r.id===t.id)){alert("This rule is already active.");return;}
+  saved.push(t);localStorage.setItem("eagle_retention",JSON.stringify(saved));
+  renderRetention();log(`Retention rule added: ${t.label}`,"ok");
+}
+
+async function checkAndRunRetention(){
+  const rules=getSavedRetention();if(!rules.length)return;
+  const apiKey=localStorage.getItem("RESEND_KEY");if(!apiKey)return;
+  const sentLog=JSON.parse(localStorage.getItem("eagle_retention_sent")||"{}");
+  const today=new Date().toISOString().slice(0,10);
+  let queued=0;
+  for(const rule of rules){
+    const targets=[];
+    for(const k in db){
+      const r=db[k];
+      if(rule.trigger==="days_inactive"){
+        const src=r.lastActivity||r.added;if(!src)continue;
+        const days=(Date.now()-new Date(src))/86400000;
+        if(days<rule.triggerValue)continue;
+        if(sentLog[`${rule.id}_${k}_${today.slice(0,7)}`])continue; // monthly dedupe
+        targets.push(r);
+      }else if(rule.trigger==="child_count"){
+        if(!r.children||r.children.length<rule.triggerValue)continue;
+        if(sentLog[`${rule.id}_${k}_${today.slice(0,4)}`])continue; // yearly dedupe
+        targets.push(r);
+      }
+    }
+    if(!targets.length)continue;
+    for(const contact of targets){
+      const subj=replaceVars(rule.subject,contact,"");
+      const body=replaceVars(rule.body,contact,"");
+      try{
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:contact.email,subject:subj,html:body.replace(/\n/g,"<br>")})});
+        const logKey=`${rule.id}_${contact.email.replace(/\./g,"_")}_${today.slice(0,rule.trigger==="child_count"?4:7)}`;
+        sentLog[logKey]=today;queued++;
+      }catch(e){}
+    }
+  }
+  if(queued>0){localStorage.setItem("eagle_retention_sent",JSON.stringify(sentLog));log(`Retention: ${queued} automated email(s) sent.`,"ok");}
+}
+
+function openTemplateBuilder(){alert("Full template builder coming soon — for now, sequence templates are created directly in the Events tab when you create an event.");}
+</script>
+</body>
+</html>
