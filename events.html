@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Events</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+:root{--bg:#06060a;--surf:#0c0c11;--surf2:#111116;--border:#1c1c24;--border2:#262632;--text:#ececf0;--muted:#4e4e5c;--muted2:#72727e;--gold:#e8aa20;--gold-lt:#f5c842;--gold-dk:#b08010;--red:#e84040;--blue:#3d8eff;--purple:#9d55f5;--green:#1fc863;--orange:#f07020;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bebas Neue',sans-serif;--r:3px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.gate-wrap{width:280px;text-align:center;}
+.gate-eagle{font-family:var(--disp);font-size:52px;color:var(--gold);letter-spacing:4px;line-height:1;}
+.gate-name{font-family:var(--disp);font-size:16px;letter-spacing:6px;color:var(--muted2);margin-bottom:40px;}
+.gate-input{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:24px;text-align:center;letter-spacing:10px;padding:14px;outline:none;}
+.gate-input:focus{border-color:var(--gold-dk);}
+.gate-btn{margin-top:10px;width:100%;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:13px;cursor:pointer;}
+.gate-btn:hover{background:var(--gold);}
+.gate-err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:10px;height:14px;}
+#app{display:none;}
+.topbar{position:sticky;top:0;z-index:200;height:50px;background:rgba(6,6,10,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+.t-logo{font-family:var(--disp);font-size:20px;color:var(--gold);letter-spacing:2px;}
+.t-nav{display:flex;gap:2px;}
+.t-nav a{font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 10px;border-radius:var(--r);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.t-nav a:hover{color:var(--gold);background:var(--surf2);}
+.t-nav a.here{color:var(--gold);}
+.status-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
+.sdot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+.ws{max-width:1320px;margin:0 auto;padding:24px;}
+.page-title{font-family:var(--disp);font-size:28px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
+.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:24px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:768px){.grid2{grid-template-columns:1fr;}}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:900px){.grid3{grid-template-columns:1fr;}}
+.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.ph{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-family:var(--disp);font-size:13px;letter-spacing:1.5px;color:var(--gold);}
+.pb{padding:16px;}
+label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+select,input[type="text"],input[type="date"],input[type="number"],textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:11px;padding:9px 11px;outline:none;transition:border-color .15s;margin-bottom:13px;}
+select:focus,input:focus,textarea:focus{border-color:var(--gold-dk);}
+textarea{resize:vertical;min-height:80px;}
+.btn{display:inline-block;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background .15s;width:100%;text-align:center;}
+.btn:hover{background:var(--gold-lt);}
+.btn-sm{padding:6px 12px;font-size:9px;width:auto;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
+.btn-ghost:hover{border-color:var(--gold-dk);color:var(--gold);background:transparent;}
+.btn-red{background:transparent;border:1px solid #3a1010;color:#ff6060;}
+.btn-red:hover{background:#180808;}
+.btn-green{background:transparent;border:1px solid #0a3a1a;color:#40e080;}
+.btn-green:hover{background:#041208;border-color:var(--green);}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+
+/* EVENT CARDS */
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:20px;}
+.event-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .2s;}
+.event-card:hover{border-color:var(--border2);}
+.ec-top{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.ec-sector{font-family:var(--mono);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:2px;margin-bottom:6px;display:inline-block;}
+.ec-s-cgs{background:#220a0a;color:#ff7070;border:1px solid #5a1616;}
+.ec-s-gym{background:#091628;color:#6aadff;border:1px solid #1a3a6a;}
+.ec-s-school{background:#180a2a;color:#c080ff;border:1px solid #481a6a;}
+.ec-s-corp{background:#082018;color:#50e07a;border:1px solid #185a2a;}
+.ec-name{font-family:var(--disp);font-size:18px;letter-spacing:1px;color:var(--text);line-height:1.1;}
+.ec-date{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:4px;}
+.ec-countdown{font-family:var(--disp);font-size:22px;text-align:right;line-height:1;}
+.ec-countdown span{font-family:var(--mono);font-size:9px;color:var(--muted);display:block;text-transform:uppercase;}
+.ec-body{padding:12px 16px;}
+.ec-seq{font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:8px;}
+.seq-steps{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.seq-step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:2px;background:var(--bg);border:1px solid var(--border);}
+.seq-step.sent{border-color:#0a3a1a;background:#020d05;color:var(--green);}
+.seq-step.due{border-color:#3a2a00;background:#0d0900;color:var(--gold);}
+.seq-step.upcoming{color:var(--muted);}
+.step-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.step-dot.sent{background:var(--green);}
+.step-dot.due{background:var(--gold);animation:pulse 1.5s infinite;}
+.step-dot.upcoming{background:var(--muted);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.ec-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border);}
+.ec-actions .btn{margin-top:0;}
+
+/* STATUS BADGE */
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:20px;}
+.sb-upcoming{background:#0d0900;color:var(--gold);border:1px solid #3a2a00;}
+.sb-live{background:#020d05;color:var(--green);border:1px solid #0a3a1a;}
+.sb-past{background:#141414;color:var(--muted2);border:1px solid var(--border2);}
+.sb-dot{width:5px;height:5px;border-radius:50%;}
+.sb-upcoming .sb-dot{background:var(--gold);}
+.sb-live .sb-dot{background:var(--green);}
+.sb-past .sb-dot{background:var(--muted);}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal.open{display:flex;}
+.mbox{background:var(--surf);border:1px solid var(--border2);border-radius:4px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;}
+.mh{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.mt{font-family:var(--disp);font-size:15px;letter-spacing:1.5px;color:var(--gold);}
+.mc{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:2px 6px;}
+.mc:hover{color:var(--text);}
+.mb{padding:18px;}
+.mf{padding:14px 18px;border-top:1px solid var(--border);}
+
+.seq-builder{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:13px;}
+.seq-builder-head{background:var(--bg);padding:8px 12px;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.seq-step-row{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.seq-step-row:last-child{border-bottom:none;}
+.seq-step-timing{font-family:var(--mono);font-size:10px;color:var(--gold);width:140px;flex-shrink:0;}
+.seq-step-label{font-family:var(--mono);font-size:10px;color:var(--text);flex:1;}
+.seq-step-status{font-family:var(--mono);font-size:8px;text-transform:uppercase;}
+
+.console{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:10px;padding:10px 12px;height:70px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.l-ok{color:var(--green);}.l-err{color:var(--red);}.l-warn{color:var(--orange);}.l-info{color:var(--muted2);}.l-gold{color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-wrap">
+    <div class="gate-eagle">🦅</div>
+    <div class="gate-name">EAGLE DS</div>
+    <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="gate-btn" onclick="unlock()">Unlock</button>
+    <div class="gate-err" id="gerr"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🦅 EAGLE DS</div>
+    <div class="t-nav">
+      <a href="crm.html">CRM</a>
+      <a href="events.html" class="here">Events</a>
+      <a href="scheduler.html">Automation</a>
+      <a href="blog.html">Blog</a>
+    </div>
+    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
+  </div>
+  <div class="ws">
+    <div class="page-title">Event Calendar</div>
+    <div class="page-sub">Create events · Activate email sequences · Track registrations</div>
+
+    <div class="grid2" style="margin-bottom:16px;">
+      <div class="panel" style="margin-bottom:0;">
+        <div class="ph"><div class="pt">Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button></div>
+        <div class="pb"><div class="console" id="console"></div></div>
+      </div>
+      <div class="panel" style="margin-bottom:0;">
+        <div class="ph"><div class="pt">Quick Stats</div></div>
+        <div class="pb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+          <div><div style="font-family:var(--disp);font-size:32px;color:var(--gold);" id="cnt-upcoming">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;">Upcoming</div></div>
+          <div><div style="font-family:var(--disp);font-size:32px;color:var(--green);" id="cnt-live">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;">Today</div></div>
+          <div><div style="font-family:var(--disp);font-size:32px;color:var(--muted2);" id="cnt-past">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;">Past</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+      <button class="btn" style="width:auto;padding:10px 24px;" onclick="openNewEvent()">+ New Event</button>
+    </div>
+
+    <div id="events-grid" class="events-grid">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:40px;grid-column:1/-1;">Loading events...</div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW EVENT MODAL -->
+<div class="modal" id="event-modal">
+  <div class="mbox">
+    <div class="mh"><div class="mt" id="event-modal-title">New Event</div><button class="mc" onclick="closeModal('event-modal')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="ev-key">
+      <label>Event Name</label>
+      <input type="text" id="ev-name" placeholder="e.g. CGS Summer Open 2026">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label>Event Date</label><input type="date" id="ev-date"></div>
+        <div><label>Sector</label>
+          <select id="ev-sector">
+            <option value="cgs">⚔ CGS Circuit</option>
+            <option value="gym">🥋 Gym Academy</option>
+            <option value="school">🏫 Institutional</option>
+            <option value="corp">💼 Commercial</option>
+          </select>
+        </div>
+      </div>
+      <label>Location</label>
+      <input type="text" id="ev-location" placeholder="Venue name, address...">
+      <label>Description</label>
+      <textarea id="ev-desc" placeholder="Brief event description..."></textarea>
+      <label>Registration URL (optional)</label>
+      <input type="text" id="ev-reg-url" placeholder="https://...">
+
+      <div style="margin-top:8px;margin-bottom:10px;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;border-top:1px solid var(--border);padding-top:14px;">Email Sequence (auto-calculated from event date)</div>
+
+      <div class="seq-builder">
+        <div class="seq-builder-head">Automated Email Triggers</div>
+        <div class="seq-step-row"><div class="seq-step-timing">8 weeks before</div><input type="text" id="seq-8w" placeholder="Registration open subject line..." style="margin-bottom:0;flex:1;"></div>
+        <div class="seq-step-row"><div class="seq-step-timing">4 weeks before</div><input type="text" id="seq-4w" placeholder="Early bird reminder..." style="margin-bottom:0;flex:1;"></div>
+        <div class="seq-step-row"><div class="seq-step-timing">1 week before</div><input type="text" id="seq-1w" placeholder="Final details subject line..." style="margin-bottom:0;flex:1;"></div>
+        <div class="seq-step-row"><div class="seq-step-timing">Day of event</div><input type="text" id="seq-day" placeholder="Today's the day! subject..." style="margin-bottom:0;flex:1;"></div>
+        <div class="seq-step-row"><div class="seq-step-timing">3 days after</div><input type="text" id="seq-after" placeholder="Results + next event subject..." style="margin-bottom:0;flex:1;"></div>
+      </div>
+      <p style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.7;">Leave sequence steps blank to skip them. Email bodies are written in the Automation tab where you can use [FirstName], [EventName], [ChildName] variables.</p>
+    </div>
+    <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('event-modal')">Cancel</button><button class="btn" onclick="saveEvent()">Save Event →</button></div></div>
+  </div>
+</div>
+
+<script>
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+const HASH="81dc9bdb52d04dc20036dbd8313ed055";
+let events={};
+
+function unlock(){
+  const v=document.getElementById("pin").value.trim();
+  if(CryptoJS.MD5(v).toString()===HASH){
+    document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";
+    log("Connected.","ok");syncEvents();
+  }else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}
+}
+function log(msg,type="info"){const b=document.getElementById("console");const s=document.createElement("span");s.className=`l-${type}`;s.textContent=`[${new Date().toLocaleTimeString()}] ${msg}\n`;b.appendChild(s);b.scrollTop=b.scrollHeight;}
+function clearLog(){document.getElementById("console").innerHTML="";}
+function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+
+async function syncEvents(){
+  setStatus("","syncing…");
+  try{
+    const r=await fetch(`${FB}/eagle_events.json`);const data=await r.json();
+    events=data||{};setStatus("live","live");
+    log(`${Object.keys(events).length} events loaded.`,"ok");
+    renderEvents();
+  }catch(e){setStatus("err","offline");log("Firebase failed.","err");}
+}
+
+async function pushEvents(){
+  try{await fetch(`${FB}/eagle_events.json`,{method:"PUT",body:JSON.stringify(events)});}
+  catch(e){log("Push failed.","err");}
+}
+
+function daysUntil(dateStr){
+  const d=new Date(dateStr);d.setHours(0,0,0,0);
+  const now=new Date();now.setHours(0,0,0,0);
+  return Math.round((d-now)/86400000);
+}
+
+function getEventStatus(dateStr){
+  const d=daysUntil(dateStr);
+  if(d>0)return"upcoming";if(d===0)return"live";return"past";
+}
+
+function countdownDisplay(days){
+  if(days===0)return{n:"TODAY",c:"var(--green)"};
+  if(days>0)return{n:`${days}d`,c:days<=7?"var(--red)":days<=30?"var(--orange)":"var(--gold)"};
+  return{n:`${Math.abs(days)}d ago`,c:"var(--muted)"};
+}
+
+function renderEvents(){
+  const el=document.getElementById("events-grid");
+  const keys=Object.keys(events);
+  if(!keys.length){el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:40px;grid-column:1/-1;">No events yet. Create your first event →</div>`;updateCounts();return;}
+
+  // Sort by date
+  keys.sort((a,b)=>new Date(events[a].date)-new Date(events[b].date));
+
+  let upcoming=0,live=0,past=0;
+  el.innerHTML=keys.map(k=>{
+    const ev=events[k];const days=daysUntil(ev.date);const status=getEventStatus(ev.date);
+    const{n:cdN,c:cdC}=countdownDisplay(days);
+    if(status==="upcoming")upcoming++;else if(status==="live")live++;else past++;
+    const sector=ev.sector||"cgs";
+    const sLabels={cgs:"CGS Circuit",gym:"Gym Academy",school:"Institutional",corp:"Commercial"};
+
+    // Sequence steps display
+    const seqKeys=["8w","4w","1w","day","after"];
+    const seqLabels={"8w":"8wk before","4w":"4wk before","1w":"1wk before","day":"Day of","after":"3d after"};
+    const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};
+    const stepsHtml=seqKeys.filter(s=>ev.sequence&&ev.sequence[s]).map(s=>{
+      const daysToTrigger=days-seqDays[s];
+      let stepStatus="upcoming";
+      if(ev.sequence[s+"_sent"])stepStatus="sent";
+      else if(daysToTrigger<=0)stepStatus="due";
+      return`<div class="seq-step ${stepStatus}"><div class="step-dot ${stepStatus}"></div><span style="flex:1;">${seqLabels[s]}: ${ev.sequence[s]}</span>${stepStatus==="due"?'<span style="color:var(--gold);font-size:8px;">DUE</span>':''}</div>`;
+    }).join("");
+
+    const hasDue=seqKeys.some(s=>{if(!ev.sequence||!ev.sequence[s])return false;if(ev.sequence[s+"_sent"])return false;const dtt=days-seqDays[s];return dtt<=0;});
+
+    return`<div class="event-card">
+      <div class="ec-top">
+        <div>
+          <div class="ec-sector ec-s-${sector}">${sLabels[sector]}</div>
+          <div class="ec-name">${ev.name}</div>
+          <div class="ec-date">${new Date(ev.date).toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"long",year:"numeric"})}${ev.location?` · ${ev.location}`:""}</div>
+        </div>
+        <div class="ec-countdown" style="color:${cdC};">${cdN}<span>${status==="live"?"LIVE":status==="past"?"PAST":"DAYS"}</span></div>
+      </div>
+      <div class="ec-body">
+        ${ev.description?`<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;line-height:1.6;">${ev.description}</div>`:""}
+        ${stepsHtml?`<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Email Sequence</div><div class="seq-steps">${stepsHtml}</div>`:""}
+        ${hasDue?`<div style="font-family:var(--mono);font-size:9px;color:var(--gold);margin-bottom:8px;">⚡ Emails due — open CRM to fire automation</div>`:""}
+      </div>
+      <div class="ec-actions">
+        ${hasDue?`<button class="btn btn-green btn-sm" onclick="fireSequence('${k}')">Fire Due Emails</button>`:""}
+        <button class="btn btn-ghost btn-sm" onclick="editEvent('${k}')">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="deleteEvent('${k}')">Delete</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("cnt-upcoming").textContent=upcoming;
+  document.getElementById("cnt-live").textContent=live;
+  document.getElementById("cnt-past").textContent=past;
+}
+
+function updateCounts(){
+  document.getElementById("cnt-upcoming").textContent=0;
+  document.getElementById("cnt-live").textContent=0;
+  document.getElementById("cnt-past").textContent=0;
+}
+
+function openNewEvent(){
+  document.getElementById("ev-key").value="";
+  document.getElementById("event-modal-title").textContent="New Event";
+  ["ev-name","ev-location","ev-desc","ev-reg-url","seq-8w","seq-4w","seq-1w","seq-day","seq-after"].forEach(id=>{document.getElementById(id).value="";});
+  document.getElementById("ev-date").value="";
+  document.getElementById("ev-sector").value="cgs";
+  document.getElementById("event-modal").classList.add("open");
+}
+
+function editEvent(key){
+  const ev=events[key];
+  document.getElementById("ev-key").value=key;
+  document.getElementById("event-modal-title").textContent="Edit Event";
+  document.getElementById("ev-name").value=ev.name||"";
+  document.getElementById("ev-date").value=ev.date||"";
+  document.getElementById("ev-sector").value=ev.sector||"cgs";
+  document.getElementById("ev-location").value=ev.location||"";
+  document.getElementById("ev-desc").value=ev.description||"";
+  document.getElementById("ev-reg-url").value=ev.regUrl||"";
+  const seq=ev.sequence||{};
+  ["8w","4w","1w","day","after"].forEach(s=>{document.getElementById("seq-"+s).value=seq[s]||"";});
+  document.getElementById("event-modal").classList.add("open");
+}
+
+async function saveEvent(){
+  const name=document.getElementById("ev-name").value.trim();
+  const date=document.getElementById("ev-date").value;
+  if(!name||!date){alert("Name and date required.");return;}
+  const key=document.getElementById("ev-key").value||"ev_"+Date.now();
+  const seq={};
+  ["8w","4w","1w","day","after"].forEach(s=>{const v=document.getElementById("seq-"+s).value.trim();if(v)seq[s]=v;});
+  // Preserve existing sent flags
+  if(events[key]&&events[key].sequence){
+    ["8w","4w","1w","day","after"].forEach(s=>{if(events[key].sequence[s+"_sent"])seq[s+"_sent"]=events[key].sequence[s+"_sent"];});
+  }
+  events[key]={
+    name,date,sector:document.getElementById("ev-sector").value,
+    location:document.getElementById("ev-location").value.trim(),
+    description:document.getElementById("ev-desc").value.trim(),
+    regUrl:document.getElementById("ev-reg-url").value.trim(),
+    sequence:seq,created:events[key]?.created||new Date().toISOString()
+  };
+  closeModal("event-modal");await pushEvents();renderEvents();log(`Event saved: ${name}`,"ok");
+  // Queue automation emails
+  await queueEventEmails(key,events[key]);
+}
+
+async function queueEventEmails(key,ev){
+  if(!Object.keys(ev.sequence||{}).length)return;
+  try{
+    const r=await fetch(`${FB}/automation_queue.json`);const queue=await r.json()||{};
+    const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};
+    const eventDate=new Date(ev.date);
+    ["8w","4w","1w","day","after"].forEach(s=>{
+      if(!ev.sequence[s])return;
+      if(ev.sequence[s+"_sent"])return;
+      const sendDate=new Date(eventDate);sendDate.setDate(sendDate.getDate()+seqDays[s]);
+      const qKey=`${key}_${s}`;
+      queue[qKey]={eventKey:key,eventName:ev.name,step:s,sector:ev.sector,tier:"hot,warm,cold",subject:ev.sequence[s],body:`Hi [FirstName],\n\n${ev.sequence[s]}\n\n${ev.regUrl?"Register here: "+ev.regUrl+"\n\n":""}Eagle DS`,sendAt:sendDate.toISOString().slice(0,10),status:"pending"};
+    });
+    await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
+    log(`Email sequence queued for: ${ev.name}`,"ok");
+  }catch(e){log("Queue error: "+e.message,"err");}
+}
+
+async function fireSequence(key){
+  let apiKey=localStorage.getItem("RESEND_KEY");
+  if(!apiKey){apiKey=prompt("Enter Resend API key:");if(!apiKey)return;localStorage.setItem("RESEND_KEY",apiKey.trim());apiKey=apiKey.trim();}
+  const ev=events[key];const days=daysUntil(ev.date);
+  const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};
+  try{
+    // Load CRM contacts for this sector
+    const cr=await fetch(`${FB}/directory_crm_master.json`);const contacts=await cr.json()||{};
+    const targets=Object.values(contacts).filter(r=>(r.arms||[]).includes(ev.sector));
+    let fired=0;
+    for(const s of["8w","4w","1w","day","after"]){
+      if(!ev.sequence[s]||ev.sequence[s+"_sent"])continue;
+      const dtt=days-seqDays[s];if(dtt>0)continue;
+      const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:"info@eagleds.co.nz",to:"info@eagleds.co.nz",bcc:targets.map(t=>t.email),subject:ev.sequence[s].replace(/\[EventName\]/gi,ev.name),html:`Hi [FirstName],<br><br>${ev.sequence[s]}<br><br>${ev.regUrl?"Register: "+ev.regUrl+"<br><br>":""}Eagle DS Team`})});
+      if(res.ok){events[key].sequence[s+"_sent"]=new Date().toISOString();fired++;}
+    }
+    await pushEvents();renderEvents();log(`Fired ${fired} sequence email(s) for ${ev.name}`,"ok");
+  }catch(e){log("Error: "+e.message,"err");}
+}
+
+async function deleteEvent(key){
+  if(!confirm("Delete this event?"))return;
+  delete events[key];await pushEvents();renderEvents();log("Event deleted.","warn");
+}
+</script>
+</body>
+</html>
