@@ -1,0 +1,12 @@
+{
+  "name": "eagle-ds-functions",
+  "description": "Eagle DS Firebase Cloud Functions — Stripe dropship automation",
+  "version": "1.0.0",
+  "engines": { "node": "20" },
+  "main": "eagle-ds-functions.js",
+  "dependencies": {
+    "firebase-functions": "^5.0.0",
+    "stripe": "^14.0.0",
+    "resend": "^3.0.0"
+  }
+}
