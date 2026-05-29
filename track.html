@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Eagle DS</title>
+<style>body{margin:0;background:#0a0a0a;}</style>
+</head>
+<body>
+<script>
+const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+
+(async function() {
+  const p = new URLSearchParams(window.location.search);
+  const bid = p.get("bid");   // broadcast id
+  const cid = p.get("cid");   // contact email (encoded)
+  const type = p.get("type"); // open | click
+  const url  = p.get("url");  // destination (click only)
+
+  if (bid && cid && type) {
+    const email = decodeURIComponent(cid);
+    const key = email.replace(/\./g, "%2E").replace(/@/g, "%40");
+    const ts = new Date().toISOString();
+    const node = FB + "/email_tracking/" + encodeURIComponent(bid) + "/" + type + "/" + key + ".json";
+
+    try {
+      await fetch(node, {
+        method: "PUT",
+        body: JSON.stringify({ email, ts, bid })
+      });
+
+      // Also update contact's lastActivity in CRM
+      if (type === "click") {
+        const contactNode = FB + "/directory_crm_master/" + key + "/lastActivity.json";
+        await fetch(contactNode, { method: "PUT", body: JSON.stringify(ts) });
+      }
+    } catch(e) { /* silent fail — don't block redirect */ }
+  }
+
+  // Redirect or serve transparent pixel
+  if (type === "click" && url) {
+    window.location.replace(decodeURIComponent(url));
+  } else if (type === "open") {
+    // Serve a 1x1 transparent GIF
+    // Just show nothing — the write above is what matters
+    document.body.style.background = "transparent";
+  }
+})();
+</script>
+<!-- Fallback 1x1 transparent pixel -->
+<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1" alt="">
+</body>
+</html>

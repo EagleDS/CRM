@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "directory_crm_master": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$contact": {
+        ".write": "auth != null || (!data.exists() && newData.hasChildren(['email','source']))"
+      }
+    },
+    "email_broadcasts": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "email_tracking": {
+      ".read": "auth != null",
+      ".write": true,
+      "$bid": {
+        "$type": {
+          "$contact": {
+            ".validate": "newData.hasChildren(['email','ts'])"
+          }
+        }
+      }
+    },
+    "automation_queue": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "eagle_events": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "eagle_blog": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "web_leads": {
+      ".read": "auth != null",
+      ".write": "auth != null || (!data.exists() && newData.hasChildren(['email','submittedAt']))"
+    }
+  }
+}

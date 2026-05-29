@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 /* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
@@ -723,14 +725,15 @@ tbody tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
-<div id="gate">
+<div id="gate" style="display:flex;">
   <div class="gate-wrap">
     <div class="gate-eagle">🦅</div>
     <div class="gate-name">Eagle DS</div>
-    <div class="gate-sub">Blog &amp; Content</div>
+    <div class="gate-sub">Blog & Content</div>
     <div class="gate-line"></div>
-    <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
-    <button class="gate-btn" onclick="unlock()">Unlock →</button>
+    <input type="email" class="gate-input" id="auth-email" placeholder="email" style="font-size:13px;letter-spacing:1px;text-align:left;margin-bottom:8px;" autocomplete="username" onkeydown="if(event.key==='Enter')eagleLogin()">
+    <input type="password" class="gate-input" id="pin" placeholder="password" style="font-size:13px;letter-spacing:1px;text-align:left;" autocomplete="current-password" onkeydown="if(event.key==='Enter')eagleLogin()">
+    <button class="gate-btn" onclick="eagleLogin()">Sign In →</button>
     <div class="gate-err" id="gerr"></div>
   </div>
 </div>
@@ -743,7 +746,7 @@ tbody tr:last-child td { border-bottom: none; }
       <a href="scheduler.html">Automation</a>
       <a href="blog.html" class="here">Blog</a>
     </div>
-    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
+    <div style="display:flex;align-items:center;gap:10px;"><div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div><button onclick="eagleLogout()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-radius:2px;" title="Sign out">Logout</button></div>
   </div>
   <div class="ws">
     <div class="page-hd reveal">
@@ -868,17 +871,82 @@ tbody tr:last-child td { border-bottom: none; }
   </footer>
 </div>
 <script>
+/* ═══ EAGLE DS SHARED AUTH MODULE ═══
+   Real Firebase Authentication — replaces the MD5 passcode gate.
+   Include on every internal tool (crm, events, scheduler, blog).
+   Requires Firebase Auth enabled in console + email/password account created. */
+
+const EAGLE_FB_CONFIG = {
+  apiKey: "AIzaSyD-PLACEHOLDER-REPLACE-WITH-YOURS",
+  authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
+  databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
+  projectId: "taekwondo-scoreboard-e58ec"
+};
+
+let EAGLE_USER = null;
+let EAGLE_TOKEN = null;
+
+// Initialise Firebase Auth (compat SDK loaded via CDN in each page)
+function eagleInitAuth() {
+  if (!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      EAGLE_USER = user;
+      EAGLE_TOKEN = await user.getIdToken();
+      // Refresh token every 50 min (tokens expire at 60)
+      setInterval(async () => { if (EAGLE_USER) EAGLE_TOKEN = await EAGLE_USER.getIdToken(true); }, 50 * 60 * 1000);
+      const gate = document.getElementById("gate");
+      const app  = document.getElementById("app");
+      if (gate) gate.style.display = "none";
+      if (app)  app.style.display  = "block";
+      if (typeof onAuthReady === "function") onAuthReady();
+    } else {
+      EAGLE_USER = null; EAGLE_TOKEN = null;
+      const gate = document.getElementById("gate");
+      const app  = document.getElementById("app");
+      if (gate) gate.style.display = "flex";
+      if (app)  app.style.display  = "none";
+    }
+  });
+}
+
+async function eagleLogin() {
+  const email = (document.getElementById("auth-email") || {}).value || "";
+  const pass  = (document.getElementById("pin") || {}).value || "";
+  const err   = document.getElementById("gerr");
+  if (!email.trim() || !pass.trim()) { if (err) err.textContent = "Email and password required."; return; }
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email.trim(), pass);
+    if (err) err.textContent = "";
+  } catch (e) {
+    if (err) err.textContent = "Login failed — check your details.";
+    const p = document.getElementById("pin"); if (p) p.value = "";
+  }
+}
+
+function eagleLogout() { firebase.auth().signOut(); }
+
+// Authenticated fetch — appends the auth token to every Firebase request.
+// Use this INSTEAD of plain fetch() for all Firebase calls so security rules pass.
+async function eagleFetch(path, options = {}) {
+  const sep = path.includes("?") ? "&" : "?";
+  const url = EAGLE_TOKEN ? `${path}${sep}auth=${EAGLE_TOKEN}` : path;
+  return fetch(url, options);
+}
+
+</script>
+<script>
 
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
 let posts={},contacts={};
 const IDEAS=["Why light contact competition is the safest way to start competing","The 5 habits of Eagle DS athletes that transfer to every area of life","What your child is really learning in martial arts (it's not self-defence)","Why pressure in the dojo builds better decision-making than pressure in the classroom","From first pad to national competition: the Eagle DS pathway explained","The science behind why repetition in martial arts builds neurological resilience","What parents misunderstand about martial arts belt grading","Why we train six styles — and what each one develops","The Eagle DS approach to coaching: technique before power, always","How the Combat Games Series changed competitive combat sport in New Zealand","5 things every new Eagle DS student should know before their first session","The difference between fitness and conditioning — and why it matters for fighters","What a 27-year competitive career taught me about coaching","Why elite athletes in other sports are turning to martial arts for mental conditioning","The Eagle DS Corporate programme: what the mat can teach the boardroom"];
-function unlock(){const v=document.getElementById("pin").value.trim();if(CryptoJS.MD5(v).toString()===HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";log("Connected.","ok");syncData();}else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}}
+function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
 function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");if(btn)btn.classList.add("active");if(id==="posts")renderPosts();if(id==="ideas")renderIdeas();}
-async function syncData(){setStatus("","syncing…");try{const[pr,cr]=await Promise.all([fetch(FB+"/eagle_blog.json"),fetch(FB+"/directory_crm_master.json")]);posts=await pr.json()||{};contacts=await cr.json()||{};setStatus("live","live");log(Object.keys(posts).length+" posts, "+Object.keys(contacts).length+" contacts.","ok");renderPosts();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
-async function pushPosts(){try{await fetch(FB+"/eagle_blog.json",{method:"PUT",body:JSON.stringify(posts)});}catch(e){log("Push failed.","err");}}
+async function syncData(){setStatus("","syncing…");try{const[pr,cr]=await Promise.all([eagleFetch(FB+"/eagle_blog.json"),eagleFetch(FB+"/directory_crm_master.json")]);posts=await pr.json()||{};contacts=await cr.json()||{};setStatus("live","live");log(Object.keys(posts).length+" posts, "+Object.keys(contacts).length+" contacts.","ok");renderPosts();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
+async function pushPosts(){try{await eagleFetch(FB+"/eagle_blog.json",{method:"PUT",body:JSON.stringify(posts)});}catch(e){log("Push failed.","err");}}
 function mdToHtml(md){let h=md.replace(/^### (.+)$/gm,"<h3>$1</h3>").replace(/^## (.+)$/gm,"<h2>$1</h2>").replace(/^# (.+)$/gm,"<h1>$1</h1>").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/^> (.+)$/gm,"<blockquote>$1</blockquote>").replace(/^---$/gm,"<hr>").replace(/^- (.+)$/gm,"<li>$1</li>");h=h.replace(/(<li>.*<\/li>\n?)+/g,m=>"<ul>"+m+"</ul>");h=h.split("\n\n").map(p=>p.trim()?(/^<[hublH]/.test(p)?p:"<p>"+p+"</p>"):"").join("");return h;}
 function updateLivePreview(){const md=document.getElementById("post-body").value;document.getElementById("live-preview").innerHTML=mdToHtml(md)||'<span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Preview updates as you type…</span>';const title=document.getElementById("post-title").value;const excerpt=md.replace(/#+\s/g,"").replace(/\*\*/g,"").replace(/\*/g,"").replace(/^>/gm,"").trim().slice(0,150)+(md.length>150?"…":"");document.getElementById("prev-title").textContent=title||"Post Title";document.getElementById("prev-excerpt").textContent=excerpt||"Post excerpt will appear here...";}
 document.addEventListener("DOMContentLoaded",()=>{const b=document.getElementById("post-body");if(b)b.addEventListener("input",updateLivePreview);const t=document.getElementById("post-title");if(t)t.addEventListener("input",updateLivePreview);renderIdeas();});
@@ -899,6 +967,9 @@ function useIdea(idea){document.getElementById("post-title").value=idea;updateLi
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
+
+function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncData(); }
+eagleInitAuth();
 </script>
 </body>
 </html>

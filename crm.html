@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 /* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
@@ -726,14 +728,15 @@ tbody tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
-<div id="gate">
+<div id="gate" style="display:flex;">
   <div class="gate-wrap">
     <div class="gate-eagle">🦅</div>
     <div class="gate-name">Eagle DS</div>
     <div class="gate-sub">Command CRM</div>
     <div class="gate-line"></div>
-    <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
-    <button class="gate-btn" onclick="unlock()">Unlock →</button>
+    <input type="email" class="gate-input" id="auth-email" placeholder="email" style="font-size:13px;letter-spacing:1px;text-align:left;margin-bottom:8px;" autocomplete="username" onkeydown="if(event.key==='Enter')eagleLogin()">
+    <input type="password" class="gate-input" id="pin" placeholder="password" style="font-size:13px;letter-spacing:1px;text-align:left;" autocomplete="current-password" onkeydown="if(event.key==='Enter')eagleLogin()">
+    <button class="gate-btn" onclick="eagleLogin()">Sign In →</button>
     <div class="gate-err" id="gerr"></div>
   </div>
 </div>
@@ -748,7 +751,7 @@ tbody tr:last-child td { border-bottom: none; }
       <a href="scheduler.html">Automation</a>
       <a href="blog.html">Blog</a>
     </div>
-    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
+    <div style="display:flex;align-items:center;gap:10px;"><div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div><button onclick="eagleLogout()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-radius:2px;" title="Sign out">Logout</button></div>
   </div>
   <div class="ws">
     <div class="page-hd reveal">
@@ -759,6 +762,7 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="gold-divider" style="margin-bottom:20px;"></div>
     <div class="tabs">
       <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="tab" onclick="switchTab('leads',this)">Leads <span id="leads-badge" style="display:none;background:var(--gold-dk);color:#000;border-radius:8px;padding:0 5px;font-size:8px;margin-left:3px;"></span></button>
       <button class="tab" onclick="switchTab('import',this)">Import</button>
       <button class="tab" onclick="switchTab('broadcast',this)">Broadcast</button>
       <button class="tab" onclick="switchTab('analytics',this)">Email Analytics</button>
@@ -802,6 +806,17 @@ tbody tr:last-child td { border-bottom: none; }
           <div class="ph"><div class="pt">System Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()"><span>Clear</span></button></div>
           <div class="pb"><div class="console" id="console"></div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="tab-pane" id="tab-leads">
+      <div class="panel">
+        <div class="ph"><div class="pt">Web Enquiry Inbox</div><span id="leads-count" style="font-family:var(--mono);font-size:9px;color:var(--muted);"></span></div>
+        <div style="padding:12px 18px;background:var(--black);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.7;">
+          Enquiries from your public trial-booking form (capture.html). Review each one, then add it to the master directory with one click — it merges sectors if the contact already exists.
+        </div>
+        <div id="leads-list" style="padding:18px;"><p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">Loading…</p></div>
       </div>
     </div>
 
@@ -1028,6 +1043,71 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 
 <script>
+/* ═══ EAGLE DS SHARED AUTH MODULE ═══
+   Real Firebase Authentication — replaces the MD5 passcode gate.
+   Include on every internal tool (crm, events, scheduler, blog).
+   Requires Firebase Auth enabled in console + email/password account created. */
+
+const EAGLE_FB_CONFIG = {
+  apiKey: "AIzaSyD-PLACEHOLDER-REPLACE-WITH-YOURS",
+  authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
+  databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
+  projectId: "taekwondo-scoreboard-e58ec"
+};
+
+let EAGLE_USER = null;
+let EAGLE_TOKEN = null;
+
+// Initialise Firebase Auth (compat SDK loaded via CDN in each page)
+function eagleInitAuth() {
+  if (!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      EAGLE_USER = user;
+      EAGLE_TOKEN = await user.getIdToken();
+      // Refresh token every 50 min (tokens expire at 60)
+      setInterval(async () => { if (EAGLE_USER) EAGLE_TOKEN = await EAGLE_USER.getIdToken(true); }, 50 * 60 * 1000);
+      const gate = document.getElementById("gate");
+      const app  = document.getElementById("app");
+      if (gate) gate.style.display = "none";
+      if (app)  app.style.display  = "block";
+      if (typeof onAuthReady === "function") onAuthReady();
+    } else {
+      EAGLE_USER = null; EAGLE_TOKEN = null;
+      const gate = document.getElementById("gate");
+      const app  = document.getElementById("app");
+      if (gate) gate.style.display = "flex";
+      if (app)  app.style.display  = "none";
+    }
+  });
+}
+
+async function eagleLogin() {
+  const email = (document.getElementById("auth-email") || {}).value || "";
+  const pass  = (document.getElementById("pin") || {}).value || "";
+  const err   = document.getElementById("gerr");
+  if (!email.trim() || !pass.trim()) { if (err) err.textContent = "Email and password required."; return; }
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email.trim(), pass);
+    if (err) err.textContent = "";
+  } catch (e) {
+    if (err) err.textContent = "Login failed — check your details.";
+    const p = document.getElementById("pin"); if (p) p.value = "";
+  }
+}
+
+function eagleLogout() { firebase.auth().signOut(); }
+
+// Authenticated fetch — appends the auth token to every Firebase request.
+// Use this INSTEAD of plain fetch() for all Firebase calls so security rules pass.
+async function eagleFetch(path, options = {}) {
+  const sep = path.includes("?") ? "&" : "?";
+  const url = EAGLE_TOKEN ? `${path}${sep}auth=${EAGLE_TOKEN}` : path;
+  return fetch(url, options);
+}
+
+</script>
+<script>
 
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
 const TRACK_BASE="https://eagleds.github.io/track.html";
@@ -1048,23 +1128,23 @@ function wrapLinks(htmlBody,bid,email){const cid=encodeURIComponent(email);retur
 function buildTrackedEmail(rawBody,bid,email){let html=rawBody.replace(/\n/g,"<br>");html=wrapLinks(html,bid,email);html+=trackPixel(bid,email);return html;}
 
 // ─── GATE / UI ───
-function unlock(){const v=document.getElementById("pin").value.trim();if(CryptoJS.MD5(v).toString()===HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";log("Access granted — Eagle DS Command CRM","gold");syncFromCloud();renderProfiles();}else{const e=document.getElementById("gerr");e.textContent="Invalid passcode.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2500);}}
+function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
 
 // ─── FIREBASE ───
-async function syncFromCloud(){setStatus("","syncing…");try{const r=await fetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
-async function pushToCloud(){try{const r=await fetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
+async function syncFromCloud(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
+async function pushToCloud(){try{const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
 
 // ─── STATS ───
 function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,cold:0,dormant:0,parents:0,minors:0,multi:0,adults:0};for(const k in db){t.master++;const arms=db[k].arms||[];if(arms.includes("gym"))t.gym++;if(arms.includes("cgs"))t.cgs++;if(arms.includes("school"))t.school++;if(arms.includes("corp"))t.corp++;const tier=getTier(db[k]);if(t[tier]!==undefined)t[tier]++;const age=calcAge(db[k].dob);if(age!==null&&age<18)t.minors++;else if(age!==null&&age>=18)t.adults++;if(db[k].children&&db[k].children.length>0){t.parents++;if(db[k].children.length>1)t.multi++;}}["master","gym","cgs","school","corp","hot","warm","cold","dormant","parents","minors","multi","adults"].forEach(k=>{const el=document.getElementById("cnt-"+k);if(el)el.textContent=t[k];});}
 
 // ─── AUTOMATION ───
-async function checkAutomationQueue(){try{const r=await fetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
-async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await fetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await fetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
+async function checkAutomationQueue(){try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
+async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
 function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
 
 // ─── IMPORT ───
@@ -1106,7 +1186,7 @@ async function sendBroadcast(){
 
   // Store broadcast record in Firebase
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
-  await fetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
+  await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
   let sent=0;
   if(needsPersonal){
@@ -1139,7 +1219,7 @@ async function loadEmailAnalytics(){
   const el=document.getElementById("analytics-body");
   el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>';
   try{
-    const[br,tr]=await Promise.all([fetch(FB+"/email_broadcasts.json"),fetch(FB+"/email_tracking.json")]);
+    const[br,tr]=await Promise.all([eagleFetch(FB+"/email_broadcasts.json"),eagleFetch(FB+"/email_tracking.json")]);
     const broadcasts=await br.json()||{};
     const tracking=await tr.json()||{};
 
@@ -1175,7 +1255,7 @@ async function loadEmailAnalytics(){
 
 async function showEngaged(bidEncoded){
   try{
-    const r=await fetch(FB+"/email_tracking/"+bidEncoded+".json");
+    const r=await eagleFetch(FB+"/email_tracking/"+bidEncoded+".json");
     const td=await r.json()||{};
     const opens=Object.values(td.open||{});
     const clicks=Object.values(td.click||{});
@@ -1211,9 +1291,70 @@ function previewStrip(){const s=document.getElementById("strip-sector").value,n=
 async function executeStrip(){const s=document.getElementById("strip-sector").value,affected=Object.keys(db).filter(k=>(db[k].arms||[]).includes(s));if(!affected.length){alert("None found.");return;}if(!confirm("Strip ["+s+"] from "+affected.length+" contacts?"))return;affected.forEach(k=>{db[k].arms=(db[k].arms||[]).filter(a=>a!==s);});updateStats();renderTable();await pushToCloud();log("Stripped ["+s+"] from "+affected.length,"warn");}
 function exportCSV(){const rows=[["Name","Email","Phone","DOB","Age","Sectors","Tier","Family","Last Activity","Added"]];for(const k in db){const r=db[k],age=calcAge(r.dob);rows.push([r.name||"",r.email||"",r.phone||"",r.dob||"",age!==null?age:"",(r.arms||[]).join(";"),getTier(r),isParent(r)?"Parent":(age!==null&&age<18?"Minor":"Adult"),r.lastActivity||"",r.added||""]);}const csv=rows.map(r=>r.map(c=>'"'+(c||"").replace(/"/g,'""')+'"').join(",")).join("\n"),a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="eagle-ds-"+new Date().toISOString().slice(0,10)+".csv";a.click();log("CSV exported.","ok");}
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
+
+// ─── WEB LEADS INBOX ───
+let webLeads={};
+async function loadLeads(){
+  const el=document.getElementById("leads-list");
+  el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">Loading…</p>';
+  try{
+    const r=await eagleFetch(FB+"/web_leads.json");
+    webLeads=await r.json()||{};
+    const keys=Object.keys(webLeads).filter(k=>webLeads[k].status!=="ingested");
+    document.getElementById("leads-count").textContent=keys.length+" new";
+    const badge=document.getElementById("leads-badge");
+    if(keys.length){badge.style.display="inline-block";badge.textContent=keys.length;}else badge.style.display="none";
+    if(!keys.length){el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No new enquiries. When someone books a trial on your site, it appears here.</p>';return;}
+    keys.sort((a,b)=>(webLeads[b].submittedAt||"").localeCompare(webLeads[a].submittedAt||""));
+    el.innerHTML=keys.map(k=>{
+      const l=webLeads[k];
+      const arms=(l.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join("");
+      const when=l.submittedAt?new Date(l.submittedAt).toLocaleString("en-NZ",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+      return'<div class="panel" style="margin-bottom:2px;"><div class="pb" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:200px;">'
+        +'<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:2px;">'+(l.name||l.email)+'</div>'
+        +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;">'+l.email+(l.phone?" · "+l.phone:"")+'</div>'
+        +arms
+        +(l.message?'<div style="font-family:var(--dm);font-size:12px;color:var(--muted2);line-height:1.6;margin-top:10px;border-left:2px solid var(--border2);padding-left:12px;">'+l.message+'</div>':'')
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;">'+when+'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:2px;width:160px;">'
+        +'<button class="btn btn-sm" onclick="ingestLead(\''+k+'\')"><span>+ Add to Directory</span></button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="emailLead(\''+(l.email)+'\')"><span>Email</span></button>'
+        +'<button class="btn btn-red btn-sm" onclick="dismissLead(\''+k+'\')"><span>Dismiss</span></button>'
+        +'</div>'
+        +'</div></div>';
+    }).join("");
+  }catch(e){el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--red);text-align:center;padding:24px;">Failed to load leads.</p>';}
+}
+async function ingestLead(k){
+  const l=webLeads[k];if(!l)return;
+  const email=(l.email||"").toLowerCase();const key=email.replace(/\./g,"%2E");const ts=l.submittedAt||new Date().toISOString();
+  if(db[key]){
+    // merge sectors
+    (l.arms||[]).forEach(a=>{if(!db[key].arms.includes(a))db[key].arms.push(a);});
+    if(l.phone&&!db[key].phone)db[key].phone=l.phone;
+    if((!db[key].lastActivity||ts>db[key].lastActivity))db[key].lastActivity=ts;
+    log("Merged lead into existing contact: "+(l.name||email),"ok");
+  }else{
+    db[key]={email,name:l.name||"",phone:l.phone||"",dob:l.dob||null,arms:l.arms||["gym"],lastActivity:ts,added:new Date().toISOString(),source:"web_capture"};
+    log("New contact from web lead: "+(l.name||email),"ok");
+  }
+  buildFamilyLinks();
+  // mark lead ingested
+  webLeads[k].status="ingested";
+  await eagleFetch(FB+"/web_leads/"+k+"/status.json",{method:"PUT",body:JSON.stringify("ingested")});
+  await pushToCloud();updateStats();loadLeads();
+}
+async function dismissLead(k){if(!confirm("Dismiss this enquiry?"))return;await eagleFetch(FB+"/web_leads/"+k+".json",{method:"DELETE"});delete webLeads[k];loadLeads();log("Lead dismissed.","warn");}
+function emailLead(email){document.getElementById("b-sector").value="all";switchTab("broadcast",document.querySelectorAll(".tab")[3]);document.getElementById("b-subject").focus();log("Compose an email — recipient: "+email,"info");}
+
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
+
+function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncFromCloud();renderProfiles();loadLeads(); }
+eagleInitAuth();
 </script>
 </body>
 </html>

@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eagle DS — Event Calendar</title>
+<title>Book a Trial — Eagle DS</title>
+<meta name="description" content="Book a free trial session at Eagle DS Auckland. Combat sports, martial arts, kickboxing, MMA. East Tāmaki.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 /* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
@@ -722,231 +720,337 @@ tbody tr:last-child td { border-bottom: none; }
 @keyframes breathe { 0%,100%{opacity:.9;transform:scale(1);}50%{opacity:1;transform:scale(1.015);} }
 @keyframes expand  { from{width:0;opacity:0;}to{width:48px;opacity:1;} }
 
+
+/* Public capture page — no gate */
+body { background: var(--black); }
+
+.pub-nav {
+  height: 60px; background: rgba(10,10,10,.95);
+  border-bottom: 1px solid rgba(200,150,12,0.12);
+  padding: 0 48px; display: flex;
+  align-items: center; justify-content: space-between;
+}
+.pub-nav .brand {
+  font-family: var(--bebas); font-size: 22px;
+  letter-spacing: 3px; color: var(--text);
+  text-decoration: none;
+}
+.pub-nav .brand small {
+  display: block; font-family: var(--dm);
+  font-size: 8px; letter-spacing: 0.28em;
+  color: var(--gold); font-weight: 500; text-transform: uppercase;
+}
+
+.capture-wrap {
+  min-height: calc(100vh - 60px);
+  display: grid; grid-template-columns: 1fr 1fr;
+}
+
+.capture-left {
+  background: var(--black);
+  padding: 80px 72px;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.capture-left::before {
+  content: 'TRIAL';
+  position: absolute; left: -20px; bottom: -20px;
+  font-family: var(--bebas); font-size: 200px;
+  color: rgba(255,255,255,0.02); pointer-events: none;
+  line-height: 1; letter-spacing: 0.05em;
+}
+
+.capture-right {
+  background: var(--grey);
+  padding: 60px 56px;
+  border-left: 1px solid rgba(200,150,12,0.08);
+}
+
+.capture-form-title {
+  font-family: var(--cormorant);
+  font-size: 18px; font-weight: 600;
+  color: var(--gold); margin-bottom: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* Programme selector */
+.prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 14px; }
+.prog-tile {
+  background: var(--black); border: 1px solid var(--border2);
+  padding: 12px 14px; cursor: pointer;
+  font-family: var(--mono); font-size: 9px;
+  text-align: left; transition: all .15s;
+  color: var(--muted2); user-select: none;
+  position: relative;
+}
+.prog-tile:hover { border-color: var(--border2); color: var(--muted); }
+.prog-tile.sel-gym    { border-color: var(--blue); color: #6aadff; background: #080f1c; }
+.prog-tile.sel-cgs    { border-color: var(--red);  color: #ff7070; background: #1c0808; }
+.prog-tile.sel-school { border-color: var(--purple); color: #c080ff; background: #110820; }
+.prog-tile.sel-corp   { border-color: var(--green); color: #50e07a; background: #061410; }
+.prog-tile .pt-name   { font-family: var(--cormorant); font-size: 15px; font-weight: 600; color: inherit; display: block; margin-bottom: 3px; }
+.prog-tile .pt-desc   { font-size: 9px; color: var(--muted2); line-height: 1.5; }
+
+/* Success state */
+.success-state {
+  display: none; text-align: center; padding: 40px 20px;
+}
+.success-state .si {
+  font-family: var(--bebas); font-size: 64px;
+  color: var(--gold); line-height: 1; margin-bottom: 12px;
+}
+.success-state .st {
+  font-family: var(--cormorant); font-size: 28px;
+  font-weight: 300; color: var(--text); margin-bottom: 8px;
+}
+.success-state .ss {
+  font-family: var(--dm); font-size: 13px;
+  color: var(--muted2); line-height: 1.7; margin-bottom: 24px;
+}
+
+/* Proof points */
+.proof { margin-top: 40px; }
+.proof-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  margin-bottom: 18px;
+}
+.proof-num {
+  font-family: var(--bebas); font-size: 28px;
+  color: var(--gold); line-height: 1; flex-shrink: 0; width: 52px;
+}
+.proof-label { font-family: var(--cormorant); font-size: 16px; font-weight: 600; color: var(--text); display: block; margin-bottom: 2px; }
+.proof-desc  { font-family: var(--dm); font-size: 12px; color: var(--muted2); line-height: 1.6; }
+
+@media(max-width:900px){
+  .capture-wrap { grid-template-columns: 1fr; }
+  .capture-left { padding: 60px 32px 40px; }
+  .capture-left::before { display: none; }
+  .capture-right { padding: 40px 32px; }
+  .pub-nav { padding: 0 24px; }
+}
+@media(max-width:480px){
+  .capture-left,.capture-right { padding: 32px 20px; }
+  .prog-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
-<div id="gate" style="display:flex;">
-  <div class="gate-wrap">
-    <div class="gate-eagle">🦅</div>
-    <div class="gate-name">Eagle DS</div>
-    <div class="gate-sub">Event Calendar</div>
-    <div class="gate-line"></div>
-    <input type="email" class="gate-input" id="auth-email" placeholder="email" style="font-size:13px;letter-spacing:1px;text-align:left;margin-bottom:8px;" autocomplete="username" onkeydown="if(event.key==='Enter')eagleLogin()">
-    <input type="password" class="gate-input" id="pin" placeholder="password" style="font-size:13px;letter-spacing:1px;text-align:left;" autocomplete="current-password" onkeydown="if(event.key==='Enter')eagleLogin()">
-    <button class="gate-btn" onclick="eagleLogin()">Sign In →</button>
-    <div class="gate-err" id="gerr"></div>
-  </div>
-</div>
-<div id="app">
-  <div class="topbar">
-    <a href="index.html" class="t-brand"><span class="t-wordmark">EAGLE DS<small>Event Calendar</small></span></a>
-    <div class="t-nav">
-      <a href="crm.html">CRM</a>
-      <a href="events.html" class="here">Events</a>
-      <a href="scheduler.html">Automation</a>
-      <a href="blog.html">Blog</a>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;"><div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div><button onclick="eagleLogout()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-radius:2px;" title="Sign out">Logout</button></div>
-  </div>
-  <div class="ws">
-    <div class="page-hd reveal">
-      <span class="section-label">Eagle DS · Event Operations</span>
-      <div class="page-title">Event <em>Calendar</em></div>
-      <div class="page-sub">Create events · Activate email sequences · Track registrations</div>
-    </div>
-    <div class="gold-divider" style="margin-bottom:20px;"></div>
-    <div class="grid2" style="margin-bottom:2px;">
-      <div class="panel" style="margin-bottom:0;">
-        <div class="ph"><div class="pt">System Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()"><span>Clear</span></button></div>
-        <div class="pb"><div class="console" id="console"></div></div>
+
+<nav class="pub-nav">
+  <a href="index.html" class="brand">EAGLE DS<small>Auckland Combat Academy</small></a>
+  <a href="https://eagleds.gymdesk.com/login" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Member Login ↗</a>
+</nav>
+
+<div class="capture-wrap">
+  <!-- LEFT: copy -->
+  <div class="capture-left">
+    <div class="gold-line" style="animation:expand .8s ease forwards;"></div>
+    <span class="section-label">Your First Step</span>
+    <h1 class="page-title" style="margin-bottom:12px;">Book a <em>Free Trial.</em></h1>
+    <p style="font-family:var(--dm);font-size:14px;color:var(--muted);line-height:1.85;max-width:380px;margin-bottom:32px;">Tell us who you are and what you're interested in. We'll be in touch within 24 hours to book your session — no commitment required.</p>
+
+    <div class="proof">
+      <div class="proof-item">
+        <div class="proof-num">900+</div>
+        <div><span class="proof-label">Matches Facilitated</span><span class="proof-desc">Across 3 years of the CGS circuit — the most active light-contact series in New Zealand.</span></div>
       </div>
-      <div class="panel" style="margin-bottom:0;">
-        <div class="ph"><div class="pt">Season Overview</div></div>
-        <div class="pb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;text-align:center;">
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--gold);" id="cnt-upcoming">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Upcoming</div></div>
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--green);" id="cnt-live">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Today</div></div>
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--muted2);" id="cnt-past">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Past</div></div>
-        </div>
+      <div class="proof-item">
+        <div class="proof-num">50+</div>
+        <div><span class="proof-label">Clubs United</span><span class="proof-desc">Eagle DS is the hub of a national combat sports network.</span></div>
+      </div>
+      <div class="proof-item">
+        <div class="proof-num">0</div>
+        <div><span class="proof-label">Concussions on Record</span><span class="proof-desc">Safety is the standard. Light contact, certified officials, development-first.</span></div>
+      </div>
+      <div class="proof-item">
+        <div class="proof-num">27</div>
+        <div><span class="proof-label">Years Coaching</span><span class="proof-desc">Dafydd Sanders — NZ representative across four combat disciplines at world championship level.</span></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;margin:16px 0;">
-      <button class="btn" style="width:auto;padding:12px 28px;" onclick="openNewEvent()"><span>+ New Event</span></button>
-    </div>
-    <div id="events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:2px;"></div>
   </div>
-    <footer class="site-footer">
-    <span class="sf-brand">EAGLE DS</span>
-    <div class="sf-links">
-      <a href="crm.html">CRM</a><a href="events.html">Events</a>
-      <a href="scheduler.html">Automation</a><a href="blog.html">Blog</a>
-      <a href="https://eagleds.co.nz" target="_blank">Website ↗</a>
-    </div>
-    <span class="sf-copy">Eagle DS · East Tāmaki · Internal Operations</span>
-  </footer>
-</div>
-<!-- EVENT MODAL -->
-<div class="modal" id="event-modal">
-  <div class="mbox" style="max-width:620px;">
-    <div class="mh"><div class="mt" id="event-modal-title">New Event</div><button class="mc" onclick="closeModal('event-modal')">✕</button></div>
-    <div class="mb">
-      <input type="hidden" id="ev-key">
-      <label>Event Name</label>
-      <input type="text" id="ev-name" placeholder="e.g. CGS Summer Open 2026">
+
+  <!-- RIGHT: form -->
+  <div class="capture-right">
+    <div id="form-state">
+      <div class="capture-form-title">Your Details</div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div><label>Event Date</label><input type="date" id="ev-date"></div>
-        <div><label>Sector</label>
-          <select id="ev-sector">
-            <option value="cgs">⚔ CGS Circuit</option>
-            <option value="gym">🥋 Gym Academy</option>
-            <option value="school">🏫 Institutional</option>
-            <option value="corp">💼 Commercial</option>
-          </select>
+        <div><label>First Name ✱</label><input type="text" id="f-first" placeholder="First name"></div>
+        <div><label>Last Name</label><input type="text" id="f-last" placeholder="Last name"></div>
+      </div>
+      <label>Email ✱</label>
+      <input type="text" id="f-email" placeholder="your@email.com">
+      <label>Phone</label>
+      <input type="text" id="f-phone" placeholder="021 000 0000">
+      <label>Age (or child's age if enquiring for your child)</label>
+      <input type="text" id="f-age" placeholder="e.g. 12, or Adult">
+      <label>Message or question (optional)</label>
+      <textarea id="f-message" style="min-height:70px;" placeholder="Anything we should know — current experience, goals, availability..."></textarea>
+
+      <div class="capture-form-title" style="margin-top:4px;">Interested In</div>
+      <div class="prog-grid">
+        <div class="prog-tile" data-sector="gym" onclick="toggleProg(this)">
+          <span class="pt-name">🥋 Gym Academy</span>
+          <span class="pt-desc">Classes, grading pathway, competition prep</span>
+        </div>
+        <div class="prog-tile" data-sector="cgs" onclick="toggleProg(this)">
+          <span class="pt-name">⚔ CGS Competition</span>
+          <span class="pt-desc">Light-contact circuit, any style, any level</span>
+        </div>
+        <div class="prog-tile" data-sector="school" onclick="toggleProg(this)">
+          <span class="pt-name">🏫 School Programme</span>
+          <span class="pt-desc">Institutional partnerships &amp; curriculum delivery</span>
+        </div>
+        <div class="prog-tile" data-sector="corp" onclick="toggleProg(this)">
+          <span class="pt-name">💼 Corporate</span>
+          <span class="pt-desc">Team performance &amp; wellness programmes</span>
         </div>
       </div>
-      <label>Location</label>
-      <input type="text" id="ev-location" placeholder="Venue name, address...">
-      <label>Description</label>
-      <textarea id="ev-desc" style="min-height:70px;" placeholder="Brief event description..."></textarea>
-      <label>Registration URL</label>
-      <input type="text" id="ev-reg-url" placeholder="https://forms.gle/...">
-      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
-        <span class="section-label">Email Sequence — auto-scheduled from event date</span>
-        <div style="background:var(--black);border:1px solid var(--border);">
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">8 weeks before</span>
-            <input type="text" id="seq-8w" placeholder="Registration open subject line..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">4 weeks before</span>
-            <input type="text" id="seq-4w" placeholder="Early bird closes..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">1 week before</span>
-            <input type="text" id="seq-1w" placeholder="Final details..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">Day of event</span>
-            <input type="text" id="seq-day" placeholder="Today is the day!" style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">3 days after</span>
-            <input type="text" id="seq-after" placeholder="Results + next event..." style="margin-bottom:0;flex:1;">
-          </div>
-        </div>
-        <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:10px;line-height:1.7;">Leave steps blank to skip. Email bodies are written in the Automation tab using [FirstName], [EventName], [ChildName] variables.</p>
-      </div>
+
+      <div id="form-err" style="font-family:var(--mono);font-size:9px;color:var(--red);margin-bottom:12px;min-height:14px;"></div>
+      <button class="btn" onclick="submitCapture()"><span id="btn-label">Submit Enquiry →</span></button>
+
+      <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:14px;line-height:1.7;">17 Nandina Ave, East Tāmaki, Auckland · <a href="tel:+64210902471" style="color:var(--gold-dk);">021 902 471</a> · <a href="mailto:info@eagleds.co.nz" style="color:var(--gold-dk);">info@eagleds.co.nz</a></p>
     </div>
-    <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('event-modal')"><span>Cancel</span></button><button class="btn" onclick="saveEvent()"><span>Save Event →</span></button></div></div>
+
+    <div class="success-state" id="success-state">
+      <div class="si">✓</div>
+      <div class="st">Enquiry received.</div>
+      <p class="ss">We'll be in touch within 24 hours to book your trial session.<br>Check your inbox for a confirmation.</p>
+      <a href="index.html" class="btn" style="display:inline-block;width:auto;padding:12px 32px;text-decoration:none;"><span>Back to Eagle DS →</span></a>
+    </div>
   </div>
 </div>
+
 <script>
-/* ═══ EAGLE DS SHARED AUTH MODULE ═══
-   Real Firebase Authentication — replaces the MD5 passcode gate.
-   Include on every internal tool (crm, events, scheduler, blog).
-   Requires Firebase Auth enabled in console + email/password account created. */
+const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+const FROM = "info@eagleds.co.nz";
+let selectedSectors = [];
 
-const EAGLE_FB_CONFIG = {
-  apiKey: "AIzaSyD-PLACEHOLDER-REPLACE-WITH-YOURS",
-  authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
-  databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
-  projectId: "taekwondo-scoreboard-e58ec"
-};
-
-let EAGLE_USER = null;
-let EAGLE_TOKEN = null;
-
-// Initialise Firebase Auth (compat SDK loaded via CDN in each page)
-function eagleInitAuth() {
-  if (!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
-  firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-      EAGLE_USER = user;
-      EAGLE_TOKEN = await user.getIdToken();
-      // Refresh token every 50 min (tokens expire at 60)
-      setInterval(async () => { if (EAGLE_USER) EAGLE_TOKEN = await EAGLE_USER.getIdToken(true); }, 50 * 60 * 1000);
-      const gate = document.getElementById("gate");
-      const app  = document.getElementById("app");
-      if (gate) gate.style.display = "none";
-      if (app)  app.style.display  = "block";
-      if (typeof onAuthReady === "function") onAuthReady();
-    } else {
-      EAGLE_USER = null; EAGLE_TOKEN = null;
-      const gate = document.getElementById("gate");
-      const app  = document.getElementById("app");
-      if (gate) gate.style.display = "flex";
-      if (app)  app.style.display  = "none";
-    }
-  });
-}
-
-async function eagleLogin() {
-  const email = (document.getElementById("auth-email") || {}).value || "";
-  const pass  = (document.getElementById("pin") || {}).value || "";
-  const err   = document.getElementById("gerr");
-  if (!email.trim() || !pass.trim()) { if (err) err.textContent = "Email and password required."; return; }
-  try {
-    await firebase.auth().signInWithEmailAndPassword(email.trim(), pass);
-    if (err) err.textContent = "";
-  } catch (e) {
-    if (err) err.textContent = "Login failed — check your details.";
-    const p = document.getElementById("pin"); if (p) p.value = "";
+function toggleProg(el) {
+  const s = el.dataset.sector;
+  const cls = "sel-" + s;
+  if (el.classList.contains(cls)) {
+    el.classList.remove(cls);
+    selectedSectors = selectedSectors.filter(x => x !== s);
+  } else {
+    el.classList.add(cls);
+    selectedSectors.push(s);
   }
 }
 
-function eagleLogout() { firebase.auth().signOut(); }
+async function submitCapture() {
+  const first = document.getElementById("f-first").value.trim();
+  const last  = document.getElementById("f-last").value.trim();
+  const email = document.getElementById("f-email").value.trim().toLowerCase();
+  const phone = document.getElementById("f-phone").value.trim();
+  const age   = document.getElementById("f-age").value.trim();
+  const msg   = document.getElementById("f-message").value.trim();
+  const err   = document.getElementById("form-err");
+  const btn   = document.getElementById("btn-label");
 
-// Authenticated fetch — appends the auth token to every Firebase request.
-// Use this INSTEAD of plain fetch() for all Firebase calls so security rules pass.
-async function eagleFetch(path, options = {}) {
-  const sep = path.includes("?") ? "&" : "?";
-  const url = EAGLE_TOKEN ? `${path}${sep}auth=${EAGLE_TOKEN}` : path;
-  return fetch(url, options);
+  if (!first) { err.textContent = "First name required."; return; }
+  if (!email || !email.includes("@")) { err.textContent = "Valid email required."; return; }
+  err.textContent = "";
+  btn.textContent = "Sending…";
+
+  const name = (first + " " + last).trim();
+  const key  = email.replace(/\./g, "%2E");
+  const ts   = new Date().toISOString();
+  const arms = selectedSectors.length ? selectedSectors : ["gym"];
+
+  // Parse age to DOB approximation
+  let dob = null;
+  const ageNum = parseInt(age);
+  if (!isNaN(ageNum) && ageNum > 0 && ageNum < 100) {
+    const yr = new Date().getFullYear() - ageNum;
+    dob = yr + "-01-01";
+  }
+
+  const contact = {
+    email, name, phone, dob,
+    arms,
+    lastActivity: ts,
+    added: ts,
+    source: "web_capture",
+    message: msg || null
+  };
+
+  // Also write to web_leads for quick review in CRM
+  const lead = { ...contact, submittedAt: ts, status: "new" };
+
+  try {
+    // Public pages can only CREATE leads (not read or overwrite the master directory).
+    // The lead lands in /web_leads — a queue the owner ingests from inside the CRM,
+    // where the authenticated merge into the master directory happens safely.
+    await fetch(FB + "/web_leads/" + key + "_" + Date.now() + ".json", {
+      method: "PUT", body: JSON.stringify(lead)
+    });
+
+    // Send confirmation email (uses stored Resend key or falls back silently)
+    const apiKey = localStorage.getItem("RESEND_KEY");
+    if (apiKey) {
+      const confirmHtml = `
+        <div style="background:#0a0a0a;color:#f8f4ee;padding:40px;font-family:DM Sans,sans-serif;max-width:560px;margin:0 auto;">
+          <div style="font-family:Bebas Neue,sans-serif;font-size:28px;letter-spacing:3px;color:#C8960C;margin-bottom:4px;">EAGLE DS</div>
+          <div style="font-family:monospace;font-size:10px;color:#666;letter-spacing:2px;margin-bottom:24px;border-bottom:1px solid #222;padding-bottom:12px;">TRIAL ENQUIRY RECEIVED</div>
+          <div style="font-family:Georgia,serif;font-size:22px;color:#f8f4ee;margin-bottom:12px;">Hi ${first},</div>
+          <p style="font-size:14px;color:#888;line-height:1.7;margin-bottom:16px;">We have received your enquiry and will be in touch within 24 hours to book your free trial session at Eagle DS.</p>
+          <p style="font-size:14px;color:#888;line-height:1.7;margin-bottom:24px;">In the meantime, you can find our full schedule and information at <a href="https://eagleds.github.io" style="color:#C8960C;">eagleds.github.io</a>.</p>
+          <div style="background:#1a1a1a;padding:20px;margin-bottom:24px;">
+            <div style="font-family:monospace;font-size:9px;color:#666;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;">Your Enquiry</div>
+            <div style="font-size:13px;color:#aaa;line-height:1.8;">
+              <strong style="color:#f8f4ee;">Name:</strong> ${name}<br>
+              <strong style="color:#f8f4ee;">Interest:</strong> ${arms.join(", ")}<br>
+              ${msg ? "<strong style='color:#f8f4ee;'>Message:</strong> " + msg : ""}
+            </div>
+          </div>
+          <div style="font-size:13px;color:#666;line-height:1.8;">
+            Dafydd Sanders<br>Eagle DS<br>
+            <a href="tel:+64210902471" style="color:#C8960C;">021 902 471</a> · 
+            <a href="mailto:info@eagleds.co.nz" style="color:#C8960C;">info@eagleds.co.nz</a><br>
+            17 Nandina Ave, East Tāmaki, Auckland
+          </div>
+        </div>`;
+
+      // Confirmation to enquirer
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: FROM, to: email, subject: "Your Eagle DS trial enquiry — we'll be in touch", html: confirmHtml })
+      });
+
+      // Internal notification to Eagle DS
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: FROM, to: FROM,
+          subject: "New web enquiry: " + name + " — " + arms.join(", "),
+          html: `<div style="font-family:monospace;padding:24px;background:#111;color:#eee;">
+            <h2 style="color:#C8960C;font-family:monospace;">New Web Lead</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone||"—"}</p>
+            <p><strong>Age:</strong> ${age||"—"}</p>
+            <p><strong>Interest:</strong> ${arms.join(", ")}</p>
+            <p><strong>Message:</strong> ${msg||"—"}</p>
+            <p><strong>Submitted:</strong> ${ts}</p>
+            <p><a href="https://eagleds.github.io/crm.html" style="color:#C8960C;">View in CRM →</a></p>
+          </div>`
+        })
+      });
+    }
+
+    // Show success
+    document.getElementById("form-state").style.display = "none";
+    document.getElementById("success-state").style.display = "block";
+
+  } catch(e) {
+    err.textContent = "Something went wrong. Please email info@eagleds.co.nz directly.";
+    btn.textContent = "Submit Enquiry →";
+  }
 }
-
-</script>
-<script>
-
-const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055";
-let events={};
-function unlock(){eagleLogin();}
-function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
-function clearLog(){document.getElementById("console").innerHTML="";}
-function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function closeModal(id){document.getElementById(id).classList.remove("open");}
-async function syncEvents(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/eagle_events.json"),data=await r.json();events=data||{};setStatus("live","live");log(Object.keys(events).length+" events loaded.","ok");renderEvents();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
-async function pushEvents(){try{await eagleFetch(FB+"/eagle_events.json",{method:"PUT",body:JSON.stringify(events)});}catch(e){log("Push failed.","err");}}
-function daysUntil(d){const dt=new Date(d);dt.setHours(0,0,0,0);const now=new Date();now.setHours(0,0,0,0);return Math.round((dt-now)/86400000);}
-function getStatus(d){const n=daysUntil(d);if(n>0)return"upcoming";if(n===0)return"live";return"past";}
-function renderEvents(){
-  const el=document.getElementById("events-grid"),keys=Object.keys(events);
-  if(!keys.length){el.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:60px;grid-column:1/-1;">No events yet. Create your first event above.</div>';document.getElementById("cnt-upcoming").textContent=0;document.getElementById("cnt-live").textContent=0;document.getElementById("cnt-past").textContent=0;return;}
-  keys.sort((a,b)=>new Date(events[a].date)-new Date(events[b].date));
-  let upcoming=0,live=0,past=0;
-  el.innerHTML=keys.map(k=>{
-    const ev=events[k],days=daysUntil(ev.date),status=getStatus(ev.date),sector=ev.sector||"cgs";
-    if(status==="upcoming")upcoming++;else if(status==="live")live++;else past++;
-    const cdColor=days===0?"var(--green)":days>0&&days<=7?"var(--red)":days>0&&days<=30?"var(--orange)":"var(--gold)";
-    const cdText=days===0?"TODAY":days>0?days+"d":Math.abs(days)+"d ago";
-    const sLabels={cgs:"CGS Circuit",gym:"Gym Academy",school:"Institutional",corp:"Commercial"};
-    const seqKeys=["8w","4w","1w","day","after"],seqLabels={"8w":"8wk before","4w":"4wk before","1w":"1wk before","day":"Day of","after":"3d after"},seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};
-    const stepsHtml=(ev.sequence?seqKeys.filter(s=>ev.sequence[s]).map(s=>{const dtt=days-seqDays[s];let ss="upcoming";if(ev.sequence[s+"_sent"])ss="sent";else if(dtt<=0)ss="due";return'<div class="seq-step '+ss+'"><div class="step-dot '+ss+'"></div><span style="flex:1;">'+seqLabels[s]+': '+ev.sequence[s]+'</span>'+(ss==="due"?'<span style="font-family:var(--mono);font-size:8px;color:var(--gold);">DUE</span>':'')+' </div>';}).join(""):"");
-    const hasDue=ev.sequence&&seqKeys.some(s=>{if(!ev.sequence[s]||ev.sequence[s+"_sent"])return false;return(days-seqDays[s])<=0;});
-    return'<div class="event-card"><div class="ec-top"><div><div class="ec-sector ec-s-'+sector+'">'+sLabels[sector]+'</div><div class="ec-name">'+ev.name+'</div><div class="ec-date">'+new Date(ev.date).toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"long",year:"numeric"})+(ev.location?" · "+ev.location:"")+'</div></div><div class="ec-countdown" style="color:'+cdColor+';">'+cdText+'<span>'+( status==="live"?"LIVE":status==="past"?"PAST":"DAYS")+'</span></div></div><div class="ec-body">'+(ev.description?'<p style="font-family:var(--dm);font-size:12px;color:var(--muted2);margin-bottom:10px;line-height:1.6;">'+ev.description+'</p>':'')+(stepsHtml?'<span class="section-label" style="margin-bottom:6px;display:block;">Email Sequence</span><div class="seq-steps">'+stepsHtml+'</div>':'')+(hasDue?'<p style="font-family:var(--mono);font-size:9px;color:var(--gold);margin-top:6px;">⚡ Emails due — use Fire Due button below</p>':'')+'</div><div class="ec-actions">'+(hasDue?'<button class="btn btn-sm" style="background:transparent;border:1px solid rgba(34,182,74,.4);color:var(--green);" onclick="fireSequence(\''+k+'\')"><span>Fire Due Emails</span></button>':'')+'<button class="btn btn-ghost btn-sm" onclick="editEvent(\''+k+'\')"><span>Edit</span></button><button class="btn btn-red btn-sm" onclick="deleteEvent(\''+k+'\')"><span>Delete</span></button></div></div>';
-  }).join("");
-  document.getElementById("cnt-upcoming").textContent=upcoming;document.getElementById("cnt-live").textContent=live;document.getElementById("cnt-past").textContent=past;
-}
-function openNewEvent(){document.getElementById("ev-key").value="";document.getElementById("event-modal-title").textContent="New Event";["ev-name","ev-location","ev-desc","ev-reg-url","seq-8w","seq-4w","seq-1w","seq-day","seq-after"].forEach(id=>document.getElementById(id).value="");document.getElementById("ev-date").value="";document.getElementById("ev-sector").value="cgs";document.getElementById("event-modal").classList.add("open");}
-function editEvent(key){const ev=events[key];document.getElementById("ev-key").value=key;document.getElementById("event-modal-title").textContent="Edit Event";document.getElementById("ev-name").value=ev.name||"";document.getElementById("ev-date").value=ev.date||"";document.getElementById("ev-sector").value=ev.sector||"cgs";document.getElementById("ev-location").value=ev.location||"";document.getElementById("ev-desc").value=ev.description||"";document.getElementById("ev-reg-url").value=ev.regUrl||"";const seq=ev.sequence||{};["8w","4w","1w","day","after"].forEach(s=>document.getElementById("seq-"+s).value=seq[s]||"");document.getElementById("event-modal").classList.add("open");}
-async function saveEvent(){const name=document.getElementById("ev-name").value.trim(),date=document.getElementById("ev-date").value;if(!name||!date){alert("Name and date required.");return;}const key=document.getElementById("ev-key").value||"ev_"+Date.now(),seq={};["8w","4w","1w","day","after"].forEach(s=>{const v=document.getElementById("seq-"+s).value.trim();if(v)seq[s]=v;});if(events[key]&&events[key].sequence){["8w","4w","1w","day","after"].forEach(s=>{if(events[key].sequence[s+"_sent"])seq[s+"_sent"]=events[key].sequence[s+"_sent"];});}events[key]={name,date,sector:document.getElementById("ev-sector").value,location:document.getElementById("ev-location").value.trim(),description:document.getElementById("ev-desc").value.trim(),regUrl:document.getElementById("ev-reg-url").value.trim(),sequence:seq,created:events[key]?.created||new Date().toISOString()};closeModal("event-modal");await pushEvents();renderEvents();log("Event saved: "+name,"ok");await queueEventEmails(key,events[key]);}
-async function queueEventEmails(key,ev){if(!Object.keys(ev.sequence||{}).length)return;try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3},eventDate=new Date(ev.date);["8w","4w","1w","day","after"].forEach(s=>{if(!ev.sequence[s]||ev.sequence[s+"_sent"])return;const sd=new Date(eventDate);sd.setDate(sd.getDate()+seqDays[s]);const qKey=key+"_"+s;queue[qKey]={eventKey:key,eventName:ev.name,step:s,sector:ev.sector,tier:"hot,warm,cold",subject:ev.sequence[s],body:"Hi [FirstName],\n\n"+ev.sequence[s]+"\n\n"+(ev.regUrl?"Register: "+ev.regUrl+"\n\n":"")+"Dafydd Sanders\nEagle DS",sendAt:sd.toISOString().slice(0,10),status:"pending"};});await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Email sequence queued for: "+ev.name,"ok");}catch(e){log("Queue error: "+e.message,"err");}}
-async function fireSequence(key){let apiKey=localStorage.getItem("RESEND_KEY");if(!apiKey){apiKey=prompt("Enter Resend API key:");if(!apiKey)return;localStorage.setItem("RESEND_KEY",apiKey.trim());apiKey=apiKey.trim();}const ev=events[key],days=daysUntil(ev.date);const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};try{const cr=await eagleFetch(FB+"/directory_crm_master.json"),contacts=await cr.json()||{},targets=Object.values(contacts).filter(r=>(r.arms||[]).includes(ev.sector));let fired=0;for(const s of["8w","4w","1w","day","after"]){if(!ev.sequence[s]||ev.sequence[s+"_sent"])continue;if((days-seqDays[s])>0)continue;const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({from:"info@eagleds.co.nz",to:"info@eagleds.co.nz",bcc:targets.map(t=>t.email),subject:ev.sequence[s].replace(/\[EventName\]/gi,ev.name),html:"Hi [FirstName],<br><br>"+ev.sequence[s]+"<br><br>"+(ev.regUrl?"Register: "+ev.regUrl+"<br><br>":"")+"Dafydd Sanders<br>Eagle DS"})});if(res.ok){events[key].sequence[s+"_sent"]=new Date().toISOString();fired++;}}await pushEvents();renderEvents();log("Fired "+fired+" sequence email(s) for "+ev.name,"ok");}catch(e){log("Error: "+e.message,"err");}}
-async function deleteEvent(key){if(!confirm("Delete this event?"))return;delete events[key];await pushEvents();renderEvents();log("Event deleted.","warn");}
-const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
-document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
-
-
-function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncEvents(); }
-eagleInitAuth();
 </script>
 </body>
 </html>
