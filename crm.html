@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+:root{--bg:#06060a;--surf:#0c0c11;--surf2:#111116;--border:#1c1c24;--border2:#262632;--text:#ececf0;--muted:#4e4e5c;--muted2:#72727e;--gold:#e8aa20;--gold-lt:#f5c842;--gold-dk:#b08010;--red:#e84040;--blue:#3d8eff;--purple:#9d55f5;--green:#1fc863;--orange:#f07020;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bebas Neue',sans-serif;--r:3px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.gate-wrap{width:280px;text-align:center;}
+.gate-eagle{font-family:var(--disp);font-size:52px;color:var(--gold);letter-spacing:4px;line-height:1;}
+.gate-name{font-family:var(--disp);font-size:16px;letter-spacing:6px;color:var(--muted2);margin-bottom:40px;}
+.gate-input{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:24px;text-align:center;letter-spacing:10px;padding:14px;outline:none;}
+.gate-btn{margin-top:10px;width:100%;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:13px;cursor:pointer;}
+.gate-btn:hover{background:var(--gold);}
+.gate-err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:10px;height:14px;}
+#app{display:none;}
+.topbar{position:sticky;top:0;z-index:200;height:50px;background:rgba(6,6,10,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+.t-logo{font-family:var(--disp);font-size:20px;color:var(--gold);letter-spacing:2px;}
+.t-nav{display:flex;gap:2px;}
+.t-nav a{font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 10px;border-radius:var(--r);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.t-nav a:hover{color:var(--gold);}
+.t-nav a.here{color:var(--gold);}
+.status-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
+.sdot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+.ws{max-width:1320px;margin:0 auto;padding:24px;}
+.page-title{font-family:var(--disp);font-size:28px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
+.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:24px;}
+.grid-blog{display:grid;grid-template-columns:1fr 400px;gap:20px;}
+@media(max-width:900px){.grid-blog{grid-template-columns:1fr;}}
+.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.ph{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-family:var(--disp);font-size:13px;letter-spacing:1.5px;color:var(--gold);}
+.pb{padding:16px;}
+label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+select,input[type="text"],textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:11px;padding:9px 11px;outline:none;transition:border-color .15s;margin-bottom:13px;}
+select:focus,input:focus,textarea:focus{border-color:var(--gold-dk);}
+.btn{display:inline-block;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background .15s;width:100%;text-align:center;}
+.btn:hover{background:var(--gold-lt);}
+.btn-sm{padding:6px 12px;font-size:9px;width:auto;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
+.btn-ghost:hover{border-color:var(--gold-dk);color:var(--gold);background:transparent;}
+.btn-red{background:transparent;border:1px solid #3a1010;color:#ff6060;}
+.btn-red:hover{background:#180808;}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+
+/* EDITOR */
+.editor-toolbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.tb-btn{background:var(--bg);border:1px solid var(--border2);color:var(--muted2);font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:var(--r);cursor:pointer;transition:all .15s;}
+.tb-btn:hover{border-color:var(--gold-dk);color:var(--gold);}
+#post-body{font-family:var(--sans);font-size:13px;line-height:1.8;min-height:300px;resize:vertical;}
+
+/* PREVIEW */
+.preview-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;min-height:200px;font-family:var(--sans);font-size:13px;line-height:1.8;color:var(--text);}
+.preview-wrap h1,.preview-wrap h2,.preview-wrap h3{font-family:var(--disp);color:var(--gold);letter-spacing:1px;margin:16px 0 8px;}
+.preview-wrap h1{font-size:28px;}
+.preview-wrap h2{font-size:22px;}
+.preview-wrap h3{font-size:18px;}
+.preview-wrap p{margin-bottom:12px;color:var(--muted2);}
+.preview-wrap strong{color:var(--text);}
+.preview-wrap em{color:var(--muted2);}
+.preview-wrap ul,.preview-wrap ol{margin:0 0 12px 20px;color:var(--muted2);}
+.preview-wrap blockquote{border-left:3px solid var(--gold-dk);padding-left:16px;color:var(--muted2);margin:12px 0;font-style:italic;}
+.preview-wrap hr{border:none;border-top:1px solid var(--border2);margin:16px 0;}
+
+/* POST LIST */
+.post-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;transition:border-color .2s;}
+.post-card:hover{border-color:var(--border2);}
+.pc-title{font-family:var(--disp);font-size:16px;letter-spacing:1px;color:var(--text);margin-bottom:4px;}
+.pc-meta{font-family:var(--mono);font-size:9px;color:var(--muted2);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.pc-excerpt{font-family:var(--sans);font-size:11px;color:var(--muted2);line-height:1.6;margin-bottom:10px;}
+.pc-actions{display:flex;gap:6px;}
+.tag{display:inline-block;padding:1px 7px;border-radius:2px;font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.5px;}
+.tag-published{background:#020d05;color:var(--green);border:1px solid #0a3a1a;}
+.tag-draft{background:#2a1400;color:var(--orange);border:1px solid #5a3000;}
+
+.console{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:10px;padding:10px 12px;height:60px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.l-ok{color:var(--green);}.l-err{color:var(--red);}.l-warn{color:var(--orange);}.l-info{color:var(--muted2);}
+
+/* notify toggle */
+.notify-toggle{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
+.toggle{width:36px;height:20px;background:var(--border2);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--gold-dk);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+.toggle.on::after{left:19px;}
+.toggle-label{font-family:var(--mono);font-size:10px;color:var(--muted2);}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-wrap">
+    <div class="gate-eagle">🦅</div>
+    <div class="gate-name">EAGLE DS</div>
+    <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="gate-btn" onclick="unlock()">Unlock</button>
+    <div class="gate-err" id="gerr"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🦅 EAGLE DS</div>
+    <div class="t-nav">
+      <a href="crm.html">CRM</a><a href="events.html">Events</a>
+      <a href="scheduler.html">Automation</a><a href="blog.html" class="here">Blog</a>
+    </div>
+    <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
+  </div>
+  <div class="ws">
+    <div class="page-title">Blog &amp; Content</div>
+    <div class="page-sub">Write posts · Publish to your site · Auto-notify your list</div>
+
+    <div class="grid-blog">
+      <!-- EDITOR -->
+      <div>
+        <div class="panel">
+          <div class="ph"><div class="pt" id="editor-mode-label">New Post</div><button class="btn btn-ghost btn-sm" onclick="resetEditor()">Clear</button></div>
+          <div class="pb">
+            <input type="hidden" id="post-key">
+            <label>Post Title</label>
+            <input type="text" id="post-title" placeholder="Enter post title...">
+
+            <label>Category</label>
+            <select id="post-category">
+              <option value="combat-sports">🥋 Combat Sports</option>
+              <option value="training">💪 Training Tips</option>
+              <option value="events">🏆 Events & Results</option>
+              <option value="news">📣 Club News</option>
+              <option value="nutrition">🥗 Nutrition & Recovery</option>
+              <option value="mindset">🧠 Mindset & Mental Game</option>
+            </select>
+
+            <label>Content — Markdown supported</label>
+            <div class="editor-toolbar">
+              <button class="tb-btn" onclick="insertMd('**','**')">B</button>
+              <button class="tb-btn" onclick="insertMd('*','*')"><em>I</em></button>
+              <button class="tb-btn" onclick="insertMd('## ','')">H2</button>
+              <button class="tb-btn" onclick="insertMd('### ','')">H3</button>
+              <button class="tb-btn" onclick="insertMd('\n- ','')">List</button>
+              <button class="tb-btn" onclick="insertMd('\n> ','')">Quote</button>
+              <button class="tb-btn" onclick="insertMd('\n---\n','')">Divider</button>
+              <button class="tb-btn" onclick="updatePreview()">Preview ↗</button>
+            </div>
+            <textarea id="post-body" placeholder="Write your post in plain text or Markdown...&#10;&#10;## Section Heading&#10;&#10;Your content here.&#10;&#10;**Bold text** and *italic text* are supported." oninput="updatePreview()"></textarea>
+
+            <label>Excerpt (shown in email and post list)</label>
+            <input type="text" id="post-excerpt" placeholder="One sentence summary...">
+
+            <div class="notify-toggle">
+              <div class="toggle on" id="notify-toggle" onclick="this.classList.toggle('on')"></div>
+              <span class="toggle-label">Email list when published</span>
+            </div>
+            <label>Notify Sector</label>
+            <select id="notify-sector">
+              <option value="all">All contacts</option>
+              <option value="gym">🥋 Gym Academy</option>
+              <option value="cgs">⚔ CGS Circuit</option>
+              <option value="school">🏫 Institutional</option>
+              <option value="corp">💼 Commercial</option>
+            </select>
+
+            <div class="btn-row">
+              <button class="btn btn-ghost" onclick="savePost('draft')">Save Draft</button>
+              <button class="btn" onclick="savePost('published')">Publish →</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">Log</div></div>
+          <div class="pb"><div class="console" id="console"></div></div>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div>
+        <div class="panel">
+          <div class="ph"><div class="pt">Preview</div></div>
+          <div class="pb" style="padding:0;">
+            <div class="preview-wrap" id="preview-box">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Start writing to see preview...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">All Posts</div>
+            <span id="post-count" style="font-family:var(--mono);font-size:9px;color:var(--muted);"></span>
+          </div>
+          <div class="pb" id="post-list">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px;">No posts yet.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><div class="pt">Content Ideas</div></div>
+          <div class="pb">
+            <div id="ideas-list" style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:2.2;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+const HASH="81dc9bdb52d04dc20036dbd8313ed055";
+const FROM="info@eagleds.co.nz";
+let posts={},db={};
+
+const CONTENT_IDEAS=[
+  "5 reasons to start martial arts as an adult","How to prepare your child for their first competition","The mental game: building confidence through combat sports","Nutrition basics for fighters","What belt rankings actually mean","Tournament day checklist for parents","The difference between sport and self-defence","Cross-training benefits for combat athletes","How to choose the right martial art for your child","Recovery techniques after hard training","Interview: our most improved student this year","Event recap: [last tournament name]","Setting goals for the new season","Why showing up consistently beats talent","Strength training for grapplers"
+];
+
+function unlock(){
+  const v=document.getElementById("pin").value.trim();
+  if(CryptoJS.MD5(v).toString()===HASH){
+    document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";
+    log("Connected.");syncAll();renderIdeas();
+  }else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}
+}
+function log(msg,type="info"){const b=document.getElementById("console");const s=document.createElement("span");s.className=`l-${type}`;s.textContent=`[${new Date().toLocaleTimeString()}] ${msg}\n`;b.appendChild(s);b.scrollTop=b.scrollHeight;}
+function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
+
+async function syncAll(){
+  setStatus("","syncing…");
+  try{
+    const[pr,cr]=await Promise.all([fetch(`${FB}/eagle_blog.json`),fetch(`${FB}/directory_crm_master.json`)]);
+    posts=await pr.json()||{};db=await cr.json()||{};
+    setStatus("live","live");log(`${Object.keys(posts).length} posts loaded.`,"ok");
+    renderPostList();
+  }catch(e){setStatus("err","offline");log("Load failed.","err");}
+}
+
+// MARKDOWN PARSER (lightweight)
+function parseMarkdown(md){
+  if(!md)return"";
+  return md
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/^### (.+)$/gm,"<h3>$1</h3>")
+    .replace(/^## (.+)$/gm,"<h2>$1</h2>")
+    .replace(/^# (.+)$/gm,"<h1>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,"<em>$1</em>")
+    .replace(/^> (.+)$/gm,"<blockquote>$1</blockquote>")
+    .replace(/^- (.+)$/gm,"<li>$1</li>")
+    .replace(/(<li>.*<\/li>)/gs,"<ul>$1</ul>")
+    .replace(/^---$/gm,"<hr>")
+    .replace(/\n\n/g,"</p><p>")
+    .replace(/^(?!<[hul]|<bl|<hr)(.+)$/gm,"<p>$1</p>")
+    .replace(/<p><\/p>/g,"");
+}
+
+function updatePreview(){
+  const title=document.getElementById("post-title").value;
+  const body=document.getElementById("post-body").value;
+  const html=(title?`<h1>${title}</h1>`:"")+(body?parseMarkdown(body):"<span style='font-family:var(--mono);font-size:10px;color:var(--muted);'>Start writing...</span>");
+  document.getElementById("preview-box").innerHTML=html;
+}
+
+function insertMd(before,after){
+  const el=document.getElementById("post-body");
+  const s=el.selectionStart,e=el.selectionEnd;
+  const selected=el.value.slice(s,e);
+  el.value=el.value.slice(0,s)+before+selected+after+el.value.slice(e);
+  el.focus();updatePreview();
+}
+
+async function savePost(status){
+  const title=document.getElementById("post-title").value.trim();
+  const body=document.getElementById("post-body").value.trim();
+  if(!title||!body){alert("Title and content required.");return;}
+  const key=document.getElementById("post-key").value||"post_"+Date.now();
+  const isNew=!document.getElementById("post-key").value;
+  const notify=document.getElementById("notify-toggle").classList.contains("on");
+  const sector=document.getElementById("notify-sector").value;
+  const cat=document.getElementById("post-category").value;
+  const excerpt=document.getElementById("post-excerpt").value.trim()||body.replace(/[#*>-]/g,"").slice(0,140)+"...";
+  posts[key]={title,body,excerpt,category:cat,status,sector,publishedAt:status==="published"?(posts[key]?.publishedAt||new Date().toISOString()):null,updatedAt:new Date().toISOString(),created:posts[key]?.created||new Date().toISOString()};
+  try{
+    await fetch(`${FB}/eagle_blog.json`,{method:"PUT",body:JSON.stringify(posts)});
+    log(`${status==="published"?"Published":"Draft saved"}: "${title}"`,"ok");
+    renderPostList();
+    if(status==="published"&&notify&&isNew){
+      await sendBlogNotification(posts[key],sector);
+    }
+    if(status==="published")resetEditor();
+  }catch(e){log("Save failed.","err");}
+}
+
+async function sendBlogNotification(post,sector){
+  const apiKey=localStorage.getItem("RESEND_KEY");
+  if(!apiKey){log("No Resend key stored — skipping email notification.","warn");return;}
+  const targets=Object.values(db).filter(r=>sector==="all"||(r.arms||[]).includes(sector));
+  if(!targets.length)return;
+  const html=`
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+      <div style="background:#06060a;padding:24px;border-bottom:3px solid #b08010;">
+        <div style="font-family:serif;font-size:28px;color:#e8aa20;letter-spacing:2px;">🦅 EAGLE DS</div>
+      </div>
+      <div style="background:#0c0c11;padding:32px;">
+        <div style="font-size:11px;color:#72727e;font-family:monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">${post.category.replace("-"," ")}</div>
+        <h1 style="font-family:serif;font-size:26px;color:#ececf0;margin-bottom:16px;line-height:1.2;">${post.title}</h1>
+        <p style="color:#72727e;font-size:14px;line-height:1.7;margin-bottom:24px;">${post.excerpt}</p>
+        <a href="https://eagleds.github.io/blog.html" style="background:#b08010;color:#000;font-family:monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;border-radius:3px;text-decoration:none;display:inline-block;">Read Full Post →</a>
+      </div>
+      <div style="background:#06060a;padding:16px;text-align:center;font-family:monospace;font-size:9px;color:#4e4e5c;text-transform:uppercase;letter-spacing:1px;">Eagle DS · eagleds.co.nz</div>
+    </div>`;
+  try{
+    const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(r=>r.email),subject:`New post: ${post.title}`,html})});
+    if(res.ok)log(`Blog notification sent to ${targets.length} contacts.`,"ok");
+    else log("Email send failed.","err");
+  }catch(e){log("Notification error.","err");}
+}
+
+function renderPostList(){
+  const el=document.getElementById("post-list");
+  const keys=Object.keys(posts).sort((a,b)=>(posts[b].updatedAt||"").localeCompare(posts[a].updatedAt||""));
+  document.getElementById("post-count").textContent=`${keys.length} posts`;
+  if(!keys.length){el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:20px;">No posts yet.</div>`;return;}
+  el.innerHTML=keys.map(k=>{
+    const p=posts[k];
+    const date=new Date(p.updatedAt||p.created).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"});
+    return`<div class="post-card">
+      <div class="pc-title">${p.title}</div>
+      <div class="pc-meta">
+        <span>${date}</span>
+        <span>${p.category?p.category.replace("-"," "):""}</span>
+        <span class="tag ${p.status==="published"?"tag-published":"tag-draft"}">${p.status}</span>
+      </div>
+      ${p.excerpt?`<div class="pc-excerpt">${p.excerpt.slice(0,100)}${p.excerpt.length>100?"...":""}</div>`:""}
+      <div class="pc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editPost('${k}')">Edit</button>
+        ${p.status==="draft"?`<button class="btn btn-sm" onclick="publishNow('${k}')">Publish</button>`:""}
+        <button class="btn btn-red btn-sm" onclick="deletePost('${k}')">Delete</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function editPost(key){
+  const p=posts[key];
+  document.getElementById("post-key").value=key;
+  document.getElementById("post-title").value=p.title||"";
+  document.getElementById("post-body").value=p.body||"";
+  document.getElementById("post-excerpt").value=p.excerpt||"";
+  document.getElementById("post-category").value=p.category||"combat-sports";
+  document.getElementById("notify-sector").value=p.sector||"all";
+  document.getElementById("editor-mode-label").textContent="Editing Post";
+  updatePreview();window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function publishNow(key){
+  posts[key].status="published";posts[key].publishedAt=new Date().toISOString();
+  await fetch(`${FB}/eagle_blog.json`,{method:"PUT",body:JSON.stringify(posts)});
+  renderPostList();log(`Published: "${posts[key].title}"`,"ok");
+  await sendBlogNotification(posts[key],posts[key].sector||"all");
+}
+
+async function deletePost(key){
+  if(!confirm("Delete this post?"))return;
+  delete posts[key];
+  await fetch(`${FB}/eagle_blog.json`,{method:"PUT",body:JSON.stringify(posts)});
+  renderPostList();log("Post deleted.","warn");
+}
+
+function resetEditor(){
+  document.getElementById("post-key").value="";
+  document.getElementById("post-title").value="";
+  document.getElementById("post-body").value="";
+  document.getElementById("post-excerpt").value="";
+  document.getElementById("editor-mode-label").textContent="New Post";
+  document.getElementById("preview-box").innerHTML=`<span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Start writing to see preview...</span>`;
+}
+
+function renderIdeas(){
+  const el=document.getElementById("ideas-list");
+  const shuffled=CONTENT_IDEAS.sort(()=>Math.random()-.5).slice(0,8);
+  el.innerHTML=shuffled.map(idea=>`<div style="cursor:pointer;padding:2px 0;border-bottom:1px solid var(--border);" onclick="document.getElementById('post-title').value='${idea}';updatePreview();" title="Click to use as title">→ ${idea}</div>`).join("");
+}
+</script>
+</body>
+</html>
