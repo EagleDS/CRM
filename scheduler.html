@@ -3,411 +3,891 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eagle DS — Automation</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>Eagle DS — Automation Scheduler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
-:root{--bg:#06060a;--surf:#0c0c11;--surf2:#111116;--border:#1c1c24;--border2:#262632;--text:#ececf0;--muted:#4e4e5c;--muted2:#72727e;--gold:#e8aa20;--gold-lt:#f5c842;--gold-dk:#b08010;--red:#e84040;--blue:#3d8eff;--purple:#9d55f5;--green:#1fc863;--orange:#f07020;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bebas Neue',sans-serif;--r:3px;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
-::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
-.gate-wrap{width:280px;text-align:center;}
-.gate-eagle{font-family:var(--disp);font-size:52px;color:var(--gold);letter-spacing:4px;line-height:1;}
-.gate-name{font-family:var(--disp);font-size:16px;letter-spacing:6px;color:var(--muted2);margin-bottom:40px;}
-.gate-input{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:24px;text-align:center;letter-spacing:10px;padding:14px;outline:none;}
-.gate-btn{margin-top:10px;width:100%;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:13px;cursor:pointer;}
-.gate-btn:hover{background:var(--gold);}
-.gate-err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:10px;height:14px;}
-#app{display:none;}
-.topbar{position:sticky;top:0;z-index:200;height:50px;background:rgba(6,6,10,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
-.t-logo{font-family:var(--disp);font-size:20px;color:var(--gold);letter-spacing:2px;}
-.t-nav{display:flex;gap:2px;}
-.t-nav a{font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 10px;border-radius:var(--r);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
-.t-nav a:hover{color:var(--gold);}
-.t-nav a.here{color:var(--gold);}
-.status-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
-.sdot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
-.sdot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
-.ws{max-width:1320px;margin:0 auto;padding:24px;}
-.page-title{font-family:var(--disp);font-size:28px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
-.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:24px;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-@media(max-width:768px){.grid2{grid-template-columns:1fr;}}
-.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
-.ph{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.pt{font-family:var(--disp);font-size:13px;letter-spacing:1.5px;color:var(--gold);}
-.pb{padding:16px;}
-label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
-select,input[type="text"],input[type="date"],textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:11px;padding:9px 11px;outline:none;transition:border-color .15s;margin-bottom:13px;}
-textarea{resize:vertical;min-height:100px;}
-.btn{display:inline-block;background:var(--gold-dk);color:#000;border:none;border-radius:var(--r);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:background .15s;width:100%;text-align:center;}
-.btn:hover{background:var(--gold-lt);}
-.btn-sm{padding:6px 12px;font-size:9px;width:auto;}
-.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
-.btn-ghost:hover{border-color:var(--gold-dk);color:var(--gold);background:transparent;}
-.btn-red{background:transparent;border:1px solid #3a1010;color:#ff6060;}
-.btn-red:hover{background:#180808;}
-.btn-row{display:flex;gap:8px;}
-.btn-row .btn{flex:1;}
+/* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
+:root {
+  --black:    #0a0a0a;
+  --black-2:  #0f0f0f;
+  --grey:     #1a1a1a;
+  --mid:      #2e2e2e;
+  --surf:     #141414;
+  --border:   #222222;
+  --border2:  #333333;
+  --text:     #f8f4ee;
+  --muted:    #888888;
+  --muted2:   #666666;
+  --gold:     #C8960C;
+  --gold-lt:  #E8B84B;
+  --gold-pale:#f5e6b8;
+  --gold-dk:  #9a7008;
+  --red:      #C0392B;
+  --blue:     #3d8eff;
+  --green:    #22b64a;
+  --orange:   #e07020;
+  --purple:   #9d55f5;
+  --cormorant:'Cormorant Garamond', serif;
+  --bebas:    'Bebas Neue', sans-serif;
+  --dm:       'DM Sans', sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --r:        2px;
+}
 
-/* QUEUE TABLE */
-.twrap{overflow-x:auto;max-height:460px;overflow-y:auto;}
-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
-thead th{background:var(--bg);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:9px 13px;border-bottom:1px solid var(--border);position:sticky;top:0;}
-tbody td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle;}
-tbody tr:hover td{background:var(--surf2);}
-tbody tr:last-child td{border-bottom:none;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
-.q-status{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:20px;}
-.qs-pending{background:#2a1400;color:var(--orange);border:1px solid #5a3000;}
-.qs-sent{background:#020d05;color:var(--green);border:1px solid #0a3a1a;}
-.qs-due{background:#2a0a00;color:var(--red);border:1px solid #6a1a00;animation:blink .8s infinite;}
-.qs-skipped{background:#141414;color:var(--muted2);border:1px solid var(--border2);}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: var(--dm);
+  font-weight: 300;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-/* SEQUENCE TEMPLATES */
-.template-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
-.template-card:hover{border-color:var(--gold-dk);}
-.tc-name{font-family:var(--disp);font-size:14px;letter-spacing:1px;color:var(--gold);margin-bottom:4px;}
-.tc-meta{font-family:var(--mono);font-size:9px;color:var(--muted2);}
-.tc-steps{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
-.tc-step{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;background:var(--surf);border:1px solid var(--border2);color:var(--muted2);}
+/* Film grain */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.35;
+}
 
-.var-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px;}
-.var-chip{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:2px;background:var(--surf2);border:1px solid var(--border2);color:var(--gold-dk);cursor:pointer;transition:all .15s;}
-.var-chip:hover{border-color:var(--gold);color:var(--gold);}
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 1px; }
 
-.console{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:10px;padding:10px 12px;height:70px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
-.l-ok{color:var(--green);}.l-err{color:var(--red);}.l-warn{color:var(--orange);}.l-info{color:var(--muted2);}.l-gold{color:var(--gold);}
+/* GATE */
+#gate {
+  position: fixed; inset: 0;
+  background: var(--black);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.gate-wrap { width: 300px; text-align: center; }
+.gate-eagle {
+  font-family: var(--bebas);
+  font-size: 56px; color: var(--gold);
+  letter-spacing: 4px; line-height: 1;
+}
+.gate-name {
+  font-family: var(--cormorant);
+  font-size: 15px; font-style: italic;
+  color: var(--muted); margin-bottom: 8px;
+}
+.gate-sub {
+  font-family: var(--mono);
+  font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 40px;
+}
+.gate-line {
+  width: 40px; height: 1px;
+  background: var(--gold-dk);
+  margin: 0 auto 40px;
+}
+.gate-input {
+  width: 100%;
+  background: var(--grey);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 24px; text-align: center;
+  letter-spacing: 10px; padding: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.gate-input:focus { border-color: var(--gold-dk); }
+.gate-btn {
+  margin-top: 10px; width: 100%;
+  background: var(--gold-dk); color: #000;
+  border: none; border-radius: var(--r);
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 600; letter-spacing: 3px;
+  text-transform: uppercase; padding: 13px;
+  cursor: pointer; transition: background .2s;
+}
+.gate-btn:hover { background: var(--gold); }
+.gate-err {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--red); margin-top: 10px; height: 14px;
+}
+
+/* NAV */
+#app { display: none; }
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  height: 54px;
+  background: rgba(10,10,10,.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(200,150,12,0.12);
+  padding: 0 32px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.t-brand {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none;
+}
+.t-wordmark {
+  font-family: var(--bebas);
+  font-size: 20px; letter-spacing: 3px; color: var(--text);
+  line-height: 1;
+}
+.t-wordmark small {
+  display: block;
+  font-family: var(--dm); font-size: 8px;
+  letter-spacing: 0.28em; color: var(--gold);
+  font-weight: 500; text-transform: uppercase;
+}
+.t-nav { display: flex; gap: 2px; align-items: center; }
+.t-nav a {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--muted); padding: 6px 10px;
+  border-radius: var(--r); text-decoration: none;
+  letter-spacing: 1px; text-transform: uppercase;
+  transition: all .15s; position: relative;
+}
+.t-nav a::after {
+  content: ''; position: absolute;
+  left: 10px; bottom: 2px;
+  width: 0; height: 1px;
+  background: var(--gold);
+  transition: width .2s;
+}
+.t-nav a:hover { color: var(--text); }
+.t-nav a:hover::after { width: calc(100% - 20px); }
+.t-nav a.here { color: var(--gold); }
+.t-nav a.here::after { width: calc(100% - 20px); }
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 9px; color: var(--muted);
+  background: var(--grey); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+}
+.sdot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+.sdot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sdot.err  { background: var(--red); }
+
+/* WORKSPACE */
+.ws { max-width: 1360px; margin: 0 auto; padding: 32px; }
+
+/* PAGE HEADER */
+.page-hd { margin-bottom: 32px; }
+.section-label {
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 500; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 10px; display: block;
+}
+.page-title {
+  font-family: var(--cormorant);
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 300; line-height: 1.1;
+  letter-spacing: -0.01em; color: var(--text);
+  margin-bottom: 8px;
+}
+.page-title em { font-style: italic; color: var(--gold-lt); }
+.page-sub {
+  font-family: var(--dm); font-size: 14px;
+  color: var(--muted); font-weight: 300;
+}
+
+/* GOLD DIVIDER */
+.gold-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,150,12,0.25), transparent);
+  margin: 8px 0;
+}
+.gold-line { width: 48px; height: 2px; background: var(--gold); margin-bottom: 20px; }
+
+/* TABS */
+.tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.tab {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); padding: 11px 18px;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all .15s;
+  background: none; border-top: none;
+  border-left: none; border-right: none;
+  position: relative;
+}
+.tab::after {
+  content: ''; position: absolute;
+  left: 18px; bottom: -1px;
+  width: 0; height: 2px;
+  background: var(--gold);
+  transition: width .2s;
+}
+.tab:hover { color: var(--muted2); }
+.tab.active { color: var(--gold); }
+.tab.active::after { width: calc(100% - 36px); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* STAT CARDS */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 2px; margin-bottom: 2px;
+}
+@media(max-width:960px){ .stat-grid { grid-template-columns: 1fr 1fr; } }
+.scard {
+  background: var(--grey);
+  padding: 20px 24px;
+  position: relative; overflow: hidden;
+}
+.scard::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--border);
+}
+.scard.s-master::before { background: linear-gradient(90deg, var(--gold-dk), var(--gold)); }
+.scard.s-gym::before    { background: var(--blue); }
+.scard.s-cgs::before    { background: var(--red); }
+.scard.s-school::before { background: var(--purple); }
+.scard.s-corp::before   { background: var(--green); }
+.scard-n {
+  font-family: var(--bebas);
+  font-size: 44px; color: var(--gold);
+  line-height: 1; letter-spacing: 1px;
+}
+.scard.s-master .scard-n { font-size: 56px; }
+.scard-l {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--muted); text-transform: uppercase;
+  letter-spacing: 1.5px; margin-top: 4px;
+}
+
+/* TIER ROW */
+.tier-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 2px; margin-bottom: 2px;
+}
+@media(max-width:700px){ .tier-row { grid-template-columns: 1fr 1fr; } }
+.tcard {
+  background: var(--grey); padding: 14px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.tdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tdot.hot     { background: #e84040; box-shadow: 0 0 8px #e84040; }
+.tdot.warm    { background: #e07020; box-shadow: 0 0 6px #e07020; }
+.tdot.cold    { background: #3d8eff; box-shadow: 0 0 5px #3d8eff; }
+.tdot.dormant { background: var(--muted); }
+.tcard-n {
+  font-family: var(--bebas); font-size: 30px;
+  color: var(--text); line-height: 1;
+}
+.tcard-l {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* PANELS */
+.panel {
+  background: var(--grey);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden; margin-bottom: 2px;
+}
+.ph {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pt {
+  font-family: var(--cormorant);
+  font-size: 16px; font-weight: 600;
+  color: var(--gold); letter-spacing: 0.5px;
+}
+.pb { padding: 18px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+@media(max-width:768px){ .grid2,.grid3 { grid-template-columns: 1fr; } }
+
+/* FORMS */
+label {
+  display: block;
+  font-family: var(--mono); font-size: 9px;
+  color: var(--muted2); text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 5px;
+}
+select,
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="password"],
+textarea {
+  width: 100%;
+  background: var(--black);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--mono); font-size: 11px;
+  padding: 9px 12px; outline: none;
+  transition: border-color .15s;
+  margin-bottom: 14px;
+  -webkit-appearance: none;
+}
+select:focus, input:focus, textarea:focus { border-color: var(--gold-dk); }
+textarea { resize: vertical; min-height: 90px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-block;
+  background: var(--gold-dk); color: #000;
+  border: none; border-radius: var(--r);
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 11px 18px;
+  cursor: pointer; transition: background .15s;
+  width: 100%; text-align: center;
+  position: relative; overflow: hidden;
+}
+.btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--gold-lt);
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+}
+.btn:hover::before { transform: translateX(0); }
+.btn span { position: relative; z-index: 1; }
+.btn-sm   { padding: 6px 14px; font-size: 9px; width: auto; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+}
+.btn-ghost::before { display: none; }
+.btn-ghost:hover { border-color: var(--gold-dk); color: var(--gold); }
+.btn-red {
+  background: transparent;
+  border: 1px solid #3a1010; color: #ff7070;
+}
+.btn-red::before { background: #200606; }
+.btn-row { display: flex; gap: 2px; }
+.btn-row .btn { flex: 1; }
+
+/* SECTOR TILES */
+.sector-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 14px; }
+.stile {
+  border: 1px solid var(--border2);
+  padding: 10px 12px; cursor: pointer;
+  font-family: var(--mono); font-size: 10px;
+  text-align: center; transition: all .15s;
+  color: var(--muted2); user-select: none;
+  position: relative; overflow: hidden;
+}
+.stile::before {
+  content: ''; position: absolute;
+  bottom: 0; left: 0; width: 0; height: 2px;
+  transition: width .2s;
+}
+.stile:hover { color: var(--muted); }
+.stile.on-gym    { border-color: var(--blue); color: #6aadff; background: #080f1c; }
+.stile.on-cgs    { border-color: var(--red);  color: #ff7070; background: #1c0808; }
+.stile.on-school { border-color: var(--purple); color: #c080ff; background: #110820; }
+.stile.on-corp   { border-color: var(--green); color: #50e07a; background: #061410; }
+
+/* BADGES */
+.badge {
+  display: inline-block; padding: 2px 7px;
+  border-radius: 1px;
+  font-family: var(--mono); font-size: 8px;
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: .5px; margin: 1px;
+}
+.b-gym    { background: #080f1c; color: #6aadff; border: 1px solid #1a3a6a; }
+.b-cgs    { background: #1c0808; color: #ff7070; border: 1px solid #5a1616; }
+.b-school { background: #110820; color: #c080ff; border: 1px solid #481a6a; }
+.b-corp   { background: #061410; color: #50e07a; border: 1px solid #185a2a; }
+
+/* TIER BADGES */
+.tb {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 20px;
+  font-family: var(--mono); font-size: 8px;
+  font-weight: 600; letter-spacing: .5px;
+}
+.tb::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.tb-hot     { background: #200808; color: #ff7070; border: 1px solid #5a1010; } .tb-hot::before     { background: #e84040; }
+.tb-warm    { background: #1e1000; color: #ffa060; border: 1px solid #5a3000; } .tb-warm::before    { background: #e07020; }
+.tb-cold    { background: #080f1e; color: #70a8ff; border: 1px solid #103060; } .tb-cold::before    { background: #3d8eff; }
+.tb-dormant { background: #111111; color: var(--muted); border: 1px solid var(--border2); } .tb-dormant::before { background: var(--muted); }
+.tb-new     { background: #071410; color: #60e080; border: 1px solid #1a5a2a; } .tb-new::before     { background: var(--green); }
+
+/* PARENT/CHILD */
+.p-badge { display:inline-block;padding:1px 7px;border-radius:20px;font-family:var(--mono);font-size:8px;border:1px solid #5a3000;color:#ffa060;background:#180b00;margin-left:4px; }
+.c-badge { display:inline-block;padding:1px 7px;border-radius:20px;font-family:var(--mono);font-size:8px;border:1px solid #481a6a;color:#c080ff;background:#0e0620;margin-left:4px; }
+
+/* CONSOLE */
+.console {
+  background: var(--black);
+  border: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px;
+  padding: 12px; height: 80px;
+  overflow-y: auto; white-space: pre-wrap; line-height: 1.7;
+}
+.l-ok   { color: #22b64a; }
+.l-err  { color: var(--red); }
+.l-warn { color: var(--orange); }
+.l-info { color: var(--muted2); }
+.l-gold { color: var(--gold); }
+
+/* TABLE */
+.tbar {
+  display: flex; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: center; flex-wrap: wrap;
+  background: var(--black-2);
+}
+.tbar input  { margin-bottom: 0; flex: 1; min-width: 180px; }
+.tbar select { margin-bottom: 0; width: auto; }
+.twrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+thead th {
+  background: var(--black-2); color: var(--muted2);
+  font-size: 9px; text-transform: uppercase;
+  letter-spacing: 1px; padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; white-space: nowrap; z-index: 1;
+}
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr:hover td { background: var(--grey); }
+tbody tr:last-child td { border-bottom: none; }
+.nc strong { font-size: 12px; color: var(--text); font-weight: 500; display: block; font-family: var(--cormorant); letter-spacing: 0.2px; }
+.nc span   { color: var(--muted2); font-size: 10px; display: block; }
+.dbtn  { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px 8px; transition: all .15s; }
+.dbtn:hover  { color: var(--red); }
+.edit-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 4px 8px; transition: all .15s; }
+.edit-btn:hover { color: var(--gold); }
+
+/* MODAL */
+.modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.92);
+  backdrop-filter: blur(8px);
+  z-index: 500; align-items: center;
+  justify-content: center; padding: 20px;
+}
+.modal.open { display: flex; }
+.mbox {
+  background: var(--grey);
+  border: 1px solid var(--border2);
+  width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+}
+.mh {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.mt {
+  font-family: var(--cormorant);
+  font-size: 20px; font-weight: 600; color: var(--gold);
+}
+.mc {
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  font-size: 18px; padding: 2px 6px;
+  transition: color .15s;
+}
+.mc:hover { color: var(--text); }
+.mb { padding: 20px; }
+.mf {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* AUTO BANNER */
+.auto-banner {
+  background: var(--grey);
+  border: 1px solid rgba(200,150,12,0.2);
+  padding: 12px 18px; margin-bottom: 2px;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+}
+.ab-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 8px var(--gold);
+  flex-shrink: 0;
+  animation: abpulse 2s infinite;
+}
+@keyframes abpulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.ab-txt { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
+.ab-count { font-family: var(--cormorant); font-size: 14px; font-weight: 600; color: var(--gold); }
+
+/* FIX ROWS */
+.fix-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.fix-row:last-child { border-bottom: none; }
+.fix-info strong { color: var(--text); display: block; font-family: var(--mono); font-size: 10px; }
+.fix-info span   { color: var(--muted2); font-family: var(--mono); font-size: 9px; }
+
+/* MAP MODAL ROWS */
+.map-r { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.map-l { font-family: var(--mono); font-size: 9px; color: var(--muted2); text-transform: uppercase; width: 80px; flex-shrink: 0; }
+.map-r select { margin-bottom: 0; flex: 1; }
+.map-prev {
+  background: var(--black); border: 1px solid var(--border);
+  padding: 10px; font-family: var(--mono); font-size: 9px;
+  color: var(--muted2); margin-bottom: 14px;
+  max-height: 90px; overflow-y: auto; white-space: pre-wrap;
+}
+.detected-banner {
+  background: var(--black); border: 1px solid rgba(200,150,12,0.2);
+  padding: 10px 14px; font-family: var(--mono); font-size: 10px;
+  color: var(--gold); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.fp-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.fp-tag {
+  font-family: var(--mono); font-size: 9px;
+  padding: 2px 8px; border: 1px solid var(--border2);
+  color: var(--muted2);
+}
+.fp-tag.match { border-color: var(--green); color: var(--green); background: rgba(34,182,74,0.06); }
+
+/* VAR CHIPS */
+.var-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.var-chip {
+  font-family: var(--mono); font-size: 9px;
+  padding: 3px 9px; border: 1px solid var(--border2);
+  color: var(--gold-dk); cursor: pointer; transition: all .15s;
+  background: rgba(200,150,12,0.04);
+}
+.var-chip:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,150,12,0.1); }
+
+/* FAMILY INSIGHT */
+.family-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.family-stat { background: var(--black); padding: 18px 20px; text-align: center; }
+.family-stat .fn { font-family: var(--bebas); font-size: 38px; line-height: 1; }
+.family-stat .fl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* NOTIFY TOGGLE */
+.notify-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.toggle { width: 36px; height: 20px; background: var(--border2); border-radius: 10px; cursor: pointer; position: relative; transition: background .2s; flex-shrink: 0; }
+.toggle.on { background: var(--gold-dk); }
+.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; }
+.toggle.on::after { left: 19px; }
+.toggle-label { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
+
+/* EDITOR TOOLBAR */
+.editor-toolbar { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 10px; }
+.tb-btn {
+  background: var(--black); border: 1px solid var(--border2);
+  color: var(--muted2); font-family: var(--mono); font-size: 10px;
+  padding: 5px 12px; cursor: pointer; transition: all .15s;
+}
+.tb-btn:hover { border-color: var(--gold-dk); color: var(--gold); }
+
+/* PREVIEW */
+.preview-wrap {
+  background: var(--black); border: 1px solid var(--border);
+  padding: 24px; min-height: 200px;
+  font-family: var(--dm); font-size: 14px;
+  line-height: 1.8; color: var(--text);
+}
+.preview-wrap h1,.preview-wrap h2,.preview-wrap h3 { font-family: var(--cormorant); color: var(--gold-lt); font-weight: 300; letter-spacing: -0.01em; margin: 16px 0 8px; }
+.preview-wrap h1 { font-size: 32px; }
+.preview-wrap h2 { font-size: 24px; }
+.preview-wrap h3 { font-size: 19px; }
+.preview-wrap p  { margin-bottom: 12px; color: var(--muted); }
+.preview-wrap strong { color: var(--text); font-weight: 500; }
+.preview-wrap em { color: var(--gold-pale); font-style: italic; }
+.preview-wrap blockquote { border-left: 2px solid var(--gold); padding-left: 18px; color: var(--muted); margin: 16px 0; font-family: var(--cormorant); font-size: 18px; font-style: italic; }
+.preview-wrap hr { border: none; border-top: 1px solid var(--border2); margin: 18px 0; }
+.preview-wrap ul { margin: 0 0 12px 20px; color: var(--muted); }
+
+/* POST CARD */
+.post-card {
+  background: var(--black); border: 1px solid var(--border);
+  padding: 18px; margin-bottom: 2px;
+  transition: border-color .2s; cursor: default;
+}
+.post-card:hover { border-color: var(--border2); }
+.pc-title { font-family: var(--cormorant); font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
+.pc-meta  { font-family: var(--mono); font-size: 9px; color: var(--muted2); display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.pc-excerpt { font-size: 12px; color: var(--muted2); line-height: 1.6; margin-bottom: 10px; }
+.pc-actions { display: flex; gap: 6px; }
+.tag-published { background: rgba(34,182,74,0.08); color: var(--green); border: 1px solid rgba(34,182,74,0.3); padding: 1px 7px; font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: .5px; }
+.tag-draft     { background: rgba(224,112,32,0.08); color: var(--orange); border: 1px solid rgba(224,112,32,0.3); padding: 1px 7px; font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* EVENT CARD */
+.event-card {
+  background: var(--grey); border: 1px solid var(--border);
+  overflow: hidden; transition: border-color .2s;
+}
+.event-card:hover { border-color: var(--border2); }
+.ec-top { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ec-sector { font-family: var(--mono); font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 2px 8px; margin-bottom: 6px; display: inline-block; border: 1px solid; }
+.ec-s-cgs    { color: #ff7070; border-color: #5a1616; background: #1c0808; }
+.ec-s-gym    { color: #6aadff; border-color: #1a3a6a; background: #080f1c; }
+.ec-s-school { color: #c080ff; border-color: #481a6a; background: #110820; }
+.ec-s-corp   { color: #50e07a; border-color: #185a2a; background: #061410; }
+.ec-name { font-family: var(--cormorant); font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.1; }
+.ec-date { font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: 4px; }
+.ec-countdown { font-family: var(--bebas); font-size: 26px; text-align: right; line-height: 1; }
+.ec-countdown span { font-family: var(--mono); font-size: 9px; color: var(--muted); display: block; text-transform: uppercase; }
+.ec-body { padding: 14px 18px; }
+.ec-actions { display: flex; gap: 2px; padding: 12px 18px; border-top: 1px solid var(--border); }
+.ec-actions .btn { margin-top: 0; }
+.seq-steps { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.seq-step { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 9px; padding: 5px 8px; background: var(--black); border: 1px solid var(--border); }
+.seq-step.sent    { border-color: rgba(34,182,74,0.3); color: var(--green); background: rgba(34,182,74,0.04); }
+.seq-step.due     { border-color: rgba(200,150,12,0.4); color: var(--gold); background: rgba(200,150,12,0.04); }
+.seq-step.upcoming { color: var(--muted); }
+.step-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.step-dot.sent { background: var(--green); }
+.step-dot.due  { background: var(--gold); animation: abpulse 1.5s infinite; }
+.step-dot.upcoming { background: var(--muted); }
+
+/* QUEUE STATUS */
+.q-status { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 9px; padding: 2px 8px; }
+.qs-pending { background: rgba(224,112,32,0.08); color: var(--orange); border: 1px solid rgba(224,112,32,0.3); }
+.qs-sent    { background: rgba(34,182,74,0.06); color: var(--green); border: 1px solid rgba(34,182,74,0.25); }
+.qs-due     { background: rgba(200,150,12,0.1); color: var(--gold); border: 1px solid rgba(200,150,12,0.4); animation: abpulse .9s infinite; }
+.qs-skipped { background: var(--black); color: var(--muted); border: 1px solid var(--border); }
+
+/* TEMPLATE CARD */
+.template-card { background: var(--black); border: 1px solid var(--border); padding: 16px; margin-bottom: 2px; cursor: pointer; transition: border-color .2s; }
+.template-card:hover { border-color: var(--gold-dk); }
+.tc-name { font-family: var(--cormorant); font-size: 17px; font-weight: 600; color: var(--gold); margin-bottom: 4px; }
+.tc-meta { font-family: var(--mono); font-size: 9px; color: var(--muted2); }
+
+/* CONTENT IDEAS */
+.idea-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: color .15s;
+  font-size: 12px; color: var(--muted2);
+}
+.idea-item:hover { color: var(--gold-lt); }
+.idea-item::before { content: '→'; color: var(--gold); font-family: var(--mono); font-size: 10px; flex-shrink: 0; }
+.idea-item:last-child { border-bottom: none; }
+
+/* WATERMARK */
+.section-watermark {
+  position: absolute; pointer-events: none;
+  font-family: var(--bebas); font-size: 180px;
+  color: rgba(255,255,255,0.02); letter-spacing: 0.1em;
+  white-space: nowrap; user-select: none;
+  right: -20px; top: 50%; transform: translateY(-50%) rotate(90deg);
+}
+
+/* FOOTER */
+.site-footer {
+  background: var(--black-2);
+  border-top: 1px solid rgba(200,150,12,0.1);
+  padding: 24px 32px;
+  display: flex; justify-content: space-between;
+  align-items: center; gap: 16px;
+  flex-wrap: wrap;
+}
+.sf-brand { font-family: var(--bebas); font-size: 16px; letter-spacing: 2px; color: var(--muted2); }
+.sf-links { display: flex; gap: 20px; }
+.sf-links a { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted2); text-decoration: none; transition: color .15s; }
+.sf-links a:hover { color: var(--gold); }
+.sf-copy { font-family: var(--mono); font-size: 9px; color: var(--muted2); letter-spacing: 1px; }
+
+/* SCROLL REVEAL */
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes breathe { 0%,100%{opacity:.9;transform:scale(1);}50%{opacity:1;transform:scale(1.015);} }
+@keyframes expand  { from{width:0;opacity:0;}to{width:48px;opacity:1;} }
+
 </style>
 </head>
 <body>
 <div id="gate">
   <div class="gate-wrap">
     <div class="gate-eagle">🦅</div>
-    <div class="gate-name">EAGLE DS</div>
+    <div class="gate-name">Eagle DS</div>
+    <div class="gate-sub">Automation Engine</div>
+    <div class="gate-line"></div>
     <input type="password" class="gate-input" id="pin" placeholder="····" maxlength="12" onkeydown="if(event.key==='Enter')unlock()">
-    <button class="gate-btn" onclick="unlock()">Unlock</button>
+    <button class="gate-btn" onclick="unlock()">Unlock →</button>
     <div class="gate-err" id="gerr"></div>
   </div>
 </div>
 <div id="app">
   <div class="topbar">
-    <div class="t-logo">🦅 EAGLE DS</div>
+    <a href="index.html" class="t-brand"><span class="t-wordmark">EAGLE DS<small>Automation Engine</small></span></a>
     <div class="t-nav">
-      <a href="crm.html">CRM</a><a href="events.html">Events</a>
-      <a href="scheduler.html" class="here">Automation</a><a href="blog.html">Blog</a>
+      <a href="crm.html">CRM</a>
+      <a href="events.html">Events</a>
+      <a href="scheduler.html" class="here">Automation</a>
+      <a href="blog.html">Blog</a>
     </div>
     <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div>
   </div>
   <div class="ws">
-    <div class="page-title">Automation Engine</div>
-    <div class="page-sub">Schedule emails · Build sequences · Set retention rules · All fires automatically</div>
+    <div class="page-hd reveal">
+      <span class="section-label">Eagle DS · Marketing Engine</span>
+      <div class="page-title">Automation <em>Scheduler</em></div>
+      <div class="page-sub">Schedule campaigns · Manage the queue · Activate retention rules</div>
+    </div>
+    <div class="gold-divider" style="margin-bottom:20px;"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('schedule',this)">Schedule</button>
+      <button class="tab" onclick="switchTab('queue',this)">Queue</button>
+      <button class="tab" onclick="switchTab('retention',this)">Retention Rules</button>
+    </div>
 
-    <div class="grid2">
-      <!-- COMPOSE ONE-OFF SCHEDULED EMAIL -->
-      <div class="panel">
-        <div class="ph"><div class="pt">Schedule a Single Email</div></div>
-        <div class="pb">
-          <label>Sector Target</label>
-          <select id="s-sector">
-            <option value="all">All Sectors</option><option value="gym">🥋 Gym</option>
-            <option value="cgs">⚔ CGS Circuit</option><option value="school">🏫 Institutional</option><option value="corp">💼 Commercial</option>
-          </select>
-          <label>Engagement Filter</label>
-          <select id="s-tier">
-            <option value="all">All contacts</option><option value="hot,warm">Hot + Warm</option>
-            <option value="hot,warm,cold">Active only</option><option value="dormant">Dormant — re-engage</option>
-            <option value="parents">Parents only</option><option value="adults">Adult athletes only</option>
-          </select>
-          <label>Send Date</label>
-          <input type="date" id="s-date">
-          <label>Subject — click variables below to insert</label>
-          <div class="var-chips">
-            <span class="var-chip" onclick="insertVar('s-subject','[FirstName]')">[FirstName]</span>
-            <span class="var-chip" onclick="insertVar('s-subject','[ChildName]')">[ChildName]</span>
-            <span class="var-chip" onclick="insertVar('s-subject','[EventName]')">[EventName]</span>
+    <!-- SCHEDULE -->
+    <div class="tab-pane active" id="tab-schedule">
+      <div class="grid2">
+        <div class="panel">
+          <div class="ph"><div class="pt">Schedule New Email</div></div>
+          <div class="pb">
+            <label>Sector</label>
+            <select id="s-sector">
+              <option value="all">All Sectors</option>
+              <option value="gym">🥋 Gym Academy</option>
+              <option value="cgs">⚔ CGS Circuit</option>
+              <option value="school">🏫 Institutional</option>
+              <option value="corp">💼 Commercial</option>
+            </select>
+            <label>Engagement Tier</label>
+            <select id="s-tier">
+              <option value="all">All contacts</option>
+              <option value="hot">Hot — last 30 days</option>
+              <option value="hot,warm">Hot + Warm</option>
+              <option value="hot,warm,cold">Active — exclude dormant</option>
+              <option value="dormant">Dormant only</option>
+              <option value="parents">Parents only</option>
+            </select>
+            <label>Send Date</label>
+            <input type="date" id="s-date">
+            <label>Subject — use [FirstName] [ChildName] [EventName]</label>
+            <input type="text" id="s-subject" placeholder="Subject line...">
+            <div class="var-chips">
+              <span class="var-chip" onclick="insertVar('[FirstName]','s-subject')">[FirstName]</span>
+              <span class="var-chip" onclick="insertVar('[ChildName]','s-subject')">[ChildName]</span>
+              <span class="var-chip" onclick="insertVar('[EventName]','s-subject')">[EventName]</span>
+            </div>
+            <label>Message Body</label>
+            <textarea id="s-body" style="min-height:130px;" placeholder="Hi [FirstName],&#10;&#10;Your message...&#10;&#10;Dafydd Sanders&#10;Eagle DS"></textarea>
+            <div class="var-chips">
+              <span class="var-chip" onclick="insertVar('[FirstName]','s-body')">[FirstName]</span>
+              <span class="var-chip" onclick="insertVar('[ChildName]','s-body')">[ChildName]</span>
+              <span class="var-chip" onclick="insertVar('[EventName]','s-body')">[EventName]</span>
+              <span class="var-chip" onclick="insertVar('[ChildCount]','s-body')">[ChildCount]</span>
+            </div>
+            <button class="btn" onclick="scheduleEmail()"><span>Add to Queue →</span></button>
           </div>
-          <input type="text" id="s-subject" placeholder="Subject line...">
-          <label>Message Body</label>
-          <div class="var-chips">
-            <span class="var-chip" onclick="insertVar('s-body','[FirstName]')">[FirstName]</span>
-            <span class="var-chip" onclick="insertVar('s-body','[ChildName]')">[ChildName]</span>
-            <span class="var-chip" onclick="insertVar('s-body','[ChildCount]')">[ChildCount]</span>
-            <span class="var-chip" onclick="insertVar('s-body','[EventName]')">[EventName]</span>
-          </div>
-          <textarea id="s-body" placeholder="Hi [FirstName],&#10;&#10;Write your message here...&#10;&#10;Eagle DS Team"></textarea>
-          <button class="btn" onclick="scheduleEmail()">Add to Queue →</button>
         </div>
-      </div>
-
-      <!-- RETENTION AUTOMATION -->
-      <div class="panel">
-        <div class="ph"><div class="pt">Retention Automations</div></div>
-        <div class="pb">
-          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.7;">These run automatically when you open the CRM. Set them once and forget.</p>
-          <div id="retention-list"></div>
-          <button class="btn btn-ghost" onclick="openRetentionBuilder()" style="margin-top:8px;">+ Add Retention Rule</button>
+        <div class="panel">
+          <div class="ph"><div class="pt">System Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()"><span>Clear</span></button></div>
+          <div class="pb"><div class="console" id="console"></div></div>
+          <div class="ph" style="border-top:1px solid var(--border);margin-top:2px;"><div class="pt">Fire Due Now</div></div>
+          <div class="pb">
+            <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:12px;line-height:1.7;">Fires all emails in the queue where the send date has passed. The CRM dashboard does this automatically each time it is opened.</p>
+            <button class="btn" onclick="fireAllDue()"><span>⚡ Fire All Due Emails</span></button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- QUEUE -->
-    <div class="panel">
-      <div class="ph">
-        <div class="pt">Automation Queue</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span id="queue-due-count" style="font-family:var(--mono);font-size:9px;color:var(--orange);"></span>
-          <button class="btn btn-sm" onclick="fireQueue()">▶ Fire Due Now</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearSentQueue()">Clear Sent</button>
+    <div class="tab-pane" id="tab-queue">
+      <div class="panel">
+        <div class="ph"><div class="pt">Automation Queue</div><span id="q-count" style="font-family:var(--mono);font-size:9px;color:var(--muted);"></span></div>
+        <div class="tbar">
+          <select id="q-filter" onchange="renderQueue()" style="width:160px;">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="due">Due now</option>
+            <option value="sent">Sent</option>
+            <option value="skipped">Skipped</option>
+          </select>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Sector / Tier</th><th>Send Date</th><th>Status</th><th></th></tr></thead>
+            <tbody id="q-body"><tr><td colspan="5" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr></tbody>
+          </table>
         </div>
       </div>
-      <div class="twrap">
-        <table>
-          <thead><tr><th>Send Date</th><th>Subject</th><th>Sector</th><th>Filter</th><th>Status</th><th></th></tr></thead>
-          <tbody id="queue-body"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Loading queue...</td></tr></tbody>
-        </table>
-      </div>
     </div>
 
-    <!-- SEQUENCE TEMPLATES -->
-    <div class="panel">
-      <div class="ph"><div class="pt">Sequence Templates</div><button class="btn btn-ghost btn-sm" onclick="openTemplateBuilder()">+ New Template</button></div>
-      <div class="pb">
-        <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:14px;line-height:1.7;">Reusable multi-step sequences. Attach to any event in the Events tab.</p>
-        <div id="templates-list"></div>
+    <!-- RETENTION -->
+    <div class="tab-pane" id="tab-retention">
+      <div class="page-hd">
+        <span class="section-label">Automated Retention Rules</span>
+        <p style="font-family:var(--dm);font-size:13px;color:var(--muted2);max-width:600px;line-height:1.8;">Click Activate to enable any rule. When active, the rule checks eligible contacts on load and fires the email once per eligible contact per year.</p>
       </div>
-    </div>
-
-    <div class="panel">
-      <div class="ph"><div class="pt">Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button></div>
-      <div class="pb"><div class="console" id="console"></div></div>
+      <div id="retention-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:2px;"></div>
     </div>
   </div>
+  <footer class="site-footer">
+    <span class="sf-brand">EAGLE DS</span>
+    <div class="sf-links">
+      <a href="crm.html">CRM</a><a href="events.html">Events</a>
+      <a href="scheduler.html">Automation</a><a href="blog.html">Blog</a>
+      <a href="https://eagleds.co.nz" target="_blank">Website ↗</a>
+    </div>
+    <span class="sf-copy">Eagle DS · East Tāmaki · Internal Operations</span>
+  </footer>
 </div>
-
 <script>
-const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
-const HASH="81dc9bdb52d04dc20036dbd8313ed055";
-const FROM="info@eagleds.co.nz";
-let queue={},db={},retention=[];
 
-function unlock(){
-  const v=document.getElementById("pin").value.trim();
-  if(CryptoJS.MD5(v).toString()===HASH){
-    document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";
-    log("Connected.","ok");loadAll();
-  }else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}
-}
-function log(msg,type="info"){const b=document.getElementById("console");const s=document.createElement("span");s.className=`l-${type}`;s.textContent=`[${new Date().toLocaleTimeString()}] ${msg}\n`;b.appendChild(s);b.scrollTop=b.scrollHeight;}
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
+let queue={},contacts={};
+const RULES=[
+  {id:"warmwinback",name:"Warm Win-Back",desc:"Contacts who were active but haven't engaged in 90+ days. Sends a personalised re-engagement email once per year.",days:90,tier:"warm",subject:"We miss you, [FirstName]",body:"Hi [FirstName],\n\nIt's been a while since we've seen you at Eagle DS — wanted to check in.\n\nIf you're thinking about getting back on the mat, we'd love to have you. Drop us a reply or book a session.\n\nDafydd Sanders\nEagle DS"},
+  {id:"dormantreact",name:"Dormant Re-Activation",desc:"Contacts with no activity for 365+ days. Sends a low-pressure check-in once per year.",days:365,tier:"dormant",subject:"Still interested in training, [FirstName]?",body:"Hi [FirstName],\n\nIt has been over a year since you were last involved with Eagle DS.\n\nWe're still here, still running sessions, and the door is always open if you'd like to come back. No pressure — just wanted to make sure you knew.\n\nDafydd Sanders\nEagle DS"},
+  {id:"multichild",name:"Multi-Child Family Offer",desc:"Parents with 2+ children registered. Sends a family discount prompt once per year.",days:0,tier:"parents",subject:"A note for Eagle DS families",body:"Hi [FirstName],\n\nWe wanted to reach out personally to families with multiple children training with us — you are a core part of the Eagle DS community.\n\nIf you haven't already, ask us about our family membership options.\n\nDafydd Sanders\nEagle DS"}
+];
+function unlock(){const v=document.getElementById("pin").value.trim();if(CryptoJS.MD5(v).toString()===HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";log("Connected.","ok");syncData();}else{const e=document.getElementById("gerr");e.textContent="Invalid.";document.getElementById("pin").value="";setTimeout(()=>e.textContent="",2000);}}
+function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="queue")renderQueue();if(id==="retention")renderRetention();}
+function insertVar(v,id){const el=document.getElementById(id);const p=el.selectionStart,e=el.selectionEnd;el.value=el.value.slice(0,p)+v+el.value.slice(e);el.focus();el.selectionStart=el.selectionEnd=p+v.length;}
+async function syncData(){setStatus("","syncing…");try{const[qr,cr]=await Promise.all([fetch(FB+"/automation_queue.json"),fetch(FB+"/directory_crm_master.json")]);queue=await qr.json()||{};contacts=await cr.json()||{};setStatus("live","live");log(Object.keys(queue).length+" queued, "+Object.keys(contacts).length+" contacts.","ok");renderRetention();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
+async function pushQueue(){try{await fetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});}catch(e){log("Push failed.","err");}}
+function calcAge(dob){if(!dob)return null;const d=new Date(dob);if(isNaN(d))return null;return Math.floor((Date.now()-d.getTime())/31557600000);}
+function getTier(r){const s=r.lastActivity||r.added||null;if(!s)return"new";const d=(Date.now()-new Date(s))/86400000;if(d<=30)return"hot";if(d<=180)return"warm";if(d<=730)return"cold";return"dormant";}
+function isParent(r){return!!(r.children&&r.children.length>0);}
+function getTargets(sector,tierStr){const tiers=tierStr==="all"?null:tierStr.split(",");return Object.values(contacts).filter(r=>{const inS=sector==="all"||(r.arms||[]).includes(sector);if(tierStr==="parents")return inS&&isParent(r);return inS&&(!tiers||tiers.includes(getTier(r)));});}
+function replaceVars(text,c){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc);}
+async function scheduleEmail(){const sector=document.getElementById("s-sector").value,tier=document.getElementById("s-tier").value,date=document.getElementById("s-date").value,subject=document.getElementById("s-subject").value.trim(),body=document.getElementById("s-body").value.trim();if(!date||!subject||!body){alert("Date, subject and body required.");return;}const key="sched_"+Date.now();queue[key]={sector,tier,subject,body,sendAt:date,status:"pending",created:new Date().toISOString()};await pushQueue();log("Queued: "+subject+" → "+date,"ok");document.getElementById("s-subject").value="";document.getElementById("s-body").value="";}
+async function fireAllDue(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargets(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const needsPersonal=item.body.includes("[FirstName]")||item.body.includes("[ChildName]");try{if(needsPersonal){for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c),html:replaceVars(item.body,c).replace(/\n/g,"<br>")})});}}else{await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(t=>t.email),subject:item.subject,html:item.body.replace(/\n/g,"<br>")})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();fired++;}catch(e){queue[i].status="error";}}await pushQueue();renderQueue();log("Fired "+fired+" email(s).","ok");}
+function renderQueue(){const tbody=document.getElementById("q-body"),filter=document.getElementById("q-filter").value,today=new Date();today.setHours(0,0,0,0);const keys=Object.keys(queue);const filtered=keys.filter(k=>{if(filter==="all")return true;if(filter==="due"){const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";}return queue[k].status===filter;});document.getElementById("q-count").textContent=filtered.length+" / "+keys.length;if(!filtered.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">No items match.</td></tr>';return;}filtered.sort((a,b)=>queue[a].sendAt.localeCompare(queue[b].sendAt));tbody.innerHTML=filtered.map(k=>{const item=queue[k],d=new Date(item.sendAt);d.setHours(0,0,0,0);const isDue=d<=today&&item.status==="pending",statusClass=item.status==="sent"?"qs-sent":item.status==="skipped"?"qs-skipped":isDue?"qs-due":"qs-pending",statusLabel=isDue?"DUE":item.status.toUpperCase();return'<tr><td style="font-family:var(--cormorant);font-size:14px;font-weight:600;color:var(--text);">'+item.subject+(item.eventName?'<br><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+item.eventName+'</span>':'')+'</td><td><span class="badge b-'+(item.sector||'cgs')+'">'+( item.sector||'all')+'</span><br><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+(item.tier||'all')+'</span></td><td style="font-family:var(--mono);font-size:10px;white-space:nowrap;">'+item.sendAt+'</td><td><span class="q-status '+statusClass+'">'+statusLabel+'</span></td><td><button class="dbtn" onclick="deleteQueueItem(\''+k+'\')">✕</button></td></tr>';}).join("");}
+async function deleteQueueItem(key){if(!confirm("Remove this queued item?"))return;delete queue[key];await pushQueue();renderQueue();log("Removed from queue.","warn");}
+function getActiveRules(){try{return JSON.parse(localStorage.getItem("eagle_retention_rules")||"[]");}catch{return[];}}
+function setActiveRules(arr){localStorage.setItem("eagle_retention_rules",JSON.stringify(arr));}
+function renderRetention(){const el=document.getElementById("retention-grid"),active=getActiveRules();el.innerHTML=RULES.map(rule=>{const isOn=active.includes(rule.id);return'<div class="panel" style="margin-bottom:0;"><div class="ph"><div class="pt">'+rule.name+'</div><div class="toggle '+(isOn?"on":"")+'\" onclick="toggleRule(\''+rule.id+'\')" title="'+(isOn?"Active — click to disable":"Inactive — click to activate")+'"></div></div><div class="pb"><p style="font-family:var(--dm);font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;">'+rule.desc+'</p><div style="background:var(--black);border:1px solid var(--border);padding:12px;"><span style="font-family:var(--mono);font-size:9px;color:var(--gold);display:block;margin-bottom:4px;">SUBJECT</span><span style="font-family:var(--dm);font-size:12px;color:var(--muted2);">'+rule.subject+'</span></div><p style="font-family:var(--mono);font-size:9px;color:'+(isOn?"var(--green)":"var(--muted)")+';margin-top:10px;">'+(isOn?"● ACTIVE — checks on load, fires once per contact per year":"○ INACTIVE")+'</p></div></div>';}).join("");}
+async function toggleRule(id){const active=getActiveRules(),i=active.indexOf(id);if(i>=0)active.splice(i,1);else{active.push(id);await runRetentionRule(id);}setActiveRules(active);renderRetention();}
+async function runRetentionRule(id){const rule=RULES.find(r=>r.id===id);if(!rule)return;const fired_key="eagle_ret_fired_"+id,fired=JSON.parse(localStorage.getItem(fired_key)||"{}"),now=new Date(),year=now.getFullYear();const eligible=Object.values(contacts).filter(c=>{const k=c.email||"";if(fired[k]===year)return false;if(rule.id==="multichild")return isParent(c)&&(c.children||[]).length>1;const d=(Date.now()-new Date(c.lastActivity||c.added||0))/86400000;return d>=rule.days&&getTier(c)===rule.tier;});if(!eligible.length){log("Retention ["+rule.name+"]: no eligible contacts.","info");return;}let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key to fire retention rule:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}let sent=0;for(const c of eligible){try{await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(rule.subject,c),html:replaceVars(rule.body,c).replace(/\n/g,"<br>")})});fired[c.email||""]=year;sent++;}catch(e){}}localStorage.setItem(fired_key,JSON.stringify(fired));log("Retention ["+rule.name+"]: sent "+sent+" email(s).","ok");}
+const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
-async function loadAll(){
-  setStatus("","loading…");
-  try{
-    const[qr,cr,rr]=await Promise.all([
-      fetch(`${FB}/automation_queue.json`),
-      fetch(`${FB}/directory_crm_master.json`),
-      fetch(`${FB}/retention_rules.json`)
-    ]);
-    queue=await qr.json()||{};
-    db=await cr.json()||{};
-    retention=await rr.json()||[];
-    setStatus("live","live");
-    log(`Queue: ${Object.keys(queue).length} items · CRM: ${Object.keys(db).length} contacts`,"ok");
-    renderQueue();renderRetention();
-    checkAndRunRetention();
-  }catch(e){setStatus("err","offline");log("Load failed.","err");}
-}
-
-function insertVar(fieldId,v){const el=document.getElementById(fieldId);const s=el.selectionStart,e=el.selectionEnd;el.value=el.value.slice(0,s)+v+el.value.slice(e);el.focus();el.setSelectionRange(s+v.length,s+v.length);}
-
-function getTier(r){
-  if(!r.lastActivity&&!r.added)return"new";
-  const days=(Date.now()-new Date(r.lastActivity||r.added))/86400000;
-  if(days<=30)return"hot";if(days<=180)return"warm";if(days<=730)return"cold";return"dormant";
-}
-
-function getTargets(sector,tierStr){
-  const tiers=tierStr==="all"?null:tierStr.split(",");
-  return Object.values(db).filter(r=>{
-    const inS=sector==="all"||(r.arms||[]).includes(sector);
-    if(tierStr==="parents")return inS&&r.children&&r.children.length>0;
-    if(tierStr==="adults"){const a=r.dob?(Date.now()-new Date(r.dob))/31557600000:null;return inS&&(a===null||a>=18);}
-    return inS&&(!tiers||tiers.includes(getTier(r)));
-  });
-}
-
-function replaceVars(text,contact,eventName){
-  const name=contact.name||(contact.email||"").split("@")[0];
-  const first=name.split(" ")[0];
-  const child=(contact.children&&contact.children[0])||first;
-  const cc=(contact.children&&contact.children.length)||1;
-  return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,eventName||"");
-}
-
-async function scheduleEmail(){
-  const sector=document.getElementById("s-sector").value;
-  const tier=document.getElementById("s-tier").value;
-  const date=document.getElementById("s-date").value;
-  const subject=document.getElementById("s-subject").value.trim();
-  const body=document.getElementById("s-body").value.trim();
-  if(!date||!subject||!body){alert("Date, subject, and message required.");return;}
-  const targets=getTargets(sector,tier);
-  if(!targets.length){alert("No contacts match this filter.");return;}
-  const key="manual_"+Date.now();
-  queue[key]={sector,tier,subject,body,sendAt:date,status:"pending",targets:targets.length,created:new Date().toISOString()};
-  try{
-    await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
-    log(`Scheduled: "${subject}" for ${date} → ${targets.length} contacts`,"ok");
-    renderQueue();
-    document.getElementById("s-subject").value="";document.getElementById("s-body").value="";document.getElementById("s-date").value="";
-  }catch(e){log("Schedule failed.","err");}
-}
-
-async function fireQueue(){
-  let apiKey=localStorage.getItem("RESEND_KEY");
-  if(!apiKey){apiKey=prompt("Enter Resend API key:");if(!apiKey)return;localStorage.setItem("RESEND_KEY",apiKey.trim());apiKey=apiKey.trim();}
-  const today=new Date();today.setHours(0,0,0,0);
-  const due=Object.keys(queue).filter(k=>{
-    const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";
-  });
-  if(!due.length){log("Nothing due today.","info");return;}
-  log(`Firing ${due.length} queued email(s)...`,"gold");
-  let fired=0;
-  for(const k of due){
-    const item=queue[k];
-    const targets=getTargets(item.sector,item.tier);
-    if(!targets.length){queue[k].status="skipped";continue;}
-    const needsPersonal=(item.subject||"").includes("[FirstName]")||(item.body||"").includes("[FirstName]")||(item.body||"").includes("[ChildName]");
-    try{
-      if(needsPersonal){
-        for(const contact of targets){
-          await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:contact.email,subject:replaceVars(item.subject,contact,item.eventName||""),html:replaceVars(item.body,contact,item.eventName||"").replace(/\n/g,"<br>")})});
-        }
-      }else{
-        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(t=>t.email),subject:item.subject,html:item.body.replace(/\n/g,"<br>")})});
-      }
-      queue[k].status="sent";queue[k].sentAt=new Date().toISOString();fired++;
-      log(`✓ Sent: "${item.subject}" → ${targets.length} contacts`,"ok");
-    }catch(e){queue[k].status="error";log(`Error: ${e.message}`,"err");}
-  }
-  await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
-  renderQueue();log(`Done. ${fired} email(s) fired.`,"ok");
-}
-
-async function clearSentQueue(){
-  if(!confirm("Remove all sent items from queue?"))return;
-  Object.keys(queue).forEach(k=>{if(queue[k].status==="sent"||queue[k].status==="skipped")delete queue[k];});
-  await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});
-  renderQueue();log("Sent items cleared.","ok");
-}
-
-function renderQueue(){
-  const tbody=document.getElementById("queue-body");
-  const keys=Object.keys(queue).sort((a,b)=>(queue[a].sendAt||"").localeCompare(queue[b].sendAt||""));
-  const today=new Date();today.setHours(0,0,0,0);
-  let dueCount=0;
-  if(!keys.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);font-family:var(--mono);font-size:10px;">Queue empty.</td></tr>`;document.getElementById("queue-due-count").textContent="";return;}
-  tbody.innerHTML=keys.map(k=>{
-    const item=queue[k];
-    const d=new Date(item.sendAt);d.setHours(0,0,0,0);
-    const isDue=d<=today&&item.status==="pending";
-    if(isDue)dueCount++;
-    const statusClass=isDue?"qs-due":item.status==="sent"?"qs-sent":item.status==="skipped"?"qs-skipped":"qs-pending";
-    const statusLabel=isDue?"DUE NOW":item.status.toUpperCase();
-    return`<tr>
-      <td style="white-space:nowrap;">${new Date(item.sendAt).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"})}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.subject||"—"}</td>
-      <td><span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">${item.sector||"all"}</span></td>
-      <td><span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">${item.tier||"all"}</span></td>
-      <td><span class="q-status ${statusClass}">${statusLabel}</span></td>
-      <td><button onclick="deleteQueueItem('${k}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;" title="Remove">✕</button></td>
-    </tr>`;
-  }).join("");
-  document.getElementById("queue-due-count").textContent=dueCount?`${dueCount} due today`:"";
-}
-
-async function deleteQueueItem(key){delete queue[key];await fetch(`${FB}/automation_queue.json`,{method:"PUT",body:JSON.stringify(queue)});renderQueue();}
-
-// RETENTION RULES
-const RETENTION_TEMPLATES=[
-  {id:"warm-winback",label:"Warm Win-Back",desc:"Contacts going cold (90 days no activity)",trigger:"days_inactive",triggerValue:90,tier:"warm",subject:"We miss you at Eagle DS, [FirstName]",body:"Hi [FirstName],\n\nWe noticed it's been a while since we've seen you.\n\nWhat's going on? We'd love to have you back on the mats.\n\nReply to this email or come in this week — first session back is on us.\n\nEagle DS Team"},
-  {id:"dormant-reactivate",label:"Dormant Re-Activation",desc:"Contacts 1+ year inactive",trigger:"days_inactive",triggerValue:365,tier:"cold",subject:"Are you still interested in martial arts, [FirstName]?",body:"Hi [FirstName],\n\nIt's been over a year since we last connected.\n\nWe have new classes, new events, and new opportunities — and we'd love to reconnect.\n\nIf you're no longer interested, no problem — just let us know and we'll stop.\n\nBut if the fire is still there, come back. We're here.\n\nEagle DS"},
-  {id:"multi-child-upsell",label:"Multi-Child Family Offer",desc:"Parents with 2+ children registered",trigger:"child_count",triggerValue:2,subject:"Family discount for [FirstName]",body:"Hi [FirstName],\n\nWith [ChildCount] children training with us, we'd like to offer you our family membership rate.\n\nReply to this email to find out more.\n\nEagle DS Team"},
-];
-
-function renderRetention(){
-  const el=document.getElementById("retention-list");
-  const saved=getSavedRetention();
-  if(!saved.length){el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:10px 0;">No retention rules active. Add one below.</div>`;return;}
-  el.innerHTML=saved.map((r,i)=>`
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text);">${r.label}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:2px;">${r.desc}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;background:#020d05;color:var(--green);border:1px solid #0a3a1a;">ACTIVE</span>
-        <button onclick="removeRetention(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;">✕</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-function getSavedRetention(){try{return JSON.parse(localStorage.getItem("eagle_retention")||"[]");}catch{return[];}}
-function removeRetention(i){const r=getSavedRetention();r.splice(i,1);localStorage.setItem("eagle_retention",JSON.stringify(r));renderRetention();}
-
-function openRetentionBuilder(){
-  const choice=prompt("Choose a template:\n1. Warm Win-Back (90 days inactive)\n2. Dormant Re-Activation (1 year)\n3. Multi-Child Family Offer\n\nType 1, 2, or 3:");
-  if(!choice)return;
-  const t=RETENTION_TEMPLATES[parseInt(choice)-1];
-  if(!t){alert("Invalid choice.");return;}
-  const saved=getSavedRetention();
-  if(saved.find(r=>r.id===t.id)){alert("This rule is already active.");return;}
-  saved.push(t);localStorage.setItem("eagle_retention",JSON.stringify(saved));
-  renderRetention();log(`Retention rule added: ${t.label}`,"ok");
-}
-
-async function checkAndRunRetention(){
-  const rules=getSavedRetention();if(!rules.length)return;
-  const apiKey=localStorage.getItem("RESEND_KEY");if(!apiKey)return;
-  const sentLog=JSON.parse(localStorage.getItem("eagle_retention_sent")||"{}");
-  const today=new Date().toISOString().slice(0,10);
-  let queued=0;
-  for(const rule of rules){
-    const targets=[];
-    for(const k in db){
-      const r=db[k];
-      if(rule.trigger==="days_inactive"){
-        const src=r.lastActivity||r.added;if(!src)continue;
-        const days=(Date.now()-new Date(src))/86400000;
-        if(days<rule.triggerValue)continue;
-        if(sentLog[`${rule.id}_${k}_${today.slice(0,7)}`])continue; // monthly dedupe
-        targets.push(r);
-      }else if(rule.trigger==="child_count"){
-        if(!r.children||r.children.length<rule.triggerValue)continue;
-        if(sentLog[`${rule.id}_${k}_${today.slice(0,4)}`])continue; // yearly dedupe
-        targets.push(r);
-      }
-    }
-    if(!targets.length)continue;
-    for(const contact of targets){
-      const subj=replaceVars(rule.subject,contact,"");
-      const body=replaceVars(rule.body,contact,"");
-      try{
-        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:contact.email,subject:subj,html:body.replace(/\n/g,"<br>")})});
-        const logKey=`${rule.id}_${contact.email.replace(/\./g,"_")}_${today.slice(0,rule.trigger==="child_count"?4:7)}`;
-        sentLog[logKey]=today;queued++;
-      }catch(e){}
-    }
-  }
-  if(queued>0){localStorage.setItem("eagle_retention_sent",JSON.stringify(sentLog));log(`Retention: ${queued} automated email(s) sent.`,"ok");}
-}
-
-function openTemplateBuilder(){alert("Full template builder coming soon — for now, sequence templates are created directly in the Events tab when you create an event.");}
 </script>
 </body>
 </html>
