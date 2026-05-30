@@ -728,6 +728,16 @@ tbody tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
+<script>
+// Inside the Eagle DS OS shell? Suppress the login flash — the shell already authed.
+if (window.self !== window.top) {
+  document.addEventListener('DOMContentLoaded', function(){
+    var g = document.getElementById('gate');
+    if (g) g.style.display = 'none';
+  });
+}
+</script>
+
 <div id="gate" style="display:flex;">
   <div class="gate-wrap">
     <div class="gate-eagle">🦅</div>
@@ -1049,7 +1059,7 @@ tbody tr:last-child td { border-bottom: none; }
    Requires Firebase Auth enabled in console + email/password account created. */
 
 const EAGLE_FB_CONFIG = {
-  apiKey: "AIzaSyD-PLACEHOLDER-REPLACE-WITH-YOURS",
+  apiKey: "AIzaSyAOXZTzYEiWzuRUJMPBfsQ_cfyXCN4qZPQ",
   authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
   databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
   projectId: "taekwondo-scoreboard-e58ec"
@@ -1061,6 +1071,8 @@ let EAGLE_TOKEN = null;
 // Initialise Firebase Auth (compat SDK loaded via CDN in each page)
 function eagleInitAuth() {
   if (!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
+  // LOCAL persistence — session shares across the Eagle DS OS shell and survives reloads
+  try { firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){}
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
       EAGLE_USER = user;

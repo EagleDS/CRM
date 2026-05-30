@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eagle DS — Event Calendar</title>
+<title>Eagle DS — Blog &amp; Content</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -739,7 +739,7 @@ if (window.self !== window.top) {
   <div class="gate-wrap">
     <div class="gate-eagle">🦅</div>
     <div class="gate-name">Eagle DS</div>
-    <div class="gate-sub">Event Calendar</div>
+    <div class="gate-sub">Blog & Content</div>
     <div class="gate-line"></div>
     <input type="email" class="gate-input" id="auth-email" placeholder="email" style="font-size:13px;letter-spacing:1px;text-align:left;margin-bottom:8px;" autocomplete="username" onkeydown="if(event.key==='Enter')eagleLogin()">
     <input type="password" class="gate-input" id="pin" placeholder="password" style="font-size:13px;letter-spacing:1px;text-align:left;" autocomplete="current-password" onkeydown="if(event.key==='Enter')eagleLogin()">
@@ -749,42 +749,128 @@ if (window.self !== window.top) {
 </div>
 <div id="app">
   <div class="topbar">
-    <a href="index.html" class="t-brand"><span class="t-wordmark">EAGLE DS<small>Event Calendar</small></span></a>
+    <a href="index.html" class="t-brand"><span class="t-wordmark">EAGLE DS<small>Blog &amp; Content</small></span></a>
     <div class="t-nav">
       <a href="crm.html">CRM</a>
-      <a href="events.html" class="here">Events</a>
+      <a href="events.html">Events</a>
       <a href="scheduler.html">Automation</a>
-      <a href="blog.html">Blog</a>
+      <a href="blog.html" class="here">Blog</a>
     </div>
     <div style="display:flex;align-items:center;gap:10px;"><div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div><button onclick="eagleLogout()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-radius:2px;" title="Sign out">Logout</button></div>
   </div>
   <div class="ws">
     <div class="page-hd reveal">
-      <span class="section-label">Eagle DS · Event Operations</span>
-      <div class="page-title">Event <em>Calendar</em></div>
-      <div class="page-sub">Create events · Activate email sequences · Track registrations</div>
+      <span class="section-label">Eagle DS · Content Operations</span>
+      <div class="page-title">Blog &amp; <em>Content</em></div>
+      <div class="page-sub">Write · Publish · Notify your list</div>
     </div>
     <div class="gold-divider" style="margin-bottom:20px;"></div>
-    <div class="grid2" style="margin-bottom:2px;">
-      <div class="panel" style="margin-bottom:0;">
-        <div class="ph"><div class="pt">System Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()"><span>Clear</span></button></div>
-        <div class="pb"><div class="console" id="console"></div></div>
-      </div>
-      <div class="panel" style="margin-bottom:0;">
-        <div class="ph"><div class="pt">Season Overview</div></div>
-        <div class="pb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;text-align:center;">
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--gold);" id="cnt-upcoming">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Upcoming</div></div>
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--green);" id="cnt-live">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Today</div></div>
-          <div style="background:var(--black);padding:16px;"><div style="font-family:var(--bebas);font-size:36px;color:var(--muted2);" id="cnt-past">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Past</div></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('editor',this)">Editor</button>
+      <button class="tab" onclick="switchTab('posts',this)">Published Posts</button>
+      <button class="tab" onclick="switchTab('ideas',this)">Content Ideas</button>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="tab-pane active" id="tab-editor">
+      <div class="grid2">
+        <div class="panel">
+          <div class="ph"><div class="pt">Compose Post</div></div>
+          <div class="pb">
+            <input type="hidden" id="post-key">
+            <label>Title</label>
+            <input type="text" id="post-title" placeholder="Post title...">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label>Category</label>
+                <select id="post-cat">
+                  <option value="Combat Sports">Combat Sports</option>
+                  <option value="Training Tips">Training Tips</option>
+                  <option value="Events &amp; Results">Events &amp; Results</option>
+                  <option value="Club News">Club News</option>
+                  <option value="Nutrition">Nutrition</option>
+                  <option value="Mindset">Mindset</option>
+                </select>
+              </div>
+              <div>
+                <label>Notify Sector</label>
+                <select id="post-sector">
+                  <option value="all">All sectors</option>
+                  <option value="gym">🥋 Gym only</option>
+                  <option value="cgs">⚔ CGS only</option>
+                  <option value="school">🏫 Schools only</option>
+                  <option value="corp">💼 Corp only</option>
+                </select>
+              </div>
+            </div>
+            <label>Toolbar</label>
+            <div class="editor-toolbar">
+              <button class="tb-btn" onclick="insertMd('**','**','Bold')">B</button>
+              <button class="tb-btn" onclick="insertMd('*','*','Italic')" style="font-style:italic;">I</button>
+              <button class="tb-btn" onclick="insertMdLine('## ')">H2</button>
+              <button class="tb-btn" onclick="insertMdLine('### ')">H3</button>
+              <button class="tb-btn" onclick="insertMdLine('- ')">List</button>
+              <button class="tb-btn" onclick="insertMdLine('> ')">Quote</button>
+              <button class="tb-btn" onclick="insertMdLine('---')">Divider</button>
+              <button class="tb-btn" onclick="togglePreview()" id="preview-btn">Preview</button>
+            </div>
+            <label>Content (Markdown)</label>
+            <textarea id="post-body" style="min-height:220px;font-family:var(--mono);font-size:11px;" placeholder="Write your post in Markdown...&#10;&#10;## Heading&#10;&#10;**Bold** and *italic* text&#10;&#10;- List item&#10;&#10;> Blockquote"></textarea>
+            <div class="preview-wrap" id="post-preview" style="display:none;"></div>
+            <div class="notify-row">
+              <div class="toggle on" id="notify-toggle" onclick="this.classList.toggle('on')"></div>
+              <span class="toggle-label">Email list on publish</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-ghost" onclick="saveDraft()"><span>Save Draft</span></button>
+              <button class="btn" onclick="publishPost()"><span>Publish →</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">Preview</div></div>
+          <div class="pb">
+            <div class="preview-wrap" id="live-preview" style="min-height:300px;"></div>
+          </div>
+          <div class="ph" style="border-top:1px solid var(--border);margin-top:2px;"><div class="pt">System Log</div><button class="btn btn-ghost btn-sm" onclick="clearLog()"><span>Clear</span></button></div>
+          <div class="pb"><div class="console" id="console"></div></div>
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;margin:16px 0;">
-      <button class="btn" style="width:auto;padding:12px 28px;" onclick="openNewEvent()"><span>+ New Event</span></button>
+
+    <!-- POSTS -->
+    <div class="tab-pane" id="tab-posts">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn btn-ghost" style="width:auto;" onclick="switchTab('editor',document.querySelectorAll('.tab')[0])"><span>+ New Post</span></button>
+      </div>
+      <div id="posts-list"></div>
     </div>
-    <div id="events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:2px;"></div>
+
+    <!-- IDEAS -->
+    <div class="tab-pane" id="tab-ideas">
+      <div class="grid2">
+        <div class="panel">
+          <div class="ph"><div class="pt">Content Ideas</div><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">Click to use as title</span></div>
+          <div class="pb" id="ideas-list"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">Email Notification Preview</div></div>
+          <div class="pb">
+            <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:14px;line-height:1.7;">When you publish with email notification on, subscribers receive a branded email with the post title, a short excerpt, and a link to the blog.</p>
+            <div style="background:var(--black);border:1px solid var(--border);padding:20px;">
+              <div style="font-family:var(--bebas);font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">EAGLE DS</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">New post from the Eagle DS blog</div>
+              <div style="font-family:var(--cormorant);font-size:22px;font-weight:600;color:var(--text);margin-bottom:8px;" id="prev-title">Post Title</div>
+              <div style="font-family:var(--dm);font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:16px;" id="prev-excerpt">Post excerpt will appear here...</div>
+              <div style="display:inline-block;background:var(--gold-dk);color:#000;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 20px;">Read Post →</div>
+              <div style="margin-top:16px;font-family:var(--mono);font-size:9px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;">Eagle DS · 17 Nandina Ave, East Tāmaki · info@eagleds.co.nz</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-    <footer class="site-footer">
+  <footer class="site-footer">
     <span class="sf-brand">EAGLE DS</span>
     <div class="sf-links">
       <a href="crm.html">CRM</a><a href="events.html">Events</a>
@@ -793,61 +879,6 @@ if (window.self !== window.top) {
     </div>
     <span class="sf-copy">Eagle DS · East Tāmaki · Internal Operations</span>
   </footer>
-</div>
-<!-- EVENT MODAL -->
-<div class="modal" id="event-modal">
-  <div class="mbox" style="max-width:620px;">
-    <div class="mh"><div class="mt" id="event-modal-title">New Event</div><button class="mc" onclick="closeModal('event-modal')">✕</button></div>
-    <div class="mb">
-      <input type="hidden" id="ev-key">
-      <label>Event Name</label>
-      <input type="text" id="ev-name" placeholder="e.g. CGS Summer Open 2026">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div><label>Event Date</label><input type="date" id="ev-date"></div>
-        <div><label>Sector</label>
-          <select id="ev-sector">
-            <option value="cgs">⚔ CGS Circuit</option>
-            <option value="gym">🥋 Gym Academy</option>
-            <option value="school">🏫 Institutional</option>
-            <option value="corp">💼 Commercial</option>
-          </select>
-        </div>
-      </div>
-      <label>Location</label>
-      <input type="text" id="ev-location" placeholder="Venue name, address...">
-      <label>Description</label>
-      <textarea id="ev-desc" style="min-height:70px;" placeholder="Brief event description..."></textarea>
-      <label>Registration URL</label>
-      <input type="text" id="ev-reg-url" placeholder="https://forms.gle/...">
-      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
-        <span class="section-label">Email Sequence — auto-scheduled from event date</span>
-        <div style="background:var(--black);border:1px solid var(--border);">
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">8 weeks before</span>
-            <input type="text" id="seq-8w" placeholder="Registration open subject line..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">4 weeks before</span>
-            <input type="text" id="seq-4w" placeholder="Early bird closes..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">1 week before</span>
-            <input type="text" id="seq-1w" placeholder="Final details..." style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">Day of event</span>
-            <input type="text" id="seq-day" placeholder="Today is the day!" style="margin-bottom:0;flex:1;">
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gold);width:130px;flex-shrink:0;">3 days after</span>
-            <input type="text" id="seq-after" placeholder="Results + next event..." style="margin-bottom:0;flex:1;">
-          </div>
-        </div>
-        <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:10px;line-height:1.7;">Leave steps blank to skip. Email bodies are written in the Automation tab using [FirstName], [EventName], [ChildName] variables.</p>
-      </div>
-    </div>
-    <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('event-modal')"><span>Cancel</span></button><button class="btn" onclick="saveEvent()"><span>Save Event →</span></button></div></div>
-  </div>
 </div>
 <script>
 /* ═══ EAGLE DS SHARED AUTH MODULE ═══
@@ -918,46 +949,38 @@ async function eagleFetch(path, options = {}) {
 </script>
 <script>
 
-const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055";
-let events={};
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
+let posts={},contacts={};
+const IDEAS=["Why light contact competition is the safest way to start competing","The 5 habits of Eagle DS athletes that transfer to every area of life","What your child is really learning in martial arts (it's not self-defence)","Why pressure in the dojo builds better decision-making than pressure in the classroom","From first pad to national competition: the Eagle DS pathway explained","The science behind why repetition in martial arts builds neurological resilience","What parents misunderstand about martial arts belt grading","Why we train six styles — and what each one develops","The Eagle DS approach to coaching: technique before power, always","How the Combat Games Series changed competitive combat sport in New Zealand","5 things every new Eagle DS student should know before their first session","The difference between fitness and conditioning — and why it matters for fighters","What a 27-year competitive career taught me about coaching","Why elite athletes in other sports are turning to martial arts for mental conditioning","The Eagle DS Corporate programme: what the mat can teach the boardroom"];
 function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function closeModal(id){document.getElementById(id).classList.remove("open");}
-async function syncEvents(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/eagle_events.json"),data=await r.json();events=data||{};setStatus("live","live");log(Object.keys(events).length+" events loaded.","ok");renderEvents();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
-async function pushEvents(){try{await eagleFetch(FB+"/eagle_events.json",{method:"PUT",body:JSON.stringify(events)});}catch(e){log("Push failed.","err");}}
-function daysUntil(d){const dt=new Date(d);dt.setHours(0,0,0,0);const now=new Date();now.setHours(0,0,0,0);return Math.round((dt-now)/86400000);}
-function getStatus(d){const n=daysUntil(d);if(n>0)return"upcoming";if(n===0)return"live";return"past";}
-function renderEvents(){
-  const el=document.getElementById("events-grid"),keys=Object.keys(events);
-  if(!keys.length){el.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:60px;grid-column:1/-1;">No events yet. Create your first event above.</div>';document.getElementById("cnt-upcoming").textContent=0;document.getElementById("cnt-live").textContent=0;document.getElementById("cnt-past").textContent=0;return;}
-  keys.sort((a,b)=>new Date(events[a].date)-new Date(events[b].date));
-  let upcoming=0,live=0,past=0;
-  el.innerHTML=keys.map(k=>{
-    const ev=events[k],days=daysUntil(ev.date),status=getStatus(ev.date),sector=ev.sector||"cgs";
-    if(status==="upcoming")upcoming++;else if(status==="live")live++;else past++;
-    const cdColor=days===0?"var(--green)":days>0&&days<=7?"var(--red)":days>0&&days<=30?"var(--orange)":"var(--gold)";
-    const cdText=days===0?"TODAY":days>0?days+"d":Math.abs(days)+"d ago";
-    const sLabels={cgs:"CGS Circuit",gym:"Gym Academy",school:"Institutional",corp:"Commercial"};
-    const seqKeys=["8w","4w","1w","day","after"],seqLabels={"8w":"8wk before","4w":"4wk before","1w":"1wk before","day":"Day of","after":"3d after"},seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};
-    const stepsHtml=(ev.sequence?seqKeys.filter(s=>ev.sequence[s]).map(s=>{const dtt=days-seqDays[s];let ss="upcoming";if(ev.sequence[s+"_sent"])ss="sent";else if(dtt<=0)ss="due";return'<div class="seq-step '+ss+'"><div class="step-dot '+ss+'"></div><span style="flex:1;">'+seqLabels[s]+': '+ev.sequence[s]+'</span>'+(ss==="due"?'<span style="font-family:var(--mono);font-size:8px;color:var(--gold);">DUE</span>':'')+' </div>';}).join(""):"");
-    const hasDue=ev.sequence&&seqKeys.some(s=>{if(!ev.sequence[s]||ev.sequence[s+"_sent"])return false;return(days-seqDays[s])<=0;});
-    return'<div class="event-card"><div class="ec-top"><div><div class="ec-sector ec-s-'+sector+'">'+sLabels[sector]+'</div><div class="ec-name">'+ev.name+'</div><div class="ec-date">'+new Date(ev.date).toLocaleDateString("en-NZ",{weekday:"short",day:"numeric",month:"long",year:"numeric"})+(ev.location?" · "+ev.location:"")+'</div></div><div class="ec-countdown" style="color:'+cdColor+';">'+cdText+'<span>'+( status==="live"?"LIVE":status==="past"?"PAST":"DAYS")+'</span></div></div><div class="ec-body">'+(ev.description?'<p style="font-family:var(--dm);font-size:12px;color:var(--muted2);margin-bottom:10px;line-height:1.6;">'+ev.description+'</p>':'')+(stepsHtml?'<span class="section-label" style="margin-bottom:6px;display:block;">Email Sequence</span><div class="seq-steps">'+stepsHtml+'</div>':'')+(hasDue?'<p style="font-family:var(--mono);font-size:9px;color:var(--gold);margin-top:6px;">⚡ Emails due — use Fire Due button below</p>':'')+'</div><div class="ec-actions">'+(hasDue?'<button class="btn btn-sm" style="background:transparent;border:1px solid rgba(34,182,74,.4);color:var(--green);" onclick="fireSequence(\''+k+'\')"><span>Fire Due Emails</span></button>':'')+'<button class="btn btn-ghost btn-sm" onclick="editEvent(\''+k+'\')"><span>Edit</span></button><button class="btn btn-red btn-sm" onclick="deleteEvent(\''+k+'\')"><span>Delete</span></button></div></div>';
-  }).join("");
-  document.getElementById("cnt-upcoming").textContent=upcoming;document.getElementById("cnt-live").textContent=live;document.getElementById("cnt-past").textContent=past;
-}
-function openNewEvent(){document.getElementById("ev-key").value="";document.getElementById("event-modal-title").textContent="New Event";["ev-name","ev-location","ev-desc","ev-reg-url","seq-8w","seq-4w","seq-1w","seq-day","seq-after"].forEach(id=>document.getElementById(id).value="");document.getElementById("ev-date").value="";document.getElementById("ev-sector").value="cgs";document.getElementById("event-modal").classList.add("open");}
-function editEvent(key){const ev=events[key];document.getElementById("ev-key").value=key;document.getElementById("event-modal-title").textContent="Edit Event";document.getElementById("ev-name").value=ev.name||"";document.getElementById("ev-date").value=ev.date||"";document.getElementById("ev-sector").value=ev.sector||"cgs";document.getElementById("ev-location").value=ev.location||"";document.getElementById("ev-desc").value=ev.description||"";document.getElementById("ev-reg-url").value=ev.regUrl||"";const seq=ev.sequence||{};["8w","4w","1w","day","after"].forEach(s=>document.getElementById("seq-"+s).value=seq[s]||"");document.getElementById("event-modal").classList.add("open");}
-async function saveEvent(){const name=document.getElementById("ev-name").value.trim(),date=document.getElementById("ev-date").value;if(!name||!date){alert("Name and date required.");return;}const key=document.getElementById("ev-key").value||"ev_"+Date.now(),seq={};["8w","4w","1w","day","after"].forEach(s=>{const v=document.getElementById("seq-"+s).value.trim();if(v)seq[s]=v;});if(events[key]&&events[key].sequence){["8w","4w","1w","day","after"].forEach(s=>{if(events[key].sequence[s+"_sent"])seq[s+"_sent"]=events[key].sequence[s+"_sent"];});}events[key]={name,date,sector:document.getElementById("ev-sector").value,location:document.getElementById("ev-location").value.trim(),description:document.getElementById("ev-desc").value.trim(),regUrl:document.getElementById("ev-reg-url").value.trim(),sequence:seq,created:events[key]?.created||new Date().toISOString()};closeModal("event-modal");await pushEvents();renderEvents();log("Event saved: "+name,"ok");await queueEventEmails(key,events[key]);}
-async function queueEventEmails(key,ev){if(!Object.keys(ev.sequence||{}).length)return;try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3},eventDate=new Date(ev.date);["8w","4w","1w","day","after"].forEach(s=>{if(!ev.sequence[s]||ev.sequence[s+"_sent"])return;const sd=new Date(eventDate);sd.setDate(sd.getDate()+seqDays[s]);const qKey=key+"_"+s;queue[qKey]={eventKey:key,eventName:ev.name,step:s,sector:ev.sector,tier:"hot,warm,cold",subject:ev.sequence[s],body:"Hi [FirstName],\n\n"+ev.sequence[s]+"\n\n"+(ev.regUrl?"Register: "+ev.regUrl+"\n\n":"")+"Dafydd Sanders\nEagle DS",sendAt:sd.toISOString().slice(0,10),status:"pending"};});await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Email sequence queued for: "+ev.name,"ok");}catch(e){log("Queue error: "+e.message,"err");}}
-async function fireSequence(key){let apiKey=localStorage.getItem("RESEND_KEY");if(!apiKey){apiKey=prompt("Enter Resend API key:");if(!apiKey)return;localStorage.setItem("RESEND_KEY",apiKey.trim());apiKey=apiKey.trim();}const ev=events[key],days=daysUntil(ev.date);const seqDays={"8w":-56,"4w":-28,"1w":-7,"day":0,"after":3};try{const cr=await eagleFetch(FB+"/directory_crm_master.json"),contacts=await cr.json()||{},targets=Object.values(contacts).filter(r=>(r.arms||[]).includes(ev.sector));let fired=0;for(const s of["8w","4w","1w","day","after"]){if(!ev.sequence[s]||ev.sequence[s+"_sent"])continue;if((days-seqDays[s])>0)continue;const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({from:"info@eagleds.co.nz",to:"info@eagleds.co.nz",bcc:targets.map(t=>t.email),subject:ev.sequence[s].replace(/\[EventName\]/gi,ev.name),html:"Hi [FirstName],<br><br>"+ev.sequence[s]+"<br><br>"+(ev.regUrl?"Register: "+ev.regUrl+"<br><br>":"")+"Dafydd Sanders<br>Eagle DS"})});if(res.ok){events[key].sequence[s+"_sent"]=new Date().toISOString();fired++;}}await pushEvents();renderEvents();log("Fired "+fired+" sequence email(s) for "+ev.name,"ok");}catch(e){log("Error: "+e.message,"err");}}
-async function deleteEvent(key){if(!confirm("Delete this event?"))return;delete events[key];await pushEvents();renderEvents();log("Event deleted.","warn");}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");if(btn)btn.classList.add("active");if(id==="posts")renderPosts();if(id==="ideas")renderIdeas();}
+async function syncData(){setStatus("","syncing…");try{const[pr,cr]=await Promise.all([eagleFetch(FB+"/eagle_blog.json"),eagleFetch(FB+"/directory_crm_master.json")]);posts=await pr.json()||{};contacts=await cr.json()||{};setStatus("live","live");log(Object.keys(posts).length+" posts, "+Object.keys(contacts).length+" contacts.","ok");renderPosts();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
+async function pushPosts(){try{await eagleFetch(FB+"/eagle_blog.json",{method:"PUT",body:JSON.stringify(posts)});}catch(e){log("Push failed.","err");}}
+function mdToHtml(md){let h=md.replace(/^### (.+)$/gm,"<h3>$1</h3>").replace(/^## (.+)$/gm,"<h2>$1</h2>").replace(/^# (.+)$/gm,"<h1>$1</h1>").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/^> (.+)$/gm,"<blockquote>$1</blockquote>").replace(/^---$/gm,"<hr>").replace(/^- (.+)$/gm,"<li>$1</li>");h=h.replace(/(<li>.*<\/li>\n?)+/g,m=>"<ul>"+m+"</ul>");h=h.split("\n\n").map(p=>p.trim()?(/^<[hublH]/.test(p)?p:"<p>"+p+"</p>"):"").join("");return h;}
+function updateLivePreview(){const md=document.getElementById("post-body").value;document.getElementById("live-preview").innerHTML=mdToHtml(md)||'<span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Preview updates as you type…</span>';const title=document.getElementById("post-title").value;const excerpt=md.replace(/#+\s/g,"").replace(/\*\*/g,"").replace(/\*/g,"").replace(/^>/gm,"").trim().slice(0,150)+(md.length>150?"…":"");document.getElementById("prev-title").textContent=title||"Post Title";document.getElementById("prev-excerpt").textContent=excerpt||"Post excerpt will appear here...";}
+document.addEventListener("DOMContentLoaded",()=>{const b=document.getElementById("post-body");if(b)b.addEventListener("input",updateLivePreview);const t=document.getElementById("post-title");if(t)t.addEventListener("input",updateLivePreview);renderIdeas();});
+function togglePreview(){const prev=document.getElementById("post-preview"),ed=document.getElementById("post-body"),btn=document.getElementById("preview-btn");if(prev.style.display==="none"){prev.innerHTML=mdToHtml(ed.value);prev.style.display="block";ed.style.display="none";btn.textContent="Edit";}else{prev.style.display="none";ed.style.display="block";btn.textContent="Preview";}}
+function insertMd(before,after,label){const el=document.getElementById("post-body"),p=el.selectionStart,e=el.selectionEnd,sel=el.value.slice(p,e)||label;el.value=el.value.slice(0,p)+before+sel+after+el.value.slice(e);el.focus();el.selectionStart=p+before.length;el.selectionEnd=p+before.length+sel.length;updateLivePreview();}
+function insertMdLine(prefix){const el=document.getElementById("post-body"),p=el.selectionStart,nl=el.value.lastIndexOf("\n",p-1);el.value=el.value.slice(0,nl+1)+prefix+el.value.slice(nl+1);el.focus();updateLivePreview();}
+function getExcerpt(body){return body.replace(/#+\s/g,"").replace(/\*\*/g,"").replace(/\*/g,"").replace(/^>/gm,"").trim().slice(0,200)+(body.length>200?"…":"");}
+async function saveDraft(){const title=document.getElementById("post-title").value.trim(),body=document.getElementById("post-body").value.trim();if(!title){alert("Title required.");return;}const key=document.getElementById("post-key").value||"post_"+Date.now();posts[key]={title,body,excerpt:getExcerpt(body),category:document.getElementById("post-cat").value,sector:document.getElementById("post-sector").value,status:"draft",updatedAt:new Date().toISOString(),created:posts[key]?.created||new Date().toISOString()};document.getElementById("post-key").value=key;await pushPosts();log("Draft saved: "+title,"ok");}
+async function publishPost(){const title=document.getElementById("post-title").value.trim(),body=document.getElementById("post-body").value.trim();if(!title||!body){alert("Title and content required.");return;}const key=document.getElementById("post-key").value||"post_"+Date.now();const notify=document.getElementById("notify-toggle").classList.contains("on");posts[key]={title,body,excerpt:getExcerpt(body),category:document.getElementById("post-cat").value,sector:document.getElementById("post-sector").value,status:"published",publishedAt:new Date().toISOString(),updatedAt:new Date().toISOString(),created:posts[key]?.created||new Date().toISOString()};document.getElementById("post-key").value=key;await pushPosts();log("Published: "+title,"ok");if(notify)await sendNotification(posts[key]);clearEditor();}
+function clearEditor(){document.getElementById("post-key").value="";document.getElementById("post-title").value="";document.getElementById("post-body").value="";document.getElementById("live-preview").innerHTML="";}
+async function sendNotification(post){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key for email notification:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}const sector=post.sector||"all",targets=Object.values(contacts).filter(r=>sector==="all"||(r.arms||[]).includes(sector));if(!targets.length){log("No contacts to notify.","info");return;}const html='<div style="background:#0a0a0a;color:#f8f4ee;padding:40px;font-family:DM Sans,sans-serif;max-width:600px;margin:0 auto;"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;letter-spacing:3px;color:#C8960C;margin-bottom:4px;">EAGLE DS</div><div style="font-family:monospace;font-size:10px;color:#666;letter-spacing:2px;margin-bottom:24px;border-bottom:1px solid #222;padding-bottom:16px;">NEW POST</div><div style="font-family:Georgia,serif;font-size:26px;font-weight:600;color:#f8f4ee;margin-bottom:12px;line-height:1.2;">'+post.title+'</div><div style="font-size:13px;color:#888;line-height:1.7;margin-bottom:24px;">'+post.excerpt+'</div><a href="https://eagleds.github.io/blog.html" style="display:inline-block;background:#9a7008;color:#000;font-family:monospace;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;text-decoration:none;">Read Post →</a><div style="margin-top:32px;padding-top:16px;border-top:1px solid #222;font-family:monospace;font-size:9px;color:#444;letter-spacing:1px;">Eagle DS · 17 Nandina Ave, East Tāmaki · info@eagleds.co.nz</div></div>';try{const res=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:FROM,bcc:targets.map(c=>c.email),subject:"New post: "+post.title,html})});const data=await res.json();if(res.ok)log("Notification sent to "+targets.length+" contacts.","ok");else log("Resend: "+data.message,"err");}catch(e){log("Send error: "+e.message,"err");}}
+function renderPosts(){const el=document.getElementById("posts-list"),keys=Object.keys(posts);if(!keys.length){el.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:60px;">No posts yet. Write your first post in the Editor tab.</div>';return;}keys.sort((a,b)=>(posts[b].updatedAt||"").localeCompare(posts[a].updatedAt||""));el.innerHTML=keys.map(k=>{const p=posts[k];return'<div class="post-card"><div class="pc-title">'+p.title+'</div><div class="pc-meta"><span>'+p.category+'</span><span>'+( p.sector==="all"?"All sectors":p.sector)+'</span><span class="'+(p.status==="published"?"tag-published":"tag-draft")+'">'+p.status.toUpperCase()+'</span>'+(p.publishedAt?'<span>'+new Date(p.publishedAt).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"numeric"})+'</span>':'')+'</div><div class="pc-excerpt">'+p.excerpt+'</div><div class="pc-actions"><button class="btn btn-ghost btn-sm" onclick="editPost(\''+k+'\')"><span>Edit</span></button>'+(p.status!=="published"?'<button class="btn btn-sm" onclick="quickPublish(\''+k+'\')"><span>Publish</span></button>':'')+'<button class="btn btn-red btn-sm" onclick="deletePost(\''+k+'\')"><span>Delete</span></button></div></div>';}).join("");}
+function editPost(key){const p=posts[key];document.getElementById("post-key").value=key;document.getElementById("post-title").value=p.title||"";document.getElementById("post-body").value=p.body||"";document.getElementById("post-cat").value=p.category||"Combat Sports";document.getElementById("post-sector").value=p.sector||"all";updateLivePreview();switchTab("editor",document.querySelector(".tab"));}
+async function quickPublish(key){posts[key].status="published";posts[key].publishedAt=new Date().toISOString();await pushPosts();renderPosts();log("Published: "+posts[key].title,"ok");}
+async function deletePost(key){if(!confirm("Delete this post?"))return;delete posts[key];await pushPosts();renderPosts();log("Post deleted.","warn");}
+function renderIdeas(){const el=document.getElementById("ideas-list");if(!el)return;el.innerHTML=IDEAS.map(idea=>'<div class="idea-item" onclick="useIdea(\''+idea.replace(/'/g,"\\'")+'\')">'+idea+'</div>').join("");}
+function useIdea(idea){document.getElementById("post-title").value=idea;updateLivePreview();switchTab("editor",document.querySelector(".tab"));}
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
 
-function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncEvents(); }
+function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncData(); }
 eagleInitAuth();
 </script>
 </body>

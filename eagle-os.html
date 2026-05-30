@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Operating System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box;}
+body{margin:0;padding:0;overflow:hidden;height:100vh;}
+
+/* LOGIN GATE */
+#gate{position:fixed;inset:0;background:#0a0a0a;z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#gate.hidden{display:none;}
+.gate-card{background:var(--grey);border:1px solid rgba(200,150,12,.2);border-radius:6px;padding:32px;width:340px;max-width:90vw;}
+.gate-logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:4px;color:var(--gold);text-align:center;}
+.gate-sub{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:var(--text-muted);text-align:center;text-transform:uppercase;margin-bottom:22px;}
+.gate-card input{width:100%;background:#0a0a0a;border:1px solid var(--border,#333);color:var(--white);padding:12px;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:10px;}
+.gate-card input:focus{outline:none;border-color:var(--gold);}
+.gate-card button{width:100%;background:var(--gold);color:#000;border:none;border-radius:3px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:13px;cursor:pointer;}
+.gate-err{font-family:var(--mono);font-size:10px;color:#e57;text-align:center;margin-top:10px;min-height:14px;}
+
+/* SHELL LAYOUT */
+#shell{display:flex;height:100vh;}
+#sidebar{width:230px;background:#0a0a0d;border-right:1px solid rgba(200,150,12,.12);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
+.sb-head{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.05);}
+.sb-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--gold);line-height:1;}
+.sb-sub{font-family:var(--mono);font-size:7px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-top:2px;}
+.sb-section{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;padding:16px 20px 6px;}
+.sb-link{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#bbb;text-decoration:none;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
+.sb-link:hover{background:rgba(255,255,255,.03);color:var(--white);}
+.sb-link.on{background:rgba(200,150,12,.08);color:var(--gold);border-left-color:var(--gold);}
+.sb-ic{width:18px;text-align:center;font-size:14px;}
+.sb-foot{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(255,255,255,.05);}
+.sb-user{font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-bottom:8px;word-break:break-all;}
+.sb-logout{background:none;border:1px solid var(--border,#333);color:var(--text-muted);font-family:var(--mono);font-size:9px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:1px;width:100%;}
+.sb-logout:hover{border-color:#e57;color:#e57;}
+
+#main{flex:1;position:relative;background:var(--black);}
+#frame{width:100%;height:100%;border:none;display:block;background:var(--black);}
+#welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:40px;text-align:center;}
+#welcome.hidden{display:none;}
+.wc-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--white);margin-bottom:10px;}
+.wc-title em{font-style:italic;color:var(--gold-light);}
+.wc-sub{font-size:14px;color:#888;max-width:420px;line-height:1.7;}
+
+/* mobile */
+.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:50;background:#0a0a0d;border:1px solid var(--border,#333);color:var(--gold);font-size:18px;width:40px;height:40px;border-radius:4px;cursor:pointer;}
+@media(max-width:768px){
+  #sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:40;transition:left .2s;}
+  #sidebar.open{left:0;}
+  .menu-btn{display:block;}
+  #main{width:100vw;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN — happens ONCE -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">⚔ EAGLE DS</div>
+    <div class="gate-sub">Operating System</div>
+    <input id="g-email" type="email" placeholder="Email" autocomplete="username">
+    <input id="g-pass" type="password" placeholder="Password" autocomplete="current-password">
+    <button onclick="doLogin()">Sign In</button>
+    <div class="gate-err" id="g-err"></div>
+  </div>
+</div>
+
+<button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
+<div id="shell">
+  <nav id="sidebar">
+    <div class="sb-head"><div class="sb-logo">⚔ EAGLE DS</div><div class="sb-sub">Operating System</div></div>
+
+    <div class="sb-section">Overview</div>
+    <a class="sb-link" onclick="openTool('engine-monitor.html','Engine',this)"><span class="sb-ic">⚙</span> Engine Monitor</a>
+    <a class="sb-link" onclick="openTool('crm.html','CRM',this)"><span class="sb-ic">◆</span> CRM &amp; Directory</a>
+
+    <div class="sb-section">Reach &amp; Grow</div>
+    <a class="sb-link" onclick="openTool('events.html','Events',this)"><span class="sb-ic">▣</span> Events &amp; Sequences</a>
+    <a class="sb-link" onclick="openTool('scheduler.html','Automation',this)"><span class="sb-ic">↻</span> Automation</a>
+    <a class="sb-link" onclick="openTool('blog-admin.html','Blog',this)"><span class="sb-ic">✎</span> Blog Editor</a>
+
+    <div class="sb-section">Arms</div>
+    <a class="sb-link" onclick="openTool('orders.html','Shop Orders',this)"><span class="sb-ic">▦</span> Shop Orders</a>
+    <a class="sb-link" onclick="openTool('referee-course.html','Referee Cert',this)"><span class="sb-ic">◈</span> Referee Cert</a>
+
+    <div class="sb-foot">
+      <div class="sb-user" id="sb-user"></div>
+      <button class="sb-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div id="main">
+    <div id="welcome">
+      <div class="wc-title">Kia ora, <em id="wc-name">Dafydd</em></div>
+      <div class="wc-sub">Your whole operation in one place. Pick a tool from the left — you're signed in across all of them. The engine is running in the background; check the Engine Monitor to see what it's handling for you.</div>
+    </div>
+    <iframe id="frame" style="display:none" title="tool"></iframe>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAOXZTzYEiWzuRUJMPBfsQ_cfyXCN4qZPQ",
+  authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
+  databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
+  projectId: "taekwondo-scoreboard-e58ec",
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// LOCAL persistence = the login carries across every iframed tool, no re-login
+await setPersistence(auth, browserLocalPersistence);
+
+window.doLogin = async function(){
+  const email=document.getElementById('g-email').value.trim();
+  const pass=document.getElementById('g-pass').value;
+  const err=document.getElementById('g-err');
+  err.textContent="";
+  try{
+    await signInWithEmailAndPassword(auth,email,pass);
+  }catch(e){
+    err.textContent="Sign in failed — check your email and password.";
+  }
+};
+window.doLogout = function(){ signOut(auth); location.reload(); };
+
+onAuthStateChanged(auth,(user)=>{
+  if(user){
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('sb-user').textContent=user.email;
+    const n=(user.email||'').split('@')[0];
+    document.getElementById('wc-name').textContent=n.charAt(0).toUpperCase()+n.slice(1);
+  }else{
+    document.getElementById('gate').classList.remove('hidden');
+  }
+});
+
+window.openTool = function(url,label,el){
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('on'));
+  if(el)el.classList.add('on');
+  const frame=document.getElementById('frame');
+  document.getElementById('welcome').classList.add('hidden');
+  frame.style.display='block';
+  frame.src=url;
+  if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open');
+};
+window.toggleSidebar = function(){ document.getElementById('sidebar').classList.toggle('open'); };
+
+// allow Enter to submit login
+document.getElementById('g-pass').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
+</script>
+</body>
+</html>
