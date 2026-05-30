@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Referee Certification Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{--crimson:#C0392B;}
+body{padding:0;}
+.rc-nav{height:56px;background:#0a0a0d;border-bottom:1px solid rgba(200,150,12,.15);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100;}
+.rc-nav .logo{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;color:var(--gold);}
+.rc-nav .sub{font-family:var(--mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;}
+.rc-nav .who{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text-muted);}
+.rc-wrap{max-width:760px;margin:0 auto;padding:20px 16px 80px;}
+
+/* gate */
+.gate{max-width:380px;margin:60px auto;background:var(--grey);border:1px solid rgba(200,150,12,.2);border-radius:4px;padding:28px;}
+.gate h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;}
+.gate p{font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;}
+.gate input{width:100%;background:#0a0a0a;border:1px solid var(--border,#333);color:var(--white);padding:11px 12px;border-radius:3px;font-family:var(--mono);font-size:13px;margin-bottom:10px;}
+.gate input:focus{outline:none;border-color:var(--gold);}
+.gate button{width:100%;background:var(--gold);color:#000;border:none;border-radius:3px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:1px;padding:12px;cursor:pointer;text-transform:uppercase;}
+
+/* progress header */
+.prog-head{background:var(--black-2);border:1px solid rgba(200,150,12,.15);border-radius:4px;padding:18px;margin-bottom:18px;}
+.prog-name{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--white);margin-bottom:2px;}
+.prog-name em{font-style:italic;color:var(--gold-light);}
+.prog-bar-wrap{height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;margin:12px 0 6px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--gold-dk),var(--gold));border-radius:4px;transition:width .5s;}
+.prog-meta{font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:1px;}
+
+/* module cards */
+.mod{background:var(--grey);border:1px solid var(--border,#222);border-radius:4px;margin-bottom:10px;overflow:hidden;}
+.mod.done{border-left:3px solid var(--green);}
+.mod.active{border-left:3px solid var(--gold);}
+.mod.locked{opacity:.5;}
+.mod-head{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.mod-num{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);min-width:28px;}
+.mod-info{flex:1;}
+.mod-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:15px;color:var(--white);line-height:1.2;}
+.mod-sub{font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.4;}
+.mod-status{font-family:var(--mono);font-size:8px;padding:3px 8px;border-radius:2px;letter-spacing:.5px;white-space:nowrap;}
+.st-done{background:rgba(34,176,74,.15);color:var(--green);border:1px solid rgba(34,176,74,.3);}
+.st-todo{background:rgba(200,150,12,.1);color:var(--gold);border:1px solid rgba(200,150,12,.3);}
+.st-lock{background:#1a1a1a;color:var(--text-muted);border:1px solid #2a2a2a;}
+.mod-body{display:none;padding:0 16px 16px;border-top:1px solid #1a1a1a;}
+.mod-body.open{display:block;}
+.mod-content{font-size:13px;color:#bbb;line-height:1.8;margin:14px 0;}
+.mod-content p{margin-bottom:10px;}
+.qz{background:#0e0e0e;border:1px solid #222;border-radius:3px;padding:14px;margin-bottom:10px;}
+.qz-q{font-size:13px;color:var(--white);margin-bottom:10px;font-weight:500;line-height:1.5;}
+.qz-type{font-family:var(--mono);font-size:8px;color:var(--gold-dk);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.qz-opt{display:block;width:100%;text-align:left;background:#141414;border:1px solid #2a2a2a;color:#ccc;padding:9px 12px;border-radius:3px;margin-bottom:5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;transition:all .12s;}
+.qz-opt:hover{border-color:var(--gold-dk);}
+.qz-opt.sel{border-color:var(--gold);color:var(--gold);background:rgba(200,150,12,.06);}
+.qz-opt.correct{border-color:var(--green);color:var(--green);background:rgba(34,176,74,.08);}
+.qz-opt.wrong{border-color:var(--crimson);color:#e57;background:rgba(192,57,43,.08);}
+.qz-scenario textarea{width:100%;background:#141414;border:1px solid #2a2a2a;color:var(--white);padding:10px;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;min-height:80px;resize:vertical;}
+.qz-guide{font-size:11px;color:var(--text-muted);background:rgba(200,150,12,.05);border-left:2px solid var(--gold-dk);padding:8px 10px;margin-top:8px;line-height:1.6;display:none;}
+.qz-guide.show{display:block;}
+.mod-submit{background:var(--gold);color:#000;border:none;border-radius:3px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;padding:11px 20px;cursor:pointer;text-transform:uppercase;margin-top:6px;}
+.mod-result{font-family:var(--mono);font-size:11px;padding:10px 12px;border-radius:3px;margin-top:10px;display:none;}
+.mod-result.pass{background:rgba(34,176,74,.1);border:1px solid var(--green);color:var(--green);display:block;}
+.mod-result.fail{background:rgba(192,57,43,.1);border:1px solid var(--crimson);color:#e57;display:block;}
+
+/* cert */
+.cert-banner{background:linear-gradient(135deg,rgba(200,150,12,.12),rgba(192,57,43,.06));border:1px solid var(--gold);border-radius:4px;padding:24px;text-align:center;margin-bottom:18px;display:none;}
+.cert-banner.show{display:block;}
+.cert-banner .ct{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--gold);}
+.cert-banner .cs{font-size:12px;color:#ccc;margin-top:6px;line-height:1.6;}
+.save-note{font-family:var(--mono);font-size:9px;color:var(--text-muted);text-align:center;margin-top:20px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="rc-nav">
+  <span class="logo">⚔ REFEREE CERT</span><span class="sub">COMBAT GAMES SERIES</span>
+  <span class="who" id="who"></span>
+</div>
+
+<div class="rc-wrap">
+  <div class="gate" id="gate">
+    <h2>Referee Certification</h2>
+    <p>Enter your details to begin or resume the course. Your progress is saved to your email.</p>
+    <input id="g-name" placeholder="Full name" autocomplete="name">
+    <input id="g-email" type="email" placeholder="Email" autocomplete="email">
+    <button onclick="startCourse()">Begin / Resume →</button>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="cert-banner" id="cert-banner">
+      <div class="ct">✓ CERTIFIED OFFICIAL</div>
+      <div class="cs" id="cert-detail"></div>
+    </div>
+    <div class="prog-head">
+      <div class="prog-name">Kia ora, <em id="learner-name"></em></div>
+      <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      <div class="prog-meta" id="prog-meta">0 of 6 modules complete</div>
+    </div>
+    <div id="modules"></div>
+    <div class="save-note">Progress auto-saves to the Eagle DS system · pass mark 70% per module</div>
+  </div>
+</div>
+
+<script>
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+const DATA={"modules": [{"id": "m1", "title": "Philosophy & Role of the Referee", "sub": "Why we coach through refereeing \u2014 the mentality behind every decision.", "content": ["The Eagle DS referee is a mentor and educator, not a rule-enforcer. Where traditional light contact over-penalises and teaches fighters to fear mistakes, our model is guidance-first: the penalty is the last resort, not the first move.", "The Golden Rule: over-coach early, ref less later. Set the tone in the first 30 seconds. Every minute you invest coaching at the start saves three minutes of controversy at the end.", "Five pillars: Coaching Over Punishment (redirect before you penalise), Clarity & Consistency (every command, every time), Calibration (set contact from the opening bell), Progressive Learning (errors are teaching moments), Authority with Empathy (firm, calm, human)."], "questions": [{"type": "mc", "q": "What is the referee's primary role in the Eagle DS model?", "options": ["Rule-enforcer who penalises infractions", "Mentor and educator who coaches through refereeing", "Neutral observer who only scores", "Timekeeper and scorekeeper"], "answer": 1}, {"type": "tf", "q": "In the Eagle DS model, the penalty is the first tool a referee reaches for.", "answer": false}, {"type": "mc", "q": "According to the Golden Rule, when do you set the tone of a bout?", "options": ["In the final 30 seconds", "At the halfway point", "In the first 30 seconds", "Only if problems arise"], "answer": 2}]}, {"id": "m2", "title": "Controlled Contact & Calibration", "sub": "Setting and maintaining the contact standard from the opening bell.", "content": ["Contact is calibrated from the opening bell. The referee establishes the acceptable level early with clear verbal cues, so both fighters understand the standard before it's ever tested.", "Calibration is proactive: you prevent over-contact by naming it early, rather than reacting after it escalates."], "questions": [{"type": "mc", "q": "When should a referee establish the contact standard?", "options": ["After the first heavy exchange", "From the opening bell", "At the judges' request", "Only in adult bouts"], "answer": 1}, {"type": "tf", "q": "Calibration is a proactive tool used to prevent over-contact before it escalates.", "answer": true}]}, {"id": "m3", "title": "Progressive Discipline & Fouls", "sub": "The four-tier system, intent assessment, and the ring-exit protocol.", "content": ["Tier 1 \u2014 Caution: verbal or gestural coaching reminder. For an accidental or borderline infraction with no malicious intent.", "Tier 2 \u2014 Final Caution: formal warning to both fighters and corners. For a repeated infraction, or a first clear intentional one.", "Tier 3 \u2014 Point Deduction: remove one point; notify judges and table. Applied when an infraction occurs after a Final Caution.", "Tier 4 \u2014 Disqualification: stop the bout; award to opponent. For continued misconduct or a severe immediate breach.", "Skipping tiers: jump straight to Point Deduction or Disqualification only when an infraction is clearly severe and intentional \u2014 a deliberate headbutt, an intentional groin strike, an attack after the bell. Intent is always assessed."], "questions": [{"type": "mc", "q": "A fighter commits a repeated infraction after a verbal caution. What tier applies?", "options": ["Tier 1 \u2014 Caution", "Tier 2 \u2014 Final Caution", "Tier 3 \u2014 Point Deduction", "Tier 4 \u2014 Disqualification"], "answer": 1}, {"type": "mc", "q": "When is it correct to skip straight to Tier 3 or 4?", "options": ["Whenever the crowd reacts", "Only when an infraction is clearly severe and intentional", "After two minutes of the round", "Never \u2014 tiers are always sequential"], "answer": 1}, {"type": "tf", "q": "A Point Deduction is applied when an infraction occurs after a Final Caution.", "answer": true}, {"type": "tf", "q": "Intent is irrelevant when deciding which tier to apply.", "answer": false}]}, {"id": "m4", "title": "Scoring System & Judge Criteria", "sub": "The 10-point must system, what scores and what doesn't, ground-engagement rules.", "content": ["The Combat Games Series uses a 10-point must system. The round winner receives 10; the opponent receives 9 or fewer based on the margin.", "Judges score clean, controlled, legal scoring actions. Wild or uncontrolled strikes that breach the contact standard do not score and may draw discipline.", "Ground engagement rules apply per style \u2014 know what scores standing versus on the ground for each discipline you officiate."], "questions": [{"type": "mc", "q": "Under the 10-point must system, the round winner receives:", "options": ["The most strikes", "10 points", "A bonus point", "9 points"], "answer": 1}, {"type": "tf", "q": "An uncontrolled strike that breaches the contact standard can still score points.", "answer": false}]}, {"id": "m5", "title": "Style-Specific Rules", "sub": "Quick-reference for all six styles, including K1 slap-knee and Hybrid Light transitions.", "content": ["Each of the six styles on the circuit has its own scoring and contact specifics. A certified official must hold the quick-reference standard for every style.", "Includes the K1 slap-knee rule and the Hybrid Light round transitions (Boxing \u2192 Kickboxing \u2192 MMA across the three rounds)."], "questions": [{"type": "mc", "q": "Hybrid Light transitions across its three rounds in which order?", "options": ["MMA \u2192 Kickboxing \u2192 Boxing", "Boxing \u2192 Kickboxing \u2192 MMA", "Kickboxing \u2192 Boxing \u2192 MMA", "Boxing \u2192 MMA \u2192 Kickboxing"], "answer": 1}, {"type": "tf", "q": "A certified official only needs to know the rules for one style.", "answer": false}]}, {"id": "m6", "title": "Practical Scenarios & Drills", "sub": "Real situations \u2014 correct actions, reasoning, and common mistakes.", "content": ["The practical module presents real ring situations. For each, you identify the correct action, the communication required, and the reasoning behind it.", "These scenarios form Part 3 of your assessment \u2014 marked on action, communication and reasoning. Trainers use the same scenario cards for live drills and debrief."], "questions": [{"type": "scenario", "q": "Two fighters in a U12 K1 Light bout: Red lands a clearly accidental light head-high kick on Blue, who is unhurt. It's the first infraction of the bout. Describe the correct action, your communication, and your reasoning.", "guide": "Tier 1 Caution. Verbal/gestural coaching reminder \u2014 no malicious intent, accidental, first infraction. Communicate clearly to Red and the corner that head contact isn't permitted at U12, calibrate, continue. Reasoning: educate first; penalty is last resort."}, {"type": "scenario", "q": "After a Final Caution for repeated holding, a fighter holds again to stall. What do you do and why?", "guide": "Tier 3 Point Deduction. Remove one point, notify judges and table. Reasoning: the infraction occurred after a Final Caution, so the progressive path moves to deduction. Communicate the deduction clearly to both corners."}]}], "passMark": 70};
+let learner={name:"",email:"",key:"",progress:{}};
+
+function emailKey(e){return e.trim().toLowerCase().replace(/\./g,"%2E").replace(/@/g,"%40");}
+
+async function startCourse(){
+  const name=document.getElementById('g-name').value.trim();
+  const email=document.getElementById('g-email').value.trim();
+  if(!name||!email||!email.includes('@')){alert('Enter your name and a valid email.');return;}
+  learner.name=name;learner.email=email;learner.key=emailKey(email);
+  // load existing progress
+  try{
+    const r=await fetch(FB+"/ref_cert/"+learner.key+".json");
+    const d=await r.json();
+    if(d&&d.progress)learner.progress=d.progress;
+    if(d&&d.name)learner.name=d.name;
+  }catch(e){}
+  // seed/refresh the record (writes into the shared spine)
+  await saveLearner();
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('learner-name').textContent=learner.name;
+  document.getElementById('who').textContent=learner.email;
+  render();
+}
+
+async function saveLearner(){
+  const rec={
+    name:learner.name,email:learner.email,
+    course:"Referee Certification",
+    progress:learner.progress,
+    modulesComplete:Object.values(learner.progress).filter(p=>p.passed).length,
+    totalModules:DATA.modules.length,
+    certified:isCertified(),
+    lastActivity:new Date().toISOString(),
+  };
+  // ref_cert record
+  await fetch(FB+"/ref_cert/"+learner.key+".json",{method:"PUT",body:JSON.stringify(rec)});
+  // ALSO tag into the shared CRM directory so they appear across the platform
+  try{
+    await fetch(FB+"/directory_crm_master/"+learner.key+"/name.json",{method:"PUT",body:JSON.stringify(learner.name)});
+    await fetch(FB+"/directory_crm_master/"+learner.key+"/email.json",{method:"PUT",body:JSON.stringify(learner.email)});
+    await fetch(FB+"/directory_crm_master/"+learner.key+"/lastActivity.json",{method:"PUT",body:JSON.stringify(new Date().toISOString())});
+    // add 'referee' to their arms[] sector tags without clobbering existing
+    const ar=await fetch(FB+"/directory_crm_master/"+learner.key+"/arms.json");
+    let arms=await ar.json();
+    if(!Array.isArray(arms))arms=[];
+    if(!arms.includes("referee"))arms.push("referee");
+    if(isCertified()&&!arms.includes("certified-referee"))arms.push("certified-referee");
+    await fetch(FB+"/directory_crm_master/"+learner.key+"/arms.json",{method:"PUT",body:JSON.stringify(arms)});
+  }catch(e){/* CRM tag best-effort */}
+}
+
+function isCertified(){
+  return DATA.modules.every(m=>learner.progress[m.id]&&learner.progress[m.id].passed);
+}
+
+function moduleUnlocked(i){
+  if(i===0)return true;
+  const prev=DATA.modules[i-1];
+  return learner.progress[prev.id]&&learner.progress[prev.id].passed;
+}
+
+function render(){
+  const done=Object.values(learner.progress).filter(p=>p.passed).length;
+  const total=DATA.modules.length;
+  document.getElementById('prog-bar').style.width=(done/total*100)+'%';
+  document.getElementById('prog-meta').textContent=done+' of '+total+' modules complete'+(isCertified()?' · CERTIFIED':'');
+
+  const cb=document.getElementById('cert-banner');
+  if(isCertified()){
+    cb.classList.add('show');
+    document.getElementById('cert-detail').innerHTML=learner.name+' is certified to officiate every style on the Combat Games Series circuit.<br>Issued '+new Date().toLocaleDateString('en-NZ');
+  }else cb.classList.remove('show');
+
+  const wrap=document.getElementById('modules');
+  wrap.innerHTML=DATA.modules.map((m,i)=>{
+    const p=learner.progress[m.id];
+    const passed=p&&p.passed;
+    const unlocked=moduleUnlocked(i);
+    const cls=passed?'done':unlocked?'active':'locked';
+    const status=passed?'<span class="mod-status st-done">✓ PASSED '+p.score+'%</span>'
+      :unlocked?'<span class="mod-status st-todo">START</span>'
+      :'<span class="mod-status st-lock">🔒 LOCKED</span>';
+    return '<div class="mod '+cls+'" id="mod-'+m.id+'">'
+      +'<div class="mod-head" onclick="'+(unlocked?'toggleMod(\''+m.id+'\')':'')+'">'
+      +'<div class="mod-num">'+(i+1)+'</div>'
+      +'<div class="mod-info"><div class="mod-title">'+m.title+'</div><div class="mod-sub">'+m.sub+'</div></div>'
+      +status+'</div>'
+      +'<div class="mod-body" id="body-'+m.id+'">'
+      +'<div class="mod-content">'+m.content.map(c=>'<p>'+c+'</p>').join('')+'</div>'
+      +'<div id="quiz-'+m.id+'"></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+let answers={};
+function toggleMod(id){
+  const body=document.getElementById('body-'+id);
+  const open=body.classList.toggle('open');
+  if(open)buildQuiz(id);
+}
+
+function buildQuiz(mid){
+  const m=DATA.modules.find(x=>x.id===mid);
+  answers[mid]=answers[mid]||{};
+  const q=document.getElementById('quiz-'+mid);
+  q.innerHTML=m.questions.map((qq,qi)=>{
+    let inner='<div class="qz-type">'+(qq.type==='mc'?'Multiple Choice':qq.type==='tf'?'True / False':'Scenario')+'</div>';
+    inner+='<div class="qz-q">'+qq.q+'</div>';
+    if(qq.type==='mc'){
+      inner+=qq.options.map((o,oi)=>'<button class="qz-opt" data-m="'+mid+'" data-q="'+qi+'" data-o="'+oi+'" onclick="pick(this)">'+o+'</button>').join('');
+    }else if(qq.type==='tf'){
+      inner+='<button class="qz-opt" data-m="'+mid+'" data-q="'+qi+'" data-o="true" onclick="pick(this)">True</button>';
+      inner+='<button class="qz-opt" data-m="'+mid+'" data-q="'+qi+'" data-o="false" onclick="pick(this)">False</button>';
+    }else{
+      inner+='<div class="qz-scenario"><textarea placeholder="Your answer — action, communication, reasoning..." data-m="'+mid+'" data-q="'+qi+'" oninput="answers[\''+mid+'\'][\''+qi+'\']=this.value"></textarea>'
+        +'<div class="qz-guide" id="guide-'+mid+'-'+qi+'"><strong>Model answer:</strong> '+qq.guide+'</div></div>';
+    }
+    return '<div class="qz" data-qi="'+qi+'">'+inner+'</div>';
+  }).join('')
+  +'<button class="mod-submit" onclick="submitMod(\''+mid+'\')">Submit Module</button>'
+  +'<div class="mod-result" id="result-'+mid+'"></div>';
+}
+
+function pick(btn){
+  const m=btn.dataset.m,qi=btn.dataset.q;
+  answers[m][qi]=btn.dataset.o;
+  // visual select within this question
+  btn.parentElement.querySelectorAll('.qz-opt').forEach(b=>{if(b.dataset.q===qi)b.classList.remove('sel');});
+  btn.classList.add('sel');
+}
+
+async function submitMod(mid){
+  const m=DATA.modules.find(x=>x.id===mid);
+  const a=answers[mid]||{};
+  let auto=0,autoTotal=0,scenarios=0;
+  m.questions.forEach((qq,qi)=>{
+    if(qq.type==='scenario'){scenarios++;
+      const g=document.getElementById('guide-'+mid+'-'+qi);if(g)g.classList.add('show');
+      return;
+    }
+    autoTotal++;
+    let correct=false;
+    if(qq.type==='mc')correct=(String(a[qi])===String(qq.answer));
+    if(qq.type==='tf')correct=(a[qi]===String(qq.answer));
+    if(correct)auto++;
+    // mark options
+    document.querySelectorAll('#quiz-'+mid+' .qz-opt[data-q="'+qi+'"]').forEach(b=>{
+      const val=b.dataset.o;
+      const isAns=(qq.type==='mc'&&String(qq.answer)===val)||(qq.type==='tf'&&String(qq.answer)===val);
+      if(isAns)b.classList.add('correct');
+      else if(b.classList.contains('sel'))b.classList.add('wrong');
+    });
+  });
+  const score=autoTotal?Math.round(auto/autoTotal*100):100;
+  const passed=score>=DATA.passMark;
+  const res=document.getElementById('result-'+mid);
+  res.className='mod-result '+(passed?'pass':'fail');
+  res.innerHTML=passed
+    ?'✓ Passed — '+score+'% on auto-marked questions.'+(scenarios?' Your '+scenarios+' scenario answer(s) are saved for Dafydd to review against the model answers shown.':'')
+    :'Not yet — '+score+'% (need '+DATA.passMark+'%). Review the material above and resubmit. Correct answers are highlighted.';
+
+  // Save scenario text + score
+  learner.progress[mid]={passed,score,
+    scenarios:m.questions.filter(q=>q.type==='scenario').map((q,i)=>({q:q.q,answer:a[String(m.questions.indexOf(q))]||''})),
+    ts:new Date().toISOString()};
+  await saveLearner();
+  render();
+  // keep this module open after re-render
+  setTimeout(()=>{const b=document.getElementById('body-'+mid);if(b){b.classList.add('open');}},50);
+}
+
+// allow Enter on gate
+document.getElementById('g-email').addEventListener('keydown',e=>{if(e.key==='Enter')startCourse();});
+</script>
+</body>
+</html>
