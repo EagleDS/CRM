@@ -729,8 +729,8 @@ tbody tr:last-child td { border-bottom: none; }
 // Inside the Eagle DS OS shell? Suppress the login flash — the shell already authed.
 if (window.self !== window.top) {
   document.addEventListener('DOMContentLoaded', function(){
-    var g = document.getElementById('gate');
-    if (g) g.style.display = 'none';
+    var g = document.getElementById('gate'); if (g) g.style.display = 'none';
+    var a = document.getElementById('app'); if (a) a.style.display = 'block';
   });
 }
 </script>
