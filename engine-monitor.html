@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Engine Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+body{padding:0;}
+.en-nav{height:56px;background:#0a0a0d;border-bottom:1px solid rgba(200,150,12,.15);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100;}
+.en-nav .logo{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;color:var(--gold);}
+.en-nav .sub{font-family:var(--mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;}
+.en-pulse{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1px;}
+.en-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:p 2s infinite;}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.en-wrap{max-width:720px;margin:0 auto;padding:18px 16px 60px;}
+.en-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.en-stat{background:var(--black-2);border:1px solid var(--border,#222);border-radius:4px;padding:12px;text-align:center;}
+.en-stat .n{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);line-height:1;}
+.en-stat .l{font-family:var(--mono);font-size:7px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-top:3px;}
+.en-tabs{display:flex;gap:2px;margin-bottom:14px;}
+.en-tab{flex:1;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:11px;background:var(--grey);color:var(--text-muted);cursor:pointer;border:none;border-bottom:2px solid transparent;}
+.en-tab.on{background:var(--black-2);color:var(--gold);border-bottom-color:var(--gold);}
+.feed-item{background:var(--grey);border:1px solid var(--border,#222);border-radius:4px;border-left:3px solid var(--gold-dk);padding:11px 14px;margin-bottom:6px;display:flex;gap:12px;align-items:flex-start;}
+.feed-item.enquiry{border-left-color:#3d8eff;}
+.feed-item.payment{border-left-color:var(--green);}
+.feed-item.cgs_registration{border-left-color:#C0392B;}
+.feed-item.certification{border-left-color:var(--gold);}
+.feed-item.programme_complete{border-left-color:#9d55f5;}
+.fi-icon{font-size:18px;line-height:1.2;}
+.fi-body{flex:1;min-width:0;}
+.fi-action{font-size:13px;color:var(--white);line-height:1.4;}
+.fi-meta{font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-top:3px;}
+.fi-type{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:2px;background:rgba(200,150,12,.1);color:var(--gold);white-space:nowrap;}
+.fi-time{font-family:var(--mono);font-size:8px;color:var(--text-muted);white-space:nowrap;}
+.empty{text-align:center;padding:50px 20px;font-family:var(--mono);font-size:11px;color:var(--text-muted);line-height:1.8;}
+.empty .big{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);letter-spacing:2px;margin-bottom:8px;}
+.seq-row{background:var(--grey);border:1px solid var(--border,#222);border-radius:4px;padding:10px 14px;margin-bottom:5px;}
+.seq-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.seq-name{font-size:13px;color:var(--white);font-weight:500;}
+.seq-stage{font-family:var(--mono);font-size:9px;color:var(--gold);}
+.seq-bar{height:5px;background:#1a1a1a;border-radius:3px;margin-top:7px;overflow:hidden;}
+.seq-fill{height:100%;background:var(--gold);border-radius:3px;}
+.seq-done .seq-fill{background:var(--green);}
+.seq-meta{font-family:var(--mono);font-size:8px;color:var(--text-muted);margin-top:4px;}
+.refresh{background:none;border:1px solid var(--border,#333);color:var(--text-muted);font-family:var(--mono);font-size:9px;padding:5px 10px;border-radius:2px;cursor:pointer;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="en-nav">
+  <span class="logo">⚙ ENGINE</span><span class="sub">WHAT THE SYSTEM IS DOING</span>
+  <span class="en-pulse"><span class="en-dot"></span>LIVE</span>
+</div>
+<div class="en-wrap">
+  <div class="en-stats">
+    <div class="en-stat"><div class="n" id="s-today">0</div><div class="l">Actions Today</div></div>
+    <div class="en-stat"><div class="n" id="s-week">0</div><div class="l">This Week</div></div>
+    <div class="en-stat"><div class="n" id="s-seq">0</div><div class="l">Active Follow-ups</div></div>
+    <div class="en-stat"><div class="n" id="s-total">0</div><div class="l">Total Handled</div></div>
+  </div>
+  <div class="en-tabs">
+    <button class="en-tab on" onclick="tab('feed',this)">Activity</button>
+    <button class="en-tab" onclick="tab('seq',this)">Follow-ups Running</button>
+  </div>
+  <div style="text-align:right;margin-bottom:8px"><button class="refresh" onclick="load()">↻ REFRESH</button></div>
+  <div id="feed"></div>
+  <div id="seq" style="display:none"></div>
+</div>
+<script>
+const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+let logs=[],seqs={};
+const ICON={enquiry:"📩",payment:"💳",cgs_registration:"🥊",certification:"🎓",programme_complete:"🎯"};
+
+async function load(){
+  try{
+    const r=await fetch(FB+"/engine_log.json");
+    const d=await r.json()||{};
+    logs=Object.values(d).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  }catch(e){logs=[];}
+  try{
+    const r=await fetch(FB+"/sequences/enquiry.json");
+    seqs=await r.json()||{};
+  }catch(e){seqs={};}
+  render();
+}
+
+function render(){
+  const now=Date.now();
+  const today=logs.filter(l=>now-new Date(l.ts)<86400000).length;
+  const week=logs.filter(l=>now-new Date(l.ts)<7*86400000).length;
+  const activeSeq=Object.values(seqs).filter(s=>s&&!s.done).length;
+  document.getElementById('s-today').textContent=today;
+  document.getElementById('s-week').textContent=week;
+  document.getElementById('s-seq').textContent=activeSeq;
+  document.getElementById('s-total').textContent=logs.length;
+
+  const feed=document.getElementById('feed');
+  if(!logs.length){
+    feed.innerHTML='<div class="empty"><div class="big">NOTHING YET</div>When the engine handles an enquiry, payment, registration or certification, it shows here — every action it takes, automatically.</div>';
+  }else{
+    feed.innerHTML=logs.slice(0,100).map(l=>{
+      const t=new Date(l.ts);
+      const ago=timeAgo(now-t.getTime());
+      return '<div class="feed-item '+(l.type||'')+'">'
+        +'<div class="fi-icon">'+(ICON[l.type]||"•")+'</div>'
+        +'<div class="fi-body"><div class="fi-action">'+esc(l.action||l.type)+'</div>'
+        +'<div class="fi-meta">'+esc(l.email||'system')+'</div></div>'
+        +'<div style="text-align:right"><span class="fi-type">'+esc((l.type||'').replace(/_/g,' '))+'</span><div class="fi-time">'+ago+'</div></div>'
+        +'</div>';
+    }).join('');
+  }
+
+  const sq=document.getElementById('seq');
+  const list=Object.values(seqs).filter(s=>s&&s.email).sort((a,b)=>new Date(b.startedAt)-new Date(a.startedAt));
+  if(!list.length){
+    sq.innerHTML='<div class="empty"><div class="big">NO FOLLOW-UPS</div>When someone enquires, the engine starts chasing them here automatically — day 2, day 5, day 10 — until they join or time out. You never chase anyone.</div>';
+  }else{
+    sq.innerHTML=list.map(s=>{
+      const stage=s.stage||0,total=3;
+      const pct=Math.round(stage/total*100);
+      return '<div class="seq-row'+(s.done?' seq-done':'')+'">'
+        +'<div class="seq-top"><span class="seq-name">'+esc(s.name||s.email)+'</span>'
+        +'<span class="seq-stage">'+(s.done?'✓ Complete':'Step '+stage+' of '+total)+'</span></div>'
+        +'<div class="seq-bar"><div class="seq-fill" style="width:'+(s.done?100:pct)+'%"></div></div>'
+        +'<div class="seq-meta">'+esc(s.email)+' · started '+new Date(s.startedAt).toLocaleDateString('en-NZ')+(s.lastSent?' · last nudge '+new Date(s.lastSent).toLocaleDateString('en-NZ'):'')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+}
+
+function tab(t,btn){
+  document.querySelectorAll('.en-tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.getElementById('feed').style.display=t==='feed'?'block':'none';
+  document.getElementById('seq').style.display=t==='seq'?'block':'none';
+}
+function timeAgo(ms){const m=Math.floor(ms/60000);if(m<1)return'now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+load();
+setInterval(load,30000);
+</script>
+</body>
+</html>
