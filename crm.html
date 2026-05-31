@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 /* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
@@ -1913,16 +1914,16 @@ async function executeBulkDelete(){
   const affected=Object.keys(db).filter(k=>{const arms=db[k].arms||[];return arms.length===1&&arms[0]===s;});
   if(!affected.length){alert('No contacts found with only the ['+s+'] tag.');return;}
   if(!confirm('Permanently delete '+affected.length+' contacts tagged only as ['+s+']? This cannot be undone.'))return;
-  affected.forEach(k=>delete db[k]);
-  updateStats();renderTable();
-  const payload={};
-  affected.forEach(k=>{ payload[k]=null; });
   setStatus("","deleting...");
+  const payload={};
+  affected.forEach(k=>{ payload["/directory_crm_master/"+k]=null; });
   try{
-    const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(payload)});
-    if(r.ok){ setStatus("live","live"); log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err'); }
-    else throw new Error("HTTP "+r.status);
-  }catch(e){ setStatus("err","offline"); log('Cloud delete failed: '+e.message+' — run Force Sync.','err'); }
+    await firebase.database().ref().update(payload);
+    affected.forEach(k=>delete db[k]);
+    updateStats();renderTable();
+    setStatus("live","live");
+    log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
+  }catch(e){ setStatus("err","offline"); log('Bulk delete failed: '+e.message,'err'); }
   document.getElementById('bulk-del-preview').textContent='';
 }
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
@@ -2038,23 +2039,19 @@ async function bulkDelete(){
   if(!selectedKeys.size) return;
   if(!confirm('Permanently delete '+selectedKeys.size+' contacts? This cannot be undone.')) return;
   const keys = [...selectedKeys];
-  keys.forEach(k => delete db[k]);
-  clearSelection();
-  updateStats(); renderTable();
-  const payload = {};
-  keys.forEach(k => { payload[k] = null; });
   setStatus("","deleting...");
+  const payload = {};
+  keys.forEach(k => { payload["/directory_crm_master/"+k] = null; });
   try{
-    const r = await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(payload)});
-    if(r.ok){
-      setStatus("live","live");
-      log('Deleted '+keys.length+' contacts.','err');
-    } else {
-      throw new Error("HTTP "+r.status);
-    }
+    await firebase.database().ref().update(payload);
+    keys.forEach(k => delete db[k]);
+    clearSelection();
+    updateStats(); renderTable();
+    setStatus("live","live");
+    log('Deleted '+keys.length+' contacts.','err');
   }catch(e){
     setStatus("err","offline");
-    log('Cloud delete failed: '+e.message+' — run Force Sync.','err');
+    log('Bulk delete failed: '+e.message,'err');
   }
 }
 
