@@ -2112,7 +2112,7 @@ function loadSegments(){
       html+='<tr>'
         +'<td class="nc"><strong>'+displayName(r)+'</strong><span>'+r.email+'</span></td>'
         +'<td style="font-size:12px;color:var(--muted2);">'+(r.club||r.extras?.organisation||'—')+'</td>'
-        +'<td><select onchange="tagSingleContact(\\"'+key+'\\",this.value)" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;">'
+        +'<td><select class="seg-inline-select" data-key="'+key+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;">'
         +'<option value="">— select —</option>'
         +Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')
         +'</select></td>'
@@ -2121,6 +2121,12 @@ function loadSegments(){
     html+='</tbody></table></div>';
   }
   el.innerHTML=html;
+  // Delegated listener for inline segment selects — avoids inline onchange quoting issues
+  el.querySelectorAll('.seg-inline-select').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      tagSingleContact(this.dataset.key, this.value);
+    });
+  });
 }
 
 async function tagSingleContact(key,subType){
