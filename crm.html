@@ -1915,8 +1915,14 @@ async function executeBulkDelete(){
   if(!confirm('Permanently delete '+affected.length+' contacts tagged only as ['+s+']? This cannot be undone.'))return;
   affected.forEach(k=>delete db[k]);
   updateStats();renderTable();
-  for(const k of affected){ await pushSingleContact(k); }
-  log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
+  const payload={};
+  affected.forEach(k=>{ payload[k]=null; });
+  setStatus("","deleting...");
+  try{
+    const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(payload)});
+    if(r.ok){ setStatus("live","live"); log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err'); }
+    else throw new Error("HTTP "+r.status);
+  }catch(e){ setStatus("err","offline"); log('Cloud delete failed: '+e.message+' — run Force Sync.','err'); }
   document.getElementById('bulk-del-preview').textContent='';
 }
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
@@ -2032,13 +2038,24 @@ async function bulkDelete(){
   if(!selectedKeys.size) return;
   if(!confirm('Permanently delete '+selectedKeys.size+' contacts? This cannot be undone.')) return;
   const keys = [...selectedKeys];
-  // Remove from local db first
   keys.forEach(k => delete db[k]);
   clearSelection();
   updateStats(); renderTable();
-  // pushSingleContact handles DELETE when key is absent from db
-  for(const k of keys){ await pushSingleContact(k); }
-  log('Deleted '+keys.length+' contacts.','err');
+  const payload = {};
+  keys.forEach(k => { payload[k] = null; });
+  setStatus("","deleting...");
+  try{
+    const r = await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(payload)});
+    if(r.ok){
+      setStatus("live","live");
+      log('Deleted '+keys.length+' contacts.','err');
+    } else {
+      throw new Error("HTTP "+r.status);
+    }
+  }catch(e){
+    setStatus("err","offline");
+    log('Cloud delete failed: '+e.message+' — run Force Sync.','err');
+  }
 }
 
 async function bulkMove(){
