@@ -898,7 +898,10 @@ if (window.self !== window.top) {
             <div style="background:var(--black);border:1px solid rgba(200,150,12,.15);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:9px;color:var(--gold-dk);line-height:1.7;">
               ⚡ Open &amp; click tracking active — each recipient gets a unique tracked email. Results appear in Email Analytics tab.
             </div>
-            <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
+            <div class="btn-row" style="gap:8px;">
+              <button class="btn btn-ghost" onclick="sendPreview()" style="flex:.6;"><span>✉ Send Preview to Me</span></button>
+              <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
+            </div>
           </div>
         </div>
         <div class="panel">
@@ -1691,6 +1694,32 @@ function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierSt
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
 // ─── BROADCAST (with tracking) ───
+async function sendPreview(){
+  let k=localStorage.getItem("RESEND_KEY");
+  if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
+  const subject=document.getElementById("b-subject").value.trim();
+  const body=document.getElementById("b-body").value.trim();
+  if(!subject||!body){alert("Subject and message required.");return;}
+  // Use your own contact record as the preview recipient so variables resolve realistically
+  const previewEmail=EAGLE_USER?EAGLE_USER.email:"info@eagleds.co.nz";
+  const previewContact=Object.values(db).find(r=>r.email===previewEmail)||{
+    email:previewEmail,firstName:"Dafydd",lastName:"Sanders",name:"Dafydd Sanders",
+    club:"Eagle DS",children:[]
+  };
+  const bid="preview_"+Date.now();
+  const html=buildTrackedEmail(replaceVars(body,previewContact,""),bid,previewEmail);
+  const previewSubject="[PREVIEW] "+replaceVars(subject,previewContact,"");
+  try{
+    const r=await fetch("https://api.resend.com/emails",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},
+      body:JSON.stringify({from:FROM,to:previewEmail,subject:previewSubject,html})
+    });
+    if(r.ok){log("Preview sent to "+previewEmail,"ok");}
+    else{const e=await r.json();log("Preview failed: "+(e.message||r.status),"err");}
+  }catch(e){log("Preview error: "+e.message,"err");}
+}
+
 async function sendBroadcast(){
   let k=localStorage.getItem("RESEND_KEY");
   if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
