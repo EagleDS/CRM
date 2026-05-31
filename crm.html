@@ -975,6 +975,24 @@ if (window.self !== window.top) {
         </div>
       </div>
       <div class="panel">
+        <div class="ph"><div class="pt">Bulk Delete by Sector</div></div>
+        <div class="pb">
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Deletes all contacts whose <em>only</em> sector tag is the one selected. Contacts tagged across multiple sectors are untouched.</p>
+          <label>Sector to Delete</label>
+          <select id="bulk-del-sector">
+            <option value="gym">🥋 Gym Academy</option>
+            <option value="cgs">⚔ CGS Circuit</option>
+            <option value="school">🏫 Institutional</option>
+            <option value="corp">💼 Commercial</option>
+          </select>
+          <div id="bulk-del-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin-bottom:14px;font-style:italic;"></div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="previewBulkDelete()"><span>Preview</span></button>
+            <button class="btn btn-red" onclick="executeBulkDelete()"><span>⚠ Delete All Matching</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
         <div class="ph"><div class="pt">Database Operations</div></div>
         <div class="pb">
           <div class="btn-row">
@@ -1180,6 +1198,10 @@ const COL={
   ecPhone:["ec phone","emergency phone","emergency contact phone","emergency number"],
   style:["style","martial art","discipline","what style"],
   org:["organisation","organization","affiliation","club affiliation"],
+  mobile:["mobile","cell","mobile number"],
+  website:["website","web","url","site"],
+  position:["position","role","job title","title"],
+  sector:["sector","industry","area"],
   rank:["rank","belt","grade"],
   years:["years competing","years training","experience"],
   address:["address"],
@@ -1439,7 +1461,11 @@ async function runImport(colMap,sector){
     const fullName=(firstName+(lastName?" "+lastName:"")).trim();
     const phone=g(cells,colMap.phone);
     const dob=parseDOB(g(cells,colMap.dob));
-    const clubName=g(cells,colMap.club);
+    const clubName=g(cells,colMap.club)||g(cells,colMap.org);
+    const mobile=g(cells,colMap.mobile);
+    const website=g(cells,colMap.website);
+    const position=g(cells,colMap.position);
+    const sectorTag=g(cells,colMap.sector);
     const clubPhone=g(cells,colMap.clubPhone); // = coach's number
     const coachNameRaw=g(cells,colMap.coachName);
     const ecFirst=g(cells,colMap.ecFirst);
@@ -1457,10 +1483,15 @@ async function runImport(colMap,sector){
       }
     });
 
+    const effectivePhone=phone||mobile;
+    if(mobile&&mobile!==phone&&mobile)extras.mobile=mobile;
+    if(website)extras.website=website;
+    if(position)extras.position=position;
+    if(sectorTag)extras.sector_tag=sectorTag;
     const incoming={
       email,firstName,lastName,
       name:fullName,
-      phone,dob,
+      phone:effectivePhone,dob,
       club:clubName,
       arms:[sector],
       lastActivity:ts,
@@ -1726,6 +1757,22 @@ async function executeFix(){const from=document.getElementById("fix-from").value
 function previewStrip(){const s=document.getElementById("strip-sector").value,n=Object.values(db).filter(r=>(r.arms||[]).includes(s)).length;document.getElementById("strip-preview").textContent=n+" contacts have ["+s+"] tag.";}
 async function executeStrip(){const s=document.getElementById("strip-sector").value,affected=Object.keys(db).filter(k=>(db[k].arms||[]).includes(s));if(!affected.length){alert("None found.");return;}if(!confirm("Strip ["+s+"] from "+affected.length+" contacts?"))return;affected.forEach(k=>{db[k].arms=(db[k].arms||[]).filter(a=>a!==s);});updateStats();renderTable();await pushToCloud();log("Stripped ["+s+"] from "+affected.length,"warn");}
 function exportCSV(){const rows=[["Name","Email","Phone","DOB","Age","Sectors","Tier","Family","Last Activity","Added"]];for(const k in db){const r=db[k],age=calcAge(r.dob);rows.push([r.name||"",r.email||"",r.phone||"",r.dob||"",age!==null?age:"",(r.arms||[]).join(";"),getTier(r),isParent(r)?"Parent":(age!==null&&age<18?"Minor":"Adult"),r.lastActivity||"",r.added||""]);}const csv=rows.map(r=>r.map(c=>'"'+(c||"").replace(/"/g,'""')+'"').join(",")).join("\n"),a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="eagle-ds-"+new Date().toISOString().slice(0,10)+".csv";a.click();log("CSV exported.","ok");}
+function previewBulkDelete(){
+  const s=document.getElementById('bulk-del-sector').value;
+  const affected=Object.keys(db).filter(k=>{const arms=db[k].arms||[];return arms.length===1&&arms[0]===s;});
+  document.getElementById('bulk-del-preview').textContent=affected.length+' contacts will be permanently deleted (only tagged as '+s+').';
+}
+async function executeBulkDelete(){
+  const s=document.getElementById('bulk-del-sector').value;
+  const affected=Object.keys(db).filter(k=>{const arms=db[k].arms||[];return arms.length===1&&arms[0]===s;});
+  if(!affected.length){alert('No contacts found with only the ['+s+'] tag.');return;}
+  if(!confirm('Permanently delete '+affected.length+' contacts tagged only as ['+s+']? This cannot be undone.'))return;
+  affected.forEach(k=>delete db[k]);
+  updateStats();renderTable();
+  await pushToCloud();
+  log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
+  document.getElementById('bulk-del-preview').textContent='';
+}
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
 
 // ─── WEB LEADS INBOX ───
