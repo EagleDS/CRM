@@ -991,7 +991,10 @@ if (window.self !== window.top) {
       <div class="panel">
         <div class="ph">
           <div class="pt">Segment Manager</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadSegments()"><span>↻ Refresh</span></button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="runReclassifyAll()"><span>⚡ Reclassify All</span></button>
+            <button class="btn btn-ghost btn-sm" onclick="loadSegments()"><span>↻ Refresh</span></button>
+          </div>
         </div>
         <div style="padding:12px 18px;background:var(--black);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.8;">
           Sub-classify Institutional contacts for precise campaign targeting. Tag contacts individually or in bulk by keyword match.
@@ -1029,12 +1032,14 @@ if (window.self !== window.top) {
               </div>
               <button class="btn" onclick="previewBulkTag()" style="height:38px;margin-top:0;"><span>Preview →</span></button>
             </div>
-            <div id="seg-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin:12px 0;font-style:italic;min-height:20px;"></div>
+            <div id="seg-preview" style="margin:12px 0;min-height:20px;"></div>
             <button class="btn btn-red" id="seg-apply-btn" onclick="applyBulkTag()" style="display:none;"><span>Apply Tag to Matched Contacts</span></button>
           </div>
 
           <!-- Segment breakdown -->
           <div id="seg-breakdown"></div>
+          <!-- EXCEPTION QUEUE -->
+          <div id="seg-exceptions" style="margin-top:24px;"></div>
         </div>
       </div>
     </div>
@@ -1683,7 +1688,8 @@ async function runImport(colMap,sector){
   }
 
   buildFamilyLinks();
-  log(`Import: ${added} new, ${merged} merged, ${linked} linked contacts (coaches/EC), ${skipped} skipped.`,"ok");
+  const classified = autoClassifyAll(false); // run rules on new/updated contacts only
+  log(`Import: ${added} new, ${merged} merged, ${linked} linked, ${skipped} skipped. Auto-classified: ${classified}.`,"ok");
   document.getElementById("sheet-input").value="";
   updateStats();renderTable();
   await pushToCloud();
@@ -2072,6 +2078,163 @@ async function bulkMove(){
   log('Moved '+keys.length+' contacts → ['+sector+'].','ok');
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-CLASSIFICATION RULES ENGINE
+// Runs on import and on demand. Never overwrites a manually-set tag
+// unless forceOverride=true. Returns count of contacts classified.
+// ═══════════════════════════════════════════════════════════════
+
+const CLASSIFICATION_RULES = [
+  // ── GATEWAY ORGS (match by known org name first — most specific) ──
+  { test: r => /CLM|Community (Leisure|Sport)/i.test(orgOf(r)),           tag: 'gateway_sport_trust' },
+  { test: r => /Counties Manukau Sport|Sport Trust|CMS/i.test(orgOf(r)), tag: 'gateway_sport_trust' },
+  { test: r => /Youthline|Youth ?line/i.test(orgOf(r)),                    tag: 'gateway_youth_service' },
+  { test: r => /Genesis Youth|STRIVE|Kia Pu[aā]wai|Solomon Group|Springboard|VisionWest/i.test(orgOf(r)), tag: 'gateway_youth_service' },
+  { test: r => /Lifewise|Barnardos|Oranga Tamariki|Reconnect/i.test(orgOf(r)), tag: 'gateway_social_work' },
+  { test: r => /Ara Taiohi|Foundation North|Local Board|Auckland Council/i.test(orgOf(r)), tag: 'gateway_funding' },
+  { test: r => /Salvation Army|City Mission|Presbyterian|Methodist|Baptist.*Trust/i.test(orgOf(r)), tag: 'gateway_social_work' },
+
+  // ── PRIVATE / INTEGRATED SCHOOLS ──
+  { test: r => /Saint Kentigern|St Kentigern|Elim|Sancta Maria|Sacred Heart|Tyndale|Christian College|Catholic College|Marist|Carmel|De La Salle/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_private' : 'school_east_private' },
+
+  // ── KURA ──
+  { test: r => /[Kk]ura|Te Kura|Kura Kaupapa|Rumaki/i.test(orgOf(r)), tag: 'school_south_kura' },
+
+  // ── SECONDARY (COLLEGE / HIGH) ──
+  { test: r => /(College|High School|Senior College)/i.test(orgOf(r)) && !/Primary|Intermediate|Junior College/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_secondary' : 'school_south_secondary' },
+
+  // ── JUNIOR COLLEGE / INTERMEDIATE ──
+  { test: r => /Junior College|Intermediate/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_intermediate' : 'school_south_intermediate' },
+
+  // ── PRIMARY ──
+  { test: r => /Primary|School/i.test(orgOf(r)) && !/College|High|Intermediate|Junior College|[Kk]ura/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_primary' : 'school_south_primary' },
+
+  // ── DECISION MAKER OVERLAY (position-based, applied on top of school tag) ──
+  // Note: this adds a second tag via extras.role, not sub_type
+];
+
+// East vs South determination — based on suburb keywords in address/org/city
+const EAST_KEYWORDS = /Howick|Botany|Pakuranga|Bucklands Beach|Half Moon Bay|Eastern Beach|Dannemora|Flat Bush|Ormiston|Mission Heights|East Tamaki|Beachlands|Maraetai|Whitford|Somerville|Cockle Bay|Farm Cove|Sunnyhills|Mellons Bay|Pigeon Mountain|Highland Park|Glendowie|St Heliers|Kohimarama/i;
+const SOUTH_KEYWORDS = /Otara|Papatoetoe|Manurewa|Mangere|Otahuhu|Papakura|Clendon|Wiri|Manukau|Pukekohe|Tuakau|Waiuku|Manurewa|Clover Park|Randwick Park/i;
+
+function orgOf(r){ return (r.club||r.extras?.club||r.extras?.organisation||r.name||''); }
+
+function eastOrSouth(r){
+  const haystack = [orgOf(r), r.extras?.physical_address||'', r.extras?.city||'', r.extras?.address||''].join(' ');
+  if(SOUTH_KEYWORDS.test(haystack)) return 'south';
+  if(EAST_KEYWORDS.test(haystack)) return 'east';
+  // Default: if org has a high decile hint or no south keyword, assume east
+  return 'east';
+}
+
+function classifyContact(r, forceOverride){
+  // Never touch manually-confirmed tags unless force
+  if(!forceOverride && r.extras?.sub_type_confirmed) return null;
+  // Don't classify non-institutional contacts
+  if(!(r.arms||[]).includes('school')) return null;
+
+  for(const rule of CLASSIFICATION_RULES){
+    if(rule.test(r)){
+      const tag = typeof rule.tag === 'function' ? rule.tag(r) : rule.tag;
+      // Don't overwrite existing tag unless force
+      if(!forceOverride && r.extras?.sub_type && r.extras.sub_type === tag) return null;
+      if(!forceOverride && r.extras?.sub_type) return null; // has a tag already, leave it
+      return tag;
+    }
+  }
+  return null; // no rule matched — goes to exception queue
+}
+
+function autoClassifyAll(forceOverride){
+  let count = 0;
+  for(const k in db){
+    const tag = classifyContact(db[k], forceOverride);
+    if(tag){
+      if(!db[k].extras) db[k].extras = {};
+      db[k].extras.sub_type = tag;
+      count++;
+    }
+  }
+  return count;
+}
+
+async function runReclassifyAll(){
+  const force = confirm('Reclassify ALL institutional contacts?\n\nOK = reclassify everything including manually-tagged contacts.\nCancel = only classify untagged contacts.');
+  const count = autoClassifyAll(force);
+  if(!count){ log('Nothing to reclassify.','info'); loadSegments(); return; }
+  await pushToCloud();
+  log('Reclassified '+count+' contacts.','ok');
+  loadSegments();
+}
+
+// ── EXCEPTION QUEUE ──
+// Shows institutional contacts that no rule could classify
+function renderExceptions(){
+  const el = document.getElementById('seg-exceptions');
+  if(!el) return;
+  const unclassifiable = Object.keys(db).filter(k => {
+    const r = db[k];
+    if(!(r.arms||[]).includes('school')) return false;
+    if(r.extras?.sub_type) return false; // already tagged
+    return true; // no tag, no rule matched
+  });
+  if(!unclassifiable.length){
+    el.innerHTML = '';
+    return;
+  }
+  let html = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;">⚠ '+unclassifiable.length+' contacts could not be auto-classified</div>';
+  html += '<div style="max-height:320px;overflow-y:auto;border:1px solid rgba(224,112,32,0.3);background:var(--black);">';
+  html += '<table style="width:100%;border-collapse:collapse;">';
+  html += '<thead><tr>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Contact</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Organisation</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Fix</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;width:40px;"></th>'
+    +'</tr></thead><tbody>';
+  unclassifiable.forEach(k => {
+    const r = db[k];
+    html += '<tr style="border-bottom:1px solid var(--border);" id="exc-row-'+k+'">'
+      +'<td style="padding:7px 12px;font-size:12px;color:var(--text);">'+displayName(r)+'<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+r.email+'</div></td>'
+      +'<td style="padding:7px 12px;font-size:11px;color:var(--muted2);">'+(orgOf(r)||'—')+'</td>'
+      +'<td style="padding:7px 12px;">'
+      +'<select class="exc-select" data-key="'+k+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;font-family:var(--mono);">'
+      +'<option value="">— select tag —</option>'
+      +Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')
+      +'</select></td>'
+      +'<td style="padding:7px 12px;"><button class="exc-fix-btn btn btn-ghost btn-sm" data-key="'+k+'"><span>✓</span></button></td>'
+      +'</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+
+  // Delegated listeners
+  el.querySelectorAll('.exc-select').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      const row = document.getElementById('exc-row-'+this.dataset.key);
+      if(row) row.style.background = this.value ? 'rgba(200,150,12,0.06)' : '';
+    });
+  });
+  el.querySelectorAll('.exc-fix-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ fixException(this.dataset.key); });
+  });
+}
+
+async function fixException(key){
+  const sel = document.querySelector('.exc-select[data-key="'+key+'"]');
+  if(!sel||!sel.value){ alert('Select a tag first.'); return; }
+  if(!db[key]) return;
+  if(!db[key].extras) db[key].extras = {};
+  db[key].extras.sub_type = sel.value;
+  db[key].extras.sub_type_confirmed = true; // mark as manually confirmed — rules won't overwrite
+  await pushSingleContact(key);
+  log('Fixed: '+displayName(db[key])+' → '+SEG_LABELS[sel.value],'ok');
+  const row = document.getElementById('exc-row-'+key);
+  if(row) row.remove();
+  // Update breakdown count
+  loadSegments();
+}
+
 // ─── SEGMENTS ───
 const SEG_LABELS = {
   school_east_secondary:  '🏫 East Secondary — fee-paying',
@@ -2137,6 +2300,7 @@ function loadSegments(){
     html+='</tbody></table></div>';
   }
   el.innerHTML=html;
+  renderExceptions();
   // Delegated listener for inline segment selects — avoids inline onchange quoting issues
   el.querySelectorAll('.seg-inline-select').forEach(function(sel){
     sel.addEventListener('change', function(){
@@ -2166,20 +2330,75 @@ function previewBulkTag(){
     const pos=(r.extras?.position||'').toLowerCase();
     return org.includes(kw)||pos.includes(kw);
   });
-  document.getElementById('seg-preview').textContent=bulkTagMatches.length+' contacts match "'+kw+'"';
-  document.getElementById('seg-apply-btn').style.display=bulkTagMatches.length?'inline-block':'none';
+  const el=document.getElementById('seg-preview');
+  if(!bulkTagMatches.length){
+    el.innerHTML='<span style="color:var(--muted);">No contacts match "'+kw+'".</span>';
+    document.getElementById('seg-apply-btn').style.display='none';
+    return;
+  }
+  let html='<div style="font-family:var(--mono);font-size:9px;color:var(--gold);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase;">'+bulkTagMatches.length+' contacts match \"'+kw+'\"</div>';
+  html+='<div style="max-height:240px;overflow-y:auto;border:1px solid var(--border);background:var(--black);">';
+  html+='<table style="width:100%;border-collapse:collapse;">';
+  html+='<thead><tr><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Name</th><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Organisation</th><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Assign Tag</th></tr></thead>';
+  html+='<tbody>';
+  bulkTagMatches.forEach(k=>{
+    const r=db[k];
+    const name=displayName(r)||r.email;
+    const org=r.club||r.extras?.club||r.extras?.organisation||'—';
+    const current=getSubType(r)||'';
+    const opts=Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'"'+(current===v?' selected':'')+'>'+l+'</option>').join('');
+    html+='<tr style="border-bottom:1px solid var(--border);">'
+      +'<td style="padding:7px 12px;font-size:12px;color:var(--text);">'+name+'<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+r.email+'</div></td>'
+      +'<td style="padding:7px 12px;font-size:11px;color:var(--muted2);">'+org+'</td>'
+      +'<td style="padding:7px 12px;">'
+      +'<select class="seg-row-select" data-key="'+k+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;font-family:var(--mono);">'
+      +'<option value="">— untagged —</option>'+opts
+      +'</select>'
+      +'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+  document.getElementById('seg-apply-btn').style.display='inline-block';
+  // Instant single-contact tagging from row dropdown
+  el.querySelectorAll('.seg-row-select').forEach(function(sel){
+    sel.addEventListener('change',function(){
+      const k=this.dataset.key;
+      const v=this.value;
+      if(!db[k])return;
+      if(!db[k].extras)db[k].extras={};
+      if(v) db[k].extras.sub_type=v;
+      else delete db[k].extras.sub_type;
+      pushSingleContact(k);
+      // Update bulkTagMatches to reflect manual override
+      this.closest('tr').style.background='rgba(200,150,12,0.06)';
+      log('Tagged '+displayName(db[k])+' → '+(v?SEG_LABELS[v]:'untagged'),'ok');
+    });
+  });
 }
 
 async function applyBulkTag(){
   const subType=document.getElementById('seg-subtype').value;
   if(!subType||!bulkTagMatches.length)return;
   if(!confirm('Tag '+bulkTagMatches.length+' contacts as "'+SEG_LABELS[subType]+'"?'))return;
-  bulkTagMatches.forEach(k=>{
+  // Read each row's dropdown — allows per-row overrides before applying
+  const rowSelects=document.querySelectorAll('.seg-row-select');
+  let tagged=0;
+  rowSelects.forEach(sel=>{
+    const k=sel.dataset.key;
+    const v=sel.value||subType;
+    if(!db[k])return;
     if(!db[k].extras)db[k].extras={};
-    db[k].extras.sub_type=subType;
+    if(v){db[k].extras.sub_type=v;tagged++;}
+  });
+  // Fall back to bulk tag for any rows without a select
+  bulkTagMatches.forEach(k=>{
+    if(!db[k])return;
+    if(!db[k].extras)db[k].extras={};
+    if(!db[k].extras.sub_type&&subType){db[k].extras.sub_type=subType;tagged++;}
   });
   await pushToCloud();
-  log('Bulk tagged '+bulkTagMatches.length+' contacts → '+SEG_LABELS[subType],'ok');
+  log('Tagged '+tagged+' contacts.','ok');
   bulkTagMatches=[];
   document.getElementById('seg-apply-btn').style.display='none';
   document.getElementById('seg-preview').textContent='';
