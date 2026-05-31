@@ -1915,15 +1915,8 @@ async function executeBulkDelete(){
   if(!confirm('Permanently delete '+affected.length+' contacts tagged only as ['+s+']? This cannot be undone.'))return;
   affected.forEach(k=>delete db[k]);
   updateStats();renderTable();
-  let failed=0;
-  for(const k of affected){
-    try{
-      const r=await eagleFetch(FB+'/directory_crm_master/'+k+'.json',{method:'DELETE'});
-      if(!r.ok) failed++;
-    }catch(e){ failed++; }
-  }
-  if(!failed) log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
-  else log('Deleted '+(affected.length-failed)+' — '+failed+' failed.','err');
+  for(const k of affected){ await pushSingleContact(k); }
+  log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
   document.getElementById('bulk-del-preview').textContent='';
 }
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
@@ -2039,20 +2032,13 @@ async function bulkDelete(){
   if(!selectedKeys.size) return;
   if(!confirm('Permanently delete '+selectedKeys.size+' contacts? This cannot be undone.')) return;
   const keys = [...selectedKeys];
-  // Delete from local db
+  // Remove from local db first
   keys.forEach(k => delete db[k]);
   clearSelection();
   updateStats(); renderTable();
-  // Write null to each key explicitly — PATCH won't delete, must null each path
-  let failed=0;
-  for(const k of keys){
-    try{
-      const r=await eagleFetch(FB+'/directory_crm_master/'+k+'.json',{method:'DELETE'});
-      if(!r.ok) failed++;
-    }catch(e){ failed++; }
-  }
-  if(!failed) log('Deleted '+keys.length+' contacts.','err');
-  else log('Deleted '+(keys.length-failed)+' of '+keys.length+' — '+failed+' failed, check Firebase.','err');
+  // pushSingleContact handles DELETE when key is absent from db
+  for(const k of keys){ await pushSingleContact(k); }
+  log('Deleted '+keys.length+' contacts.','err');
 }
 
 async function bulkMove(){
