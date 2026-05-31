@@ -1167,7 +1167,36 @@ function closeModal(id){document.getElementById(id).classList.remove("open");}
 
 // ─── FIREBASE ───
 async function syncFromCloud(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
-async function pushToCloud(){try{const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
+async function pushToCloud(){
+  // Write in batches of 100 to avoid Firebase 400 on large payloads
+  const BATCH=100;
+  const keys=Object.keys(db);
+  let failed=0;
+  try{
+    // First pass: write each record individually via PATCH to avoid full-replace on large sets
+    // Split into chunks
+    for(let i=0;i<keys.length;i+=BATCH){
+      const chunk={};
+      keys.slice(i,i+BATCH).forEach(k=>{chunk[k]=db[k];});
+      const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(chunk)});
+      if(!r.ok){failed++;log("Batch "+(Math.floor(i/BATCH)+1)+" failed: HTTP "+r.status,"err");}
+    }
+    if(!failed)log("Synced "+keys.length+" contacts.","ok");
+    else log(failed+" batch(es) failed — check Firebase.","err");
+  }catch(e){log("Push failed: "+e.message,"err");}
+}
+async function pushSingleContact(key){
+  // For single-record updates (edit, delete, ingest) — faster than full push
+  try{
+    if(db[key]){
+      const r=await eagleFetch(FB+"/directory_crm_master/"+key+".json",{method:"PUT",body:JSON.stringify(db[key])});
+      if(!r.ok)throw new Error("HTTP "+r.status);
+    }else{
+      const r=await eagleFetch(FB+"/directory_crm_master/"+key+".json",{method:"DELETE"});
+      if(!r.ok)throw new Error("HTTP "+r.status);
+    }
+  }catch(e){log("Single push failed: "+e.message,"err");}
+}
 
 // ─── STATS ───
 function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,cold:0,dormant:0,parents:0,minors:0,multi:0,adults:0};for(const k in db){t.master++;const arms=db[k].arms||[];if(arms.includes("gym"))t.gym++;if(arms.includes("cgs"))t.cgs++;if(arms.includes("school"))t.school++;if(arms.includes("corp"))t.corp++;const tier=getTier(db[k]);if(t[tier]!==undefined)t[tier]++;const age=calcAge(db[k].dob);if(age!==null&&age<18)t.minors++;else if(age!==null&&age>=18)t.adults++;if(db[k].children&&db[k].children.length>0){t.parents++;if(db[k].children.length>1)t.multi++;}}["master","gym","cgs","school","corp","hot","warm","cold","dormant","parents","minors","multi","adults"].forEach(k=>{const el=document.getElementById("cnt-"+k);if(el)el.textContent=t[k];});}
@@ -1746,10 +1775,10 @@ function renderTable(){
       +'</tr>';
   }).join("");
 }
-async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushToCloud();log("Removed: "+n,"warn");}
+async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushSingleContact(key);log("Removed: "+n,"warn");}
 function openEdit(key){const r=db[key];document.getElementById("edit-key").value=key;document.getElementById("edit-modal-name").textContent=r.name||r.email;document.getElementById("edit-firstname").value=r.firstName||(r.name||"").split(" ")[0]||"";document.getElementById("edit-lastname").value=r.lastName||(r.name||"").split(" ").slice(1).join(" ")||"";document.getElementById("edit-email").value=r.email||"";document.getElementById("edit-phone").value=r.phone||"";document.querySelectorAll(".sector-tiles .stile").forEach(el=>{el.className="stile";if((r.arms||[]).includes(el.dataset.s))el.classList.add("on-"+el.dataset.s);});document.getElementById("edit-modal").classList.add("open");}
 function toggleEditSector(el){const s=el.dataset.s;if(el.classList.contains("on-"+s))el.className="stile";else{el.className="stile";el.classList.add("on-"+s);}}
-async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});const ef=document.getElementById("edit-firstname").value.trim(),el2=document.getElementById("edit-lastname").value.trim();db[key].firstName=ef;db[key].lastName=el2;db[key].name=(ef+(el2?" "+el2:"")).trim()||db[key].name;db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushToCloud();log("Updated: "+db[key].name,"ok");}
+async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});const ef=document.getElementById("edit-firstname").value.trim(),el2=document.getElementById("edit-lastname").value.trim();db[key].firstName=ef;db[key].lastName=el2;db[key].name=(ef+(el2?" "+el2:"")).trim()||db[key].name;db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushSingleContact(key);log("Updated: "+db[key].name,"ok");}
 
 // ─── TOOLS ───
 function previewFix(){const from=document.getElementById("fix-from").value,scope=document.getElementById("fix-scope").value,n=Object.values(db).filter(r=>{const arms=r.arms||[];return scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);}).length;document.getElementById("fix-preview").textContent=n+" contacts will be affected.";}
