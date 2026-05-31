@@ -778,6 +778,7 @@ if (window.self !== window.top) {
       <button class="tab" onclick="switchTab('analytics',this)">Email Analytics</button>
       <button class="tab" onclick="switchTab('directory',this)">Directory</button>
       <button class="tab" onclick="switchTab('tools',this)">Tools</button>
+      <button class="tab" onclick="switchTab('segments',this)">Segments</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -872,6 +873,22 @@ if (window.self !== window.top) {
               <option value="dormant">Dormant — re-engage</option>
               <option value="parents">Parents only</option>
               <option value="adults">Adult athletes only</option>
+              <optgroup label="── Institutional Segments ──">
+              <option value="seg:school_east_secondary">East Secondary — fee-paying</option>
+              <option value="seg:school_east_primary">East Primary — fee-paying</option>
+              <option value="seg:school_east_intermediate">East Intermediate — fee-paying</option>
+              <option value="seg:school_east_private">East Private / Integrated</option>
+              <option value="seg:school_south_secondary">South Secondary — funded</option>
+              <option value="seg:school_south_primary">South Primary — funded</option>
+              <option value="seg:school_south_intermediate">South Intermediate — funded</option>
+              <option value="seg:school_south_kura">Kura Kaupapa</option>
+              <option value="seg:gateway_sport_trust">Gateway — Sport Trust</option>
+              <option value="seg:gateway_youth_service">Gateway — Youth Service</option>
+              <option value="seg:gateway_social_work">Gateway — Social Work / Justice</option>
+              <option value="seg:gateway_funding">Gateway — Funder / Local Govt</option>
+              <option value="seg:decision_maker">Decision Makers only</option>
+              <option value="seg:influencer">Influencers only</option>
+              </optgroup>
             </select>
             <div id="b-count" style="font-family:var(--cormorant);font-size:16px;font-weight:600;color:var(--muted2);margin-bottom:14px;"></div>
             <label>Subject</label>
@@ -939,11 +956,81 @@ if (window.self !== window.top) {
           <select id="dir-tier" onchange="renderTable()" style="width:130px;"><option value="all">All Tiers</option><option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dormant">Dormant</option></select>
           <select id="dir-family" onchange="renderTable()" style="width:140px;"><option value="all">All types</option><option value="parents">Parents</option><option value="minors">Under 18</option><option value="adults">Adults</option></select>
         </div>
+        <div id="bulk-bar" style="display:none;background:rgba(200,150,12,0.08);border-bottom:1px solid rgba(200,150,12,0.2);padding:10px 18px;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span id="bulk-count" style="font-family:var(--mono);font-size:10px;color:var(--gold);min-width:100px;"></span>
+          <select id="bulk-move-sector" style="background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:5px 8px;font-size:11px;font-family:var(--mono);">
+            <option value="">— Move to sector —</option>
+            <option value="gym">🥋 Gym Academy</option>
+            <option value="cgs">⚔ CGS Circuit</option>
+            <option value="school">🏫 Institutional</option>
+            <option value="corp">💼 Commercial</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="bulkMove()"><span>Move →</span></button>
+          <div style="width:1px;height:20px;background:var(--border2);flex-shrink:0;"></div>
+          <button class="btn btn-red btn-sm" onclick="bulkDelete()"><span>⚠ Delete Selected</span></button>
+          <button class="btn btn-ghost btn-sm" onclick="clearSelection()" style="margin-left:auto;"><span>✕ Deselect All</span></button>
+        </div>
         <div class="twrap">
           <table>
-            <thead><tr><th>Contact</th><th>Sectors</th><th>Tier</th><th>Family</th><th>Last Activity</th><th></th></tr></thead>
-            <tbody id="dir-body"><tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr></tbody>
+            <thead><tr>
+              <th style="width:36px;padding-left:14px;"><input type="checkbox" id="select-all-chk" onchange="toggleSelectAll(this)" title="Select / deselect all visible" style="cursor:pointer;accent-color:var(--gold);width:14px;height:14px;"></th>
+              <th>Contact</th><th>Sectors</th><th>Tier</th><th>Family</th><th>Last Activity</th><th></th>
+            </tr></thead>
+            <tbody id="dir-body"><tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEGMENTS -->
+    <div class="tab-pane" id="tab-segments">
+      <div class="panel">
+        <div class="ph">
+          <div class="pt">Segment Manager</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadSegments()"><span>↻ Refresh</span></button>
+        </div>
+        <div style="padding:12px 18px;background:var(--black);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.8;">
+          Sub-classify Institutional contacts for precise campaign targeting. Tag contacts individually or in bulk by keyword match.
+        </div>
+        <div style="padding:18px;">
+          <!-- Bulk tagger -->
+          <div style="background:var(--grey);border:1px solid var(--border);padding:16px;margin-bottom:20px;">
+            <div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Bulk Tag by Keyword</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
+              <div><label>Match keyword in Organisation</label><input type="text" id="seg-keyword" placeholder="e.g. College, Primary, CLM…"></div>
+              <div><label>Assign Sub-Type</label>
+                <select id="seg-subtype">
+                  <option value="school_east_secondary">East Secondary (fee-paying)</option>
+                  <option value="school_east_primary">East Primary (fee-paying)</option>
+                  <option value="school_east_intermediate">East Intermediate (fee-paying)</option>
+                  <option value="school_east_private">East Private / Integrated</option>
+                  <option value="school_south_secondary">South Secondary (funded)</option>
+                  <option value="school_south_primary">South Primary (funded)</option>
+                  <option value="school_south_intermediate">South Intermediate (funded)</option>
+                  <option value="school_south_kura">Kura Kaupapa</option>
+                  <option value="gateway_sport_trust">Gateway — Sport Trust</option>
+                  <option value="gateway_youth_service">Gateway — Youth Service</option>
+                  <option value="gateway_social_work">Gateway — Social Work / Justice</option>
+                  <option value="gateway_funding">Gateway — Funder / Local Govt</option>
+                  <option value="decision_maker">Decision Maker (signs contracts)</option>
+                  <option value="influencer">Influencer (advisor / coordinator)</option>
+                  <option value="operational">Operational (delivery staff)</option>
+                </select>
+              </div>
+              <div><label>Scope</label>
+                <select id="seg-scope">
+                  <option value="school">Institutional only</option>
+                  <option value="all">All sectors</option>
+                </select>
+              </div>
+              <button class="btn" onclick="previewBulkTag()" style="height:38px;margin-top:0;"><span>Preview →</span></button>
+            </div>
+            <div id="seg-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin:12px 0;font-style:italic;min-height:20px;"></div>
+            <button class="btn btn-red" id="seg-apply-btn" onclick="applyBulkTag()" style="display:none;"><span>Apply Tag to Matched Contacts</span></button>
+          </div>
+
+          <!-- Segment breakdown -->
+          <div id="seg-breakdown"></div>
         </div>
       </div>
     </div>
@@ -1162,7 +1249,7 @@ function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();if(id==="segments")loadSegments();}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
 
 // ─── FIREBASE ───
@@ -1758,7 +1845,8 @@ function renderTable(){
     else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';
     const club=r.club||r.extras?.club||"";
     const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";
-    return'<tr>'
+    return'<tr onclick="rowClick(event,\''+k+'\')" style="cursor:pointer;">'
+      +'<td style="width:36px;padding-left:14px;" onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-key="'+k+'" onchange="onRowCheck()" style="cursor:pointer;accent-color:var(--gold);width:14px;height:14px;"></td>'
       +'<td class="nc">'
       +'<strong>'+(dn||'<span style="color:var(--muted)">No name</span>')+'</strong>'
       +(r.lastName&&r.firstName?'<span style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-left:4px;">'+r.lastName.toUpperCase()+'</span>':'')
@@ -1864,6 +1952,202 @@ function emailLead(email){document.getElementById("b-sector").value="all";switch
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
+
+
+// ─── BULK SELECTION ───
+let selectedKeys = new Set();
+
+function onRowCheck(){
+  selectedKeys = new Set();
+  document.querySelectorAll('.row-chk:checked').forEach(chk => selectedKeys.add(chk.dataset.key));
+  updateBulkBar();
+}
+
+function toggleSelectAll(masterChk){
+  document.querySelectorAll('.row-chk').forEach(chk => {
+    chk.checked = masterChk.checked;
+  });
+  onRowCheck();
+}
+
+function rowClick(event, key){
+  // Clicking a row (not the checkbox cell) toggles the checkbox
+  if(event.target.type === 'checkbox') return;
+  const chk = document.querySelector('.row-chk[data-key="'+key+'"]');
+  if(chk){ chk.checked = !chk.checked; onRowCheck(); }
+}
+
+function updateBulkBar(){
+  const bar = document.getElementById('bulk-bar');
+  const countEl = document.getElementById('bulk-count');
+  const n = selectedKeys.size;
+  if(n > 0){
+    bar.style.display = 'flex';
+    countEl.textContent = n + ' selected';
+  } else {
+    bar.style.display = 'none';
+    const masterChk = document.getElementById('select-all-chk');
+    if(masterChk) masterChk.checked = false;
+  }
+}
+
+function clearSelection(){
+  selectedKeys.clear();
+  document.querySelectorAll('.row-chk').forEach(chk => chk.checked = false);
+  const masterChk = document.getElementById('select-all-chk');
+  if(masterChk) masterChk.checked = false;
+  updateBulkBar();
+}
+
+async function bulkDelete(){
+  if(!selectedKeys.size) return;
+  if(!confirm('Permanently delete '+selectedKeys.size+' contacts? This cannot be undone.')) return;
+  const keys = [...selectedKeys];
+  keys.forEach(k => delete db[k]);
+  clearSelection();
+  updateStats(); renderTable();
+  await pushToCloud();
+  log('Deleted '+keys.length+' contacts.','err');
+}
+
+async function bulkMove(){
+  const sector = document.getElementById('bulk-move-sector').value;
+  if(!sector){ alert('Select a sector to move to.'); return; }
+  if(!selectedKeys.size) return;
+  const keys = [...selectedKeys];
+  if(!confirm('Add sector ['+sector+'] to '+keys.length+' contacts?')) return;
+  keys.forEach(k => {
+    if(!db[k]) return;
+    if(!db[k].arms) db[k].arms = [];
+    if(!db[k].arms.includes(sector)) db[k].arms.push(sector);
+  });
+  clearSelection();
+  updateStats(); renderTable();
+  await pushToCloud();
+  log('Moved '+keys.length+' contacts → ['+sector+'].','ok');
+}
+
+// ─── SEGMENTS ───
+const SEG_LABELS = {
+  school_east_secondary:  '🏫 East Secondary — fee-paying',
+  school_east_primary:    '🏫 East Primary — fee-paying',
+  school_east_intermediate:'🏫 East Intermediate — fee-paying',
+  school_east_private:    '🏛 East Private / Integrated',
+  school_south_secondary: '🏫 South Secondary — funded',
+  school_south_primary:   '🏫 South Primary — funded',
+  school_south_intermediate:'🏫 South Intermediate — funded',
+  school_south_kura:      '🌿 Kura Kaupapa',
+  gateway_sport_trust:    '⚽ Gateway — Sport Trust',
+  gateway_youth_service:  '🤝 Gateway — Youth Service',
+  gateway_social_work:    '⚖ Gateway — Social Work / Justice',
+  gateway_funding:        '💰 Gateway — Funder / Local Govt',
+  decision_maker:         '⭐ Decision Maker',
+  influencer:             '◈ Influencer',
+  operational:            '◇ Operational'
+};
+
+function getSubType(r){ return (r.extras&&r.extras.sub_type)||null; }
+
+function loadSegments(){
+  const el=document.getElementById('seg-breakdown');
+  const counts={};
+  let untagged=0;
+  const institutional=Object.values(db).filter(r=>(r.arms||[]).includes('school'));
+  institutional.forEach(r=>{
+    const st=getSubType(r);
+    if(st){counts[st]=(counts[st]||0)+1;}else{untagged++;}
+  });
+  const total=institutional.length;
+  let html='<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:14px;letter-spacing:.1em;text-transform:uppercase;">'+total+' Institutional contacts · '+untagged+' untagged</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:20px;">';
+  for(const[st,label]of Object.entries(SEG_LABELS)){
+    const n=counts[st]||0;
+    html+='<div style="background:var(--grey);border:1px solid var(--border);padding:14px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:12px;color:var(--text);">'+label+'</div>'
+      +'<div style="font-family:var(--bebas);font-size:28px;color:'+(n>0?'var(--gold)':'var(--muted)')+';">'+n+'</div>'
+      +'</div>';
+  }
+  if(untagged){
+    html+='<div style="background:var(--grey);border:1px solid rgba(200,150,12,.3);padding:14px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:12px;color:var(--gold);">⚠ Untagged Institutional</div>'
+      +'<div style="font-family:var(--bebas);font-size:28px;color:var(--orange);">'+untagged+'</div>'
+      +'</div>';
+  }
+  html+='</div>';
+  // List untagged contacts for quick tagging
+  if(untagged){
+    html+='<div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:10px;">Untagged Contacts</div>';
+    html+='<div class="twrap"><table><thead><tr><th>Contact</th><th>Organisation</th><th>Assign Sub-Type</th></tr></thead><tbody>';
+    institutional.filter(r=>!getSubType(r)).forEach(r=>{
+      const key=emailKey(r.email);
+      html+='<tr>'
+        +'<td class="nc"><strong>'+displayName(r)+'</strong><span>'+r.email+'</span></td>'
+        +'<td style="font-size:12px;color:var(--muted2);">'+(r.club||r.extras?.organisation||'—')+'</td>'
+        +'<td><select onchange="tagSingleContact(''+key+'',this.value)" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;">'
+        +'<option value="">— select —</option>'
+        +Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')
+        +'</select></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+  el.innerHTML=html;
+}
+
+async function tagSingleContact(key,subType){
+  if(!subType||!db[key])return;
+  if(!db[key].extras)db[key].extras={};
+  db[key].extras.sub_type=subType;
+  await pushSingleContact(key);
+  log('Tagged '+displayName(db[key])+' → '+SEG_LABELS[subType],'ok');
+  loadSegments();
+}
+
+let bulkTagMatches=[];
+function previewBulkTag(){
+  const kw=document.getElementById('seg-keyword').value.trim().toLowerCase();
+  const scope=document.getElementById('seg-scope').value;
+  if(!kw){document.getElementById('seg-preview').textContent='Enter a keyword first.';return;}
+  bulkTagMatches=Object.keys(db).filter(k=>{
+    const r=db[k];
+    if(scope==='school'&&!(r.arms||[]).includes('school'))return false;
+    const org=(r.club||r.extras?.club||r.extras?.organisation||r.name||'').toLowerCase();
+    const pos=(r.extras?.position||'').toLowerCase();
+    return org.includes(kw)||pos.includes(kw);
+  });
+  document.getElementById('seg-preview').textContent=bulkTagMatches.length+' contacts match "'+kw+'"';
+  document.getElementById('seg-apply-btn').style.display=bulkTagMatches.length?'inline-block':'none';
+}
+
+async function applyBulkTag(){
+  const subType=document.getElementById('seg-subtype').value;
+  if(!subType||!bulkTagMatches.length)return;
+  if(!confirm('Tag '+bulkTagMatches.length+' contacts as "'+SEG_LABELS[subType]+'"?'))return;
+  bulkTagMatches.forEach(k=>{
+    if(!db[k].extras)db[k].extras={};
+    db[k].extras.sub_type=subType;
+  });
+  await pushToCloud();
+  log('Bulk tagged '+bulkTagMatches.length+' contacts → '+SEG_LABELS[subType],'ok');
+  bulkTagMatches=[];
+  document.getElementById('seg-apply-btn').style.display='none';
+  document.getElementById('seg-preview').textContent='';
+  loadSegments();
+}
+
+// Extend broadcast to filter by sub_type
+// Hook into getTargetEmails — if tier filter contains 'seg:' prefix, filter by sub_type
+const _origGetTargetEmails=getTargetEmails;
+window.getTargetEmails=function(sector,tierStr){
+  if(tierStr&&tierStr.startsWith('seg:')){
+    const subType=tierStr.slice(4);
+    return Object.values(db).filter(r=>{
+      const inS=sector==='all'||(r.arms||[]).includes(sector);
+      return inS&&getSubType(r)===subType;
+    });
+  }
+  return _origGetTargetEmails(sector,tierStr);
+};
 
 function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncFromCloud();renderProfiles();loadLeads(); }
 eagleInitAuth();
