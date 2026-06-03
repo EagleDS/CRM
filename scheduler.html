@@ -769,6 +769,7 @@ if (window.self !== window.top) {
       <button class="tab active" onclick="switchTab('schedule',this)">Schedule</button>
       <button class="tab" onclick="switchTab('queue',this)">Queue</button>
       <button class="tab" onclick="switchTab('retention',this)">Retention Rules</button>
+      <button class="tab" onclick="switchTab('blogseries',this)">Blog Series</button>
     </div>
 
     <!-- SCHEDULE -->
@@ -849,6 +850,53 @@ if (window.self !== window.top) {
     </div>
 
     <!-- RETENTION -->
+
+    <div class="tab-pane" id="tab-blogseries">
+      <div class="page-hd">
+        <span class="section-label">Blog Series — 12 Posts</span>
+        <p style="font-family:var(--dm);font-size:13px;color:var(--muted2);max-width:600px;line-height:1.8;">One post per week, every Wednesday 9am. Enrol your full CRM list once — the engine handles the rest. Each subscriber gets posts 01→12 in sequence regardless of when they join.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:2px;">
+        <div class="ph"><div class="pt">Series Status</div></div>
+        <div class="pb">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:16px;" id="series-stats">
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:28px;letter-spacing:2px;color:var(--gold);" id="ss-enrolled">—</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Enrolled</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:28px;letter-spacing:2px;color:var(--green);" id="ss-active">—</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">In Progress</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:28px;letter-spacing:2px;color:var(--blue);" id="ss-done">—</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Completed</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:28px;letter-spacing:2px;color:var(--muted);" id="ss-posts">—</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Posts Published</div></div>
+          </div>
+          <button class="btn btn-ghost" onclick="loadSeriesStatus()" style="margin-right:8px;"><span>Refresh Status</span></button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:2px;">
+        <div class="ph"><div class="pt">Enrol CRM List</div></div>
+        <div class="pb">
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:16px;">Enrols contacts from your CRM into the weekly series. Existing enrollees are not re-enrolled — safe to run again after importing new contacts.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);">Enrol:</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="enrol-scope" value="all" checked style="accent-color:var(--gold);"> Full CRM (all contacts with email)</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="enrol-scope" value="gym"> Gym arm only</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="enrol-scope" value="current"> Current members only</label>
+          </div>
+          <div class="console" id="series-log" style="margin-bottom:16px;min-height:60px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="enrolSeriesList()"><span id="enrol-btn-text">⚡ Enrol List</span></button>
+            <button class="btn btn-ghost" onclick="clearSeriesLog()"><span>Clear Log</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><div class="pt">Next Send</div></div>
+        <div class="pb">
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:12px;">The engine fires automatically every Wednesday at 9am NZ. The next send will go to all active subscribers at their current post position.</p>
+          <div id="next-send-info" style="font-family:var(--mono);font-size:11px;color:var(--text);">Loading…</div>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-pane" id="tab-retention">
       <div class="page-hd">
         <span class="section-label">Automated Retention Rules</span>
@@ -947,7 +995,7 @@ function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="queue")renderQueue();if(id==="retention")renderRetention();}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="queue")renderQueue();if(id==="retention")renderRetention();if(id==="blogseries")loadSeriesStatus();}
 function insertVar(v,id){const el=document.getElementById(id);const p=el.selectionStart,e=el.selectionEnd;el.value=el.value.slice(0,p)+v+el.value.slice(e);el.focus();el.selectionStart=el.selectionEnd=p+v.length;}
 async function syncData(){setStatus("","syncing…");try{const[qr,cr]=await Promise.all([eagleFetch(FB+"/automation_queue.json"),eagleFetch(FB+"/directory_crm_master.json")]);queue=await qr.json()||{};contacts=await cr.json()||{};setStatus("live","live");log(Object.keys(queue).length+" queued, "+Object.keys(contacts).length+" contacts.","ok");renderRetention();}catch(e){setStatus("err","offline");log("Firebase failed.","err");}}
 async function pushQueue(){try{await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});}catch(e){log("Push failed.","err");}}
@@ -971,6 +1019,121 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
 function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncData(); }
 eagleInitAuth();
+
+
+// ═══ BLOG SERIES MODULE ═══
+const FB_BS = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
+
+function seriesLog(msg, type) {
+  const el = document.getElementById('series-log');
+  if (!el) return;
+  const ts = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const span = document.createElement('span');
+  span.className = 'l-' + (type||'info');
+  span.textContent = '[' + ts + '] ' + msg + '\n';
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearSeriesLog() {
+  const el = document.getElementById('series-log');
+  if (el) el.innerHTML = '';
+}
+
+function emailKey(e) { return e.trim().toLowerCase().replace(/\./g,'%2E').replace(/@/g,'%40'); }
+
+async function loadSeriesStatus() {
+  try {
+    const [subsR, postsR] = await Promise.all([
+      eagleFetch(FB_BS + '/sequences/blog_series.json'),
+      eagleFetch(FB_BS + '/eagle_blog.json')
+    ]);
+    const subs = await subsR.json() || {};
+    const posts = await postsR.json() || {};
+
+    const total = Object.keys(subs).length;
+    const active = Object.values(subs).filter(s => s && !s.done).length;
+    const done = Object.values(subs).filter(s => s && s.done).length;
+    const published = Object.values(posts).filter(p => p.status === 'published').length;
+
+    document.getElementById('ss-enrolled').textContent = total;
+    document.getElementById('ss-active').textContent = active;
+    document.getElementById('ss-done').textContent = done;
+    document.getElementById('ss-posts').textContent = published;
+
+    // Next Wednesday
+    const now = new Date();
+    const day = now.getDay();
+    const daysUntilWed = (3 - day + 7) % 7 || 7;
+    const nextWed = new Date(now);
+    nextWed.setDate(now.getDate() + daysUntilWed);
+    nextWed.setHours(9, 0, 0, 0);
+    const el = document.getElementById('next-send-info');
+    if (el) el.textContent = 'Next send: Wednesday ' + nextWed.toLocaleDateString('en-NZ',{weekday:'long',day:'numeric',month:'long'}) + ' at 9:00am NZ — ' + active + ' subscribers will receive their next post.';
+  } catch(e) {
+    seriesLog('Could not load series status: ' + e.message, 'err');
+  }
+}
+
+async function enrolSeriesList() {
+  const scope = document.querySelector('input[name="enrol-scope"]:checked')?.value || 'all';
+  const btn = document.getElementById('enrol-btn-text');
+  btn.textContent = 'Enrolling…';
+  clearSeriesLog();
+  seriesLog('Loading CRM and existing enrolments…', 'gold');
+
+  try {
+    const [contR, subR] = await Promise.all([
+      eagleFetch(FB_BS + '/directory_crm_master.json'),
+      eagleFetch(FB_BS + '/sequences/blog_series.json')
+    ]);
+    const allContacts = await contR.json() || {};
+    const existing = await subR.json() || {};
+
+    // Filter contacts by scope
+    let targets = Object.values(allContacts).filter(c => c && c.email && c.email.includes('@'));
+    if (scope === 'gym') targets = targets.filter(c => (c.arms||[]).includes('gym'));
+    if (scope === 'current') targets = targets.filter(c => c.gymdesk_status === 'current');
+
+    seriesLog('Eligible contacts: ' + targets.length + ' · Scope: ' + scope, 'info');
+
+    let added = 0, skipped = 0;
+    const updates = {};
+
+    for (const contact of targets) {
+      const key = emailKey(contact.email);
+      if (existing[key]) { skipped++; continue; }
+      updates[key] = {
+        email: contact.email,
+        name: contact.name || '',
+        stage: 0,
+        startedAt: new Date().toISOString(),
+        done: false
+      };
+      added++;
+    }
+
+    if (added > 0) {
+      // Merge with existing
+      const merged = Object.assign({}, existing, updates);
+      await eagleFetch(FB_BS + '/sequences/blog_series.json', {
+        method: 'PUT',
+        body: JSON.stringify(merged)
+      });
+      seriesLog('Enrolled ' + added + ' new subscribers. ' + skipped + ' already enrolled.', 'ok');
+    } else {
+      seriesLog('All ' + skipped + ' eligible contacts already enrolled. Nothing to add.', 'info');
+    }
+
+    await loadSeriesStatus();
+  } catch(e) {
+    seriesLog('Enrolment failed: ' + e.message, 'err');
+  }
+
+  btn.textContent = '⚡ Enrol List';
+}
+// ═══ END BLOG SERIES MODULE ═══
+
 </script>
 </body>
 </html>
