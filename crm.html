@@ -1422,7 +1422,7 @@ function emailLead(email){document.getElementById("b-sector").value="all";switch
 
 
 // ═══ GYMDESK IMPORT MODULE ═══
-let gdStatus = null, gdRows = [], gdHeaders = [], gdDone = false;
+let gdStatus = null, gdRows = [], gdHeaders = [], gdDone = false, gdParsing = false;
 
 function gdSelectStatus(s) {
   gdStatus = s;
@@ -1452,6 +1452,9 @@ if (gdDrop) {
 
 function gdHandleFile(file) {
   if (!file || !file.name.match(/\.(csv|txt)$/i)) { gdLog('Please upload a .csv file.', 'err'); return; }
+  if (gdParsing) return;
+  gdParsing = true;
+  setTimeout(() => { gdParsing = false; }, 2000);
   document.getElementById('gd-file-label').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
   const reader = new FileReader();
   reader.onload = e => gdParseCSV(e.target.result);
@@ -1546,6 +1549,19 @@ async function gdRunImport() {
   const dupEl = document.querySelector('input[name="gd-dup"]:checked');
   const dupMode = dupEl ? dupEl.value : 'merge';
   gdLog('Starting — ' + gdRows.length + ' rows · status: ' + gdStatus.toUpperCase() + ' · mode: ' + dupMode, 'gold');
+
+  // Ensure CRM data is loaded before importing
+  if (Object.keys(db).length === 0) {
+    gdLog('Loading existing CRM data…', 'gold');
+    try {
+      const r = await eagleFetch(FB + '/directory_crm_master.json');
+      db = await r.json() || {};
+      gdLog('CRM loaded — ' + Object.keys(db).length + ' existing contacts.', 'ok');
+    } catch(e) {
+      gdLog('Could not load CRM: ' + e.message + ' — importing as fresh.', 'warn');
+      db = {};
+    }
+  }
 
   const workingDb = JSON.parse(JSON.stringify(db));
   const idx = gdGetIdx();
