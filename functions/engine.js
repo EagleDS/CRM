@@ -199,3 +199,78 @@ exports.advanceSequences = onSchedule(
     }
   }
 );
+
+// ═══════════════════════════════════════════════════════════════
+// THE SERIES ENGINE — runs every Wednesday 9am NZ.
+// Sends the next blog post in sequence to every enrolled subscriber.
+// Each subscriber has their own position — latecomers start at post 1.
+// Never sends the same post twice. Stops automatically when done.
+//
+// Subscriber record at /sequences/blog_series/{emailKey}:
+// { email, name, stage, startedAt, lastSent, done }
+//
+// Post order is fixed: 01→12. Release schedule: one per week Wednesday.
+// ═══════════════════════════════════════════════════════════════
+exports.advanceBlogSeries = onSchedule(
+  { schedule: "0 9 * * 3", timeZone: "Pacific/Auckland", secrets: [resendKey] },
+  async () => {
+    const resend = new Resend(resendKey.value());
+
+    // Load blog posts from Firebase
+    const posts = await fbGet("eagle_blog").catch(() => ({})) || {};
+
+    // Build ordered sequence of published posts by postNumber
+    const orderedPosts = Object.values(posts)
+      .filter(p => p.status === "published" && p.postNumber)
+      .sort((a, b) => a.postNumber - b.postNumber);
+
+    if (!orderedPosts.length) return;
+
+    // Load subscribers
+    const subs = await fbGet("sequences/blog_series").catch(() => ({})) || {};
+    let sent = 0, finished = 0;
+
+    for (const key in subs) {
+      const s = subs[key];
+      if (!s || !s.email || s.done) { if (s && s.done) finished++; continue; }
+
+      const stage = s.stage || 0;
+      const post = orderedPosts[stage];
+      if (!post) {
+        // Subscriber has received all posts
+        await fbSet(`sequences/blog_series/${key}`, { ...s, done: true, finishedAt: new Date().toISOString() });
+        finished++;
+        continue;
+      }
+
+      // Build email — Cormorant title, DM Sans body, gold Eagle DS branding
+      const postUrl = `https://eagleds.github.io/blog-public.html`;
+      const html = shell(`
+        <div style="font-family:monospace;font-size:9px;color:#666;letter-spacing:2px;margin-bottom:20px;">POST ${String(post.postNumber).padStart(2,'0')} OF 12</div>
+        <div style="font-family:'Georgia',serif;font-size:28px;font-weight:600;color:#f8f4ee;line-height:1.2;margin-bottom:16px;">${post.title}</div>
+        <div style="font-size:13px;color:#888;line-height:1.8;margin-bottom:24px;border-left:2px solid #C8960C;padding-left:16px;">${post.excerpt}</div>
+        <a href="${postUrl}" style="display:inline-block;background:#C8960C;color:#000;font-family:monospace;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;text-decoration:none;margin-bottom:20px;">Read →</a>
+        <p style="font-size:11px;color:#555;line-height:1.7;margin-top:16px;">You're receiving this because you're part of the Eagle DS community. <a href="mailto:info@eagleds.co.nz?subject=Unsubscribe" style="color:#666;">Unsubscribe</a>.</p>
+      `);
+
+      await send(resend, s.email, post.title, html);
+      const newStage = stage + 1;
+      const done = newStage >= orderedPosts.length;
+      await fbSet(`sequences/blog_series/${key}`, {
+        ...s,
+        stage: newStage,
+        done,
+        lastSent: new Date().toISOString(),
+        lastPost: post.title,
+        ...(done ? { finishedAt: new Date().toISOString() } : {})
+      });
+      sent++;
+    }
+
+    await fbPush("engine_log", {
+      type: "blog_series_advance",
+      action: `Sent post to ${sent} subscribers. ${finished} completed the series.`,
+      ts: new Date().toISOString()
+    });
+  }
+);
