@@ -311,7 +311,7 @@ exports.advanceBlogSeries = onSchedule(
       }
 
       // Build email — Cormorant title, DM Sans body, gold Eagle DS branding
-      const postUrl = `https://eagleds.github.io/blog-public.html`;
+      const postUrl = `https://eagleds.github.io/blog.html`;
       const postExcerpt = `<p style="border-left:3px solid #C8960C;padding-left:16px;color:#999;font-style:italic;">${post.excerpt}</p>`;
       const html = blogShell(post.title, postExcerpt, String(post.postNumber).padStart(2,'0'), postUrl, s.email);
 
