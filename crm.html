@@ -1439,6 +1439,8 @@ function gdSelectStatus(s) {
     }
   });
   gdCheckReady();
+  // If file already loaded, re-render preview with correct status badge
+  if (gdRows.length > 0) gdRenderPreview();
 }
 
 const gdDrop = document.getElementById('gd-drop');
@@ -1523,9 +1525,12 @@ function gdRenderPreview() {
 function gdCheckReady() {
   const btn = document.getElementById('gd-import-btn');
   if (!btn) return;
-  const ready = gdStatus && gdRows.length > 0 && !gdDone;
+  const ready = !!(gdStatus && gdRows.length > 0 && !gdDone);
   btn.disabled = !ready;
-  if (ready) document.getElementById('gd-import-btn-text').textContent = '⚡ Import ' + gdRows.length + ' records';
+  if (ready) {
+    const t = document.getElementById('gd-import-btn-text');
+    if (t) t.textContent = '⚡ Import ' + gdRows.length + ' records';
+  }
 }
 
 function gdParseDOB(str) {
@@ -1538,7 +1543,8 @@ function gdParseDOB(str) {
 async function gdRunImport() {
   if (!gdStatus || !gdRows.length) return;
   document.getElementById('gd-import-btn').disabled = true;
-  const dupMode = document.querySelector('input[name="gd-dup"]:checked').value;
+  const dupEl = document.querySelector('input[name="gd-dup"]:checked');
+  const dupMode = dupEl ? dupEl.value : 'merge';
   gdLog('Starting — ' + gdRows.length + ' rows · status: ' + gdStatus.toUpperCase() + ' · mode: ' + dupMode, 'gold');
 
   const workingDb = JSON.parse(JSON.stringify(db));
