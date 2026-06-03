@@ -35,13 +35,79 @@ const emailKey = (e) => e.trim().toLowerCase().replace(/\./g,"%2E").replace(/@/g
 const send = async (resend, to, subject, html) =>
   resend.emails.send({ from: FROM, to, subject, html });
 
-// Brand email shell — everything the engine sends looks like Eagle DS
+// ── Email shells ─────────────────────────────────────────────
+// Standard transactional shell — enquiries, payments, confirmations
 const shell = (body) => `
-<div style="background:#0a0a0a;color:#f8f4ee;padding:36px;font-family:'DM Sans',Arial,sans-serif;max-width:560px;margin:0 auto;">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:#C8960C;">EAGLE DS</div>
-  <div style="font-family:monospace;font-size:9px;color:#666;letter-spacing:2px;border-bottom:1px solid #222;padding-bottom:12px;margin-bottom:18px;">COMBAT &amp; WELLNESS · EAST TĀMAKI</div>
-  ${body}
-  <div style="margin-top:26px;font-family:monospace;font-size:9px;color:#444;border-top:1px solid #1a1a1a;padding-top:14px;">Eagle DS · 17 Nandina Ave, East Tāmaki, Auckland · 021 902 471</div>
+<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr>
+      <td>
+        <div style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
+        <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Combat &amp; Wellness · East Tāmaki, Auckland</div>
+      </td>
+    </tr>
+  </table>
+  <div style="border-top:1px solid #1a1a1a;padding-top:20px;">
+    ${body}
+  </div>
+  <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1a1a1a;">
+    <div style="font-family:monospace;font-size:9px;color:#444;line-height:1.8;letter-spacing:0.5px;">
+      <strong style="color:#666;">Dafydd Sanders</strong> — Founder &amp; Head Coach, Eagle DS<br>
+      NZ Representative · Four Combat Disciplines · 27 Years Coaching<br>
+      17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
+      <a href="tel:+64210902471" style="color:#555;text-decoration:none;">021 902 471</a> ·
+      <a href="mailto:info@eagleds.co.nz" style="color:#555;text-decoration:none;">info@eagleds.co.nz</a> ·
+      <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a>
+    </div>
+  </div>
+</div>`;
+
+// Blog series shell — full branded treatment for editorial content
+const blogShell = (title, body, postNum, postUrl) => `
+<div style="background:#0a0a0a;color:#f8f4ee;margin:0 auto;max-width:600px;font-family:Arial,sans-serif;">
+
+  <!-- Header -->
+  <div style="padding:32px 40px 24px;border-bottom:1px solid #1a1a1a;">
+    <div style="font-family:Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
+    <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">The Journal · eagleds.co.nz</div>
+  </div>
+
+  <!-- Post label -->
+  <div style="padding:24px 40px 0;">
+    <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Post ${postNum} of 12</div>
+    <!-- Title -->
+    <div style="font-family:Georgia,serif;font-size:32px;font-weight:600;color:#f8f4ee;line-height:1.2;margin-bottom:24px;">${title}</div>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:0 40px;font-family:Georgia,serif;font-size:15px;color:#ccc;line-height:1.9;">
+    ${body}
+  </div>
+
+  <!-- Read more -->
+  <div style="padding:32px 40px;">
+    <a href="${postUrl}" style="display:inline-block;background:#C8960C;color:#000;font-family:monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 28px;text-decoration:none;">Read on the blog →</a>
+  </div>
+
+  <!-- About -->
+  <div style="margin:0 40px;padding:24px;background:#0f0f0f;border:1px solid #1a1a1a;">
+    <div style="font-family:monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:10px;">About the author</div>
+    <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#f8f4ee;margin-bottom:6px;">Dafydd Sanders</div>
+    <div style="font-family:Arial,sans-serif;font-size:12px;color:#888;line-height:1.7;">Founder &amp; Head Coach of Eagle DS. NZ Representative across four combat disciplines — Taekwondo (World #10, two Olympic campaigns), Kickboxing, K1, and MMA. 27 years coaching. Builder of the Combat Games Series — 50+ clubs, 450+ matches, zero concussions. Eagle DS is a Ngāi Tahu family business in East Tāmaki, Auckland.</div>
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:24px 40px 32px;">
+    <div style="font-family:monospace;font-size:9px;color:#444;line-height:2;letter-spacing:0.5px;">
+      <strong style="color:#555;">Eagle DS Combat &amp; Wellness</strong><br>
+      17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
+      <a href="tel:+64210902471" style="color:#444;text-decoration:none;">021 902 471</a> ·
+      <a href="mailto:info@eagleds.co.nz" style="color:#444;text-decoration:none;">info@eagleds.co.nz</a> ·
+      <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a><br>
+      <span style="color:#333;">To unsubscribe reply with "unsubscribe" in the subject line.</span>
+    </div>
+  </div>
+
 </div>`;
 
 // ═══════════════════════════════════════════════════════════════
@@ -245,13 +311,8 @@ exports.advanceBlogSeries = onSchedule(
 
       // Build email — Cormorant title, DM Sans body, gold Eagle DS branding
       const postUrl = `https://eagleds.github.io/blog-public.html`;
-      const html = shell(`
-        <div style="font-family:monospace;font-size:9px;color:#666;letter-spacing:2px;margin-bottom:20px;">POST ${String(post.postNumber).padStart(2,'0')} OF 12</div>
-        <div style="font-family:'Georgia',serif;font-size:28px;font-weight:600;color:#f8f4ee;line-height:1.2;margin-bottom:16px;">${post.title}</div>
-        <div style="font-size:13px;color:#888;line-height:1.8;margin-bottom:24px;border-left:2px solid #C8960C;padding-left:16px;">${post.excerpt}</div>
-        <a href="${postUrl}" style="display:inline-block;background:#C8960C;color:#000;font-family:monospace;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;text-decoration:none;margin-bottom:20px;">Read →</a>
-        <p style="font-size:11px;color:#555;line-height:1.7;margin-top:16px;">You're receiving this because you're part of the Eagle DS community. <a href="mailto:info@eagleds.co.nz?subject=Unsubscribe" style="color:#666;">Unsubscribe</a>.</p>
-      `);
+      const postExcerpt = `<p style="border-left:3px solid #C8960C;padding-left:16px;color:#999;font-style:italic;">${post.excerpt}</p>`;
+      const html = blogShell(post.title, postExcerpt, String(post.postNumber).padStart(2,'0'), postUrl);
 
       await send(resend, s.email, post.title, html);
       const newStage = stage + 1;
