@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════
 const { onValueCreated } = require("firebase-functions/v2/database");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { Resend } = require("resend");
 
@@ -63,7 +64,7 @@ const shell = (body) => `
 </div>`;
 
 // Blog series shell — full branded treatment for editorial content
-const blogShell = (title, body, postNum, postUrl) => `
+const blogShell = (title, body, postNum, postUrl, recipientEmail) => `
 <div style="background:#0a0a0a;color:#f8f4ee;margin:0 auto;max-width:600px;font-family:Arial,sans-serif;">
 
   <!-- Header -->
@@ -104,7 +105,7 @@ const blogShell = (title, body, postNum, postUrl) => `
       <a href="tel:+64210902471" style="color:#444;text-decoration:none;">021 902 471</a> ·
       <a href="mailto:info@eagleds.co.nz" style="color:#444;text-decoration:none;">info@eagleds.co.nz</a> ·
       <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a><br>
-      <span style="color:#333;">To unsubscribe reply with "unsubscribe" in the subject line.</span>
+      <a href="https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/unsubscribe?e=${encodeURIComponent(recipientEmail)}" style="color:#333;text-decoration:underline;font-size:9px;">Unsubscribe</a>
     </div>
   </div>
 
@@ -312,7 +313,7 @@ exports.advanceBlogSeries = onSchedule(
       // Build email — Cormorant title, DM Sans body, gold Eagle DS branding
       const postUrl = `https://eagleds.github.io/blog-public.html`;
       const postExcerpt = `<p style="border-left:3px solid #C8960C;padding-left:16px;color:#999;font-style:italic;">${post.excerpt}</p>`;
-      const html = blogShell(post.title, postExcerpt, String(post.postNumber).padStart(2,'0'), postUrl);
+      const html = blogShell(post.title, postExcerpt, String(post.postNumber).padStart(2,'0'), postUrl, s.email);
 
       await send(resend, s.email, post.title, html);
       const newStage = stage + 1;
@@ -335,3 +336,60 @@ exports.advanceBlogSeries = onSchedule(
     });
   }
 );
+
+// ═══════════════════════════════════════════════════════════════
+// UNSUBSCRIBE — one-click removal from the blog series.
+// Linked from every blog series email footer.
+// GET /unsubscribe?e=email@address.com
+// Sets done:true on the subscriber record and shows a confirmation page.
+// ═══════════════════════════════════════════════════════════════
+exports.unsubscribe = onRequest(async (req, res) => {
+  const email = req.query.e;
+  if (!email || !email.includes("@")) {
+    res.status(400).send(unsubPage("Invalid request.", false));
+    return;
+  }
+  const key = emailKey(email);
+  try {
+    const sub = await fbGet(`sequences/blog_series/${key}`).catch(() => null);
+    if (!sub) {
+      res.status(200).send(unsubPage(email, false));
+      return;
+    }
+    await fbSet(`sequences/blog_series/${key}`, {
+      ...sub,
+      done: true,
+      unsubscribedAt: new Date().toISOString()
+    });
+    await fbPush("engine_log", {
+      type: "unsubscribe",
+      email,
+      action: "Removed from blog series via one-click unsubscribe.",
+      ts: new Date().toISOString()
+    });
+    res.status(200).send(unsubPage(email, true));
+  } catch(e) {
+    res.status(500).send(unsubPage(email, false));
+  }
+});
+
+const unsubPage = (email, success) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Unsubscribe</title>
+</head>
+<body style="background:#0a0a0a;color:#f8f4ee;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;">
+  <div style="max-width:480px;text-align:center;">
+    <div style="font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;margin-bottom:4px;">EAGLE DS</div>
+    <div style="font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;">Combat &amp; Wellness</div>
+    ${success
+      ? `<div style="font-size:22px;font-weight:600;color:#f8f4ee;margin-bottom:12px;">You've been unsubscribed.</div>
+         <div style="font-size:13px;color:#888;line-height:1.8;">${email} has been removed from the Eagle DS Journal series. You won't receive any further posts.<br><br>The door stays open. <a href="https://eagleds.co.nz" style="color:#C8960C;">eagleds.co.nz</a></div>`
+      : `<div style="font-size:22px;font-weight:600;color:#f8f4ee;margin-bottom:12px;">That address wasn't found.</div>
+         <div style="font-size:13px;color:#888;line-height:1.8;">We couldn't find an active subscription for ${email}. You may have already been removed, or the link may have expired.<br><br><a href="https://eagleds.co.nz" style="color:#C8960C;">eagleds.co.nz</a></div>`
+    }
+  </div>
+</body>
+</html>`;
