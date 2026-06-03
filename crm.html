@@ -10,7 +10,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 /* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
@@ -775,11 +774,11 @@ if (window.self !== window.top) {
       <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
       <button class="tab" onclick="switchTab('leads',this)">Leads <span id="leads-badge" style="display:none;background:var(--gold-dk);color:#000;border-radius:8px;padding:0 5px;font-size:8px;margin-left:3px;"></span></button>
       <button class="tab" onclick="switchTab('import',this)">Import</button>
+      <button class="tab" onclick="switchTab('gymdesk',this)">Gymdesk</button>
       <button class="tab" onclick="switchTab('broadcast',this)">Broadcast</button>
       <button class="tab" onclick="switchTab('analytics',this)">Email Analytics</button>
       <button class="tab" onclick="switchTab('directory',this)">Directory</button>
       <button class="tab" onclick="switchTab('tools',this)">Tools</button>
-      <button class="tab" onclick="switchTab('segments',this)">Segments</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -851,6 +850,64 @@ if (window.self !== window.top) {
       </div>
     </div>
 
+
+    <!-- GYMDESK -->
+    <div class="tab-pane" id="tab-gymdesk">
+      <div class="panel" style="margin-bottom:2px;">
+        <div class="ph"><div class="pt">Gymdesk Import</div><span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">Upload a Gymdesk CSV export — run monthly to keep your CRM current</span></div>
+        <div class="pb">
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Select the export type, drop the CSV, preview, then import. Existing contacts are enriched not overwritten. Run for each of your five Gymdesk categories.</p>
+          <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;">Step 1 — Which export is this?</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:20px;">
+            <div id="gd-tile-current" onclick="gdSelectStatus('current')" style="padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);background:var(--grey);transition:all .15s;"><div style="font-size:18px;margin-bottom:4px;">&#x2705;</div><div style="font-family:var(--bebas);font-size:13px;letter-spacing:2px;color:#22b64a;">Current</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:2px;">Active members</div></div>
+            <div id="gd-tile-visitor" onclick="gdSelectStatus('visitor')" style="padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);background:var(--grey);transition:all .15s;"><div style="font-size:18px;margin-bottom:4px;">&#x1F441;</div><div style="font-family:var(--bebas);font-size:13px;letter-spacing:2px;color:#3d8eff;">Visitors</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:2px;">Trials / drop-ins</div></div>
+            <div id="gd-tile-frozen" onclick="gdSelectStatus('frozen')" style="padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);background:var(--grey);transition:all .15s;"><div style="font-size:18px;margin-bottom:4px;">&#x2744;&#xFE0F;</div><div style="font-family:var(--bebas);font-size:13px;letter-spacing:2px;color:#9d55f5;">Frozen</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:2px;">Paused memberships</div></div>
+            <div id="gd-tile-cancelled" onclick="gdSelectStatus('cancelled')" style="padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);background:var(--grey);transition:all .15s;"><div style="font-size:18px;margin-bottom:4px;">&#x1F4C1;</div><div style="font-family:var(--bebas);font-size:13px;letter-spacing:2px;color:var(--gold-lt);">Cancelled</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:2px;">Former members</div></div>
+            <div id="gd-tile-lead" onclick="gdSelectStatus('lead')" style="padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--border);background:var(--grey);transition:all .15s;"><div style="font-size:18px;margin-bottom:4px;">&#x1F4AC;</div><div style="font-family:var(--bebas);font-size:13px;letter-spacing:2px;color:var(--orange);">Leads</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:2px;">Enquiries</div></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;">Step 2 — Upload CSV</div>
+          <div id="gd-drop" style="border:2px dashed var(--border2);background:var(--grey);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:4px;">
+            <input type="file" id="gd-file-input" accept=".csv,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="gdHandleFile(this.files[0])">
+            <div style="font-size:28px;margin-bottom:8px;opacity:.5;">&#x1F4C2;</div>
+            <div style="font-family:var(--cormorant);font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop Gymdesk CSV here</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);" id="gd-file-label">or click to browse</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="gd-preview-panel" style="display:none;margin-bottom:2px;">
+        <div class="ph"><div class="pt">Preview</div><span id="gd-preview-count" style="font-family:var(--mono);font-size:9px;color:var(--muted2);"></span></div>
+        <div style="overflow-x:auto;max-height:240px;overflow-y:auto;">
+          <table style="width:100%;border-collapse:collapse;"><thead id="gd-preview-head"></thead><tbody id="gd-preview-body"></tbody></table>
+        </div>
+      </div>
+      <div class="panel" id="gd-import-panel" style="display:none;">
+        <div class="ph"><div class="pt">Import to CRM</div></div>
+        <div class="pb">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);">Duplicates:</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="gd-dup" value="merge" checked style="accent-color:var(--gold);"> Merge — enrich existing, don't overwrite</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="gd-dup" value="skip"> Skip — leave existing untouched</label>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:16px;" id="gd-stats-row">
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:26px;letter-spacing:2px;color:var(--green);" id="gd-stat-new">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">New</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:26px;letter-spacing:2px;color:var(--blue);" id="gd-stat-merged">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Merged</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:26px;letter-spacing:2px;color:var(--muted);" id="gd-stat-skipped">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Skipped</div></div>
+            <div style="background:var(--grey);padding:14px;text-align:center;"><div style="font-family:var(--bebas);font-size:26px;letter-spacing:2px;color:var(--orange);" id="gd-stat-family">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;">Family groups</div></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;">Log</div>
+          <div class="console" id="gd-log" style="margin-bottom:16px;min-height:80px;"></div>
+          <div id="gd-summary" style="display:none;padding:16px;background:rgba(34,182,74,0.05);border:1px solid rgba(34,182,74,0.2);margin-bottom:16px;">
+            <div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--green);margin-bottom:4px;">Import complete &#x2713;</div>
+            <div id="gd-summary-text" style="font-family:var(--mono);font-size:10px;color:var(--muted2);"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="gd-import-btn" onclick="gdRunImport()" disabled><span id="gd-import-btn-text">&#x26A1; Import to CRM</span></button>
+            <button class="btn btn-ghost" onclick="gdReset()"><span>Reset</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- BROADCAST -->
     <div class="tab-pane" id="tab-broadcast">
       <div class="grid2">
@@ -874,35 +931,16 @@ if (window.self !== window.top) {
               <option value="dormant">Dormant — re-engage</option>
               <option value="parents">Parents only</option>
               <option value="adults">Adult athletes only</option>
-              <optgroup label="── Institutional Segments ──">
-              <option value="seg:school_east_secondary">East Secondary — fee-paying</option>
-              <option value="seg:school_east_primary">East Primary — fee-paying</option>
-              <option value="seg:school_east_intermediate">East Intermediate — fee-paying</option>
-              <option value="seg:school_east_private">East Private / Integrated</option>
-              <option value="seg:school_south_secondary">South Secondary — funded</option>
-              <option value="seg:school_south_primary">South Primary — funded</option>
-              <option value="seg:school_south_intermediate">South Intermediate — funded</option>
-              <option value="seg:school_south_kura">Kura Kaupapa</option>
-              <option value="seg:gateway_sport_trust">Gateway — Sport Trust</option>
-              <option value="seg:gateway_youth_service">Gateway — Youth Service</option>
-              <option value="seg:gateway_social_work">Gateway — Social Work / Justice</option>
-              <option value="seg:gateway_funding">Gateway — Funder / Local Govt</option>
-              <option value="seg:decision_maker">Decision Makers only</option>
-              <option value="seg:influencer">Influencers only</option>
-              </optgroup>
             </select>
             <div id="b-count" style="font-family:var(--cormorant);font-size:16px;font-weight:600;color:var(--muted2);margin-bottom:14px;"></div>
             <label>Subject</label>
             <input type="text" id="b-subject" placeholder="Subject line...">
-            <label>Message Body — [FirstName] [LastName] [FullName] [ChildName] [Club] [EventName]</label>
+            <label>Message Body — [FirstName] [ChildName] [EventName]</label>
             <textarea id="b-body" placeholder="Hi [FirstName],&#10;&#10;Your message...&#10;&#10;Dafydd Sanders&#10;Eagle DS"></textarea>
             <div style="background:var(--black);border:1px solid rgba(200,150,12,.15);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:9px;color:var(--gold-dk);line-height:1.7;">
               ⚡ Open &amp; click tracking active — each recipient gets a unique tracked email. Results appear in Email Analytics tab.
             </div>
-            <div class="btn-row" style="gap:8px;">
-              <button class="btn btn-ghost" onclick="sendPreview()" style="flex:.6;"><span>✉ Send Preview to Me</span></button>
-              <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
-            </div>
+            <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
           </div>
         </div>
         <div class="panel">
@@ -960,86 +998,11 @@ if (window.self !== window.top) {
           <select id="dir-tier" onchange="renderTable()" style="width:130px;"><option value="all">All Tiers</option><option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dormant">Dormant</option></select>
           <select id="dir-family" onchange="renderTable()" style="width:140px;"><option value="all">All types</option><option value="parents">Parents</option><option value="minors">Under 18</option><option value="adults">Adults</option></select>
         </div>
-        <div id="bulk-bar" style="display:none;background:rgba(200,150,12,0.08);border-bottom:1px solid rgba(200,150,12,0.2);padding:10px 18px;align-items:center;gap:12px;flex-wrap:wrap;">
-          <span id="bulk-count" style="font-family:var(--mono);font-size:10px;color:var(--gold);min-width:100px;"></span>
-          <select id="bulk-move-sector" style="background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:5px 8px;font-size:11px;font-family:var(--mono);">
-            <option value="">— Move to sector —</option>
-            <option value="gym">🥋 Gym Academy</option>
-            <option value="cgs">⚔ CGS Circuit</option>
-            <option value="school">🏫 Institutional</option>
-            <option value="corp">💼 Commercial</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" onclick="bulkMove()"><span>Move →</span></button>
-          <div style="width:1px;height:20px;background:var(--border2);flex-shrink:0;"></div>
-          <button class="btn btn-red btn-sm" onclick="bulkDelete()"><span>⚠ Delete Selected</span></button>
-          <button class="btn btn-ghost btn-sm" onclick="clearSelection()" style="margin-left:auto;"><span>✕ Deselect All</span></button>
-        </div>
         <div class="twrap">
           <table>
-            <thead><tr>
-              <th style="width:36px;padding-left:14px;"><input type="checkbox" id="select-all-chk" onchange="toggleSelectAll(this)" title="Select / deselect all visible" style="cursor:pointer;accent-color:var(--gold);width:14px;height:14px;"></th>
-              <th>Contact</th><th>Sectors</th><th>Tier</th><th>Family</th><th>Last Activity</th><th></th>
-            </tr></thead>
-            <tbody id="dir-body"><tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr></tbody>
+            <thead><tr><th>Contact</th><th>Sectors</th><th>Tier</th><th>Family</th><th>Last Activity</th><th></th></tr></thead>
+            <tbody id="dir-body"><tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr></tbody>
           </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- SEGMENTS -->
-    <div class="tab-pane" id="tab-segments">
-      <div class="panel">
-        <div class="ph">
-          <div class="pt">Segment Manager</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost btn-sm" onclick="runReclassifyAll()"><span>⚡ Reclassify All</span></button>
-            <button class="btn btn-ghost btn-sm" onclick="loadSegments()"><span>↻ Refresh</span></button>
-          </div>
-        </div>
-        <div style="padding:12px 18px;background:var(--black);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted2);line-height:1.8;">
-          Sub-classify Institutional contacts for precise campaign targeting. Tag contacts individually or in bulk by keyword match.
-        </div>
-        <div style="padding:18px;">
-          <!-- Bulk tagger -->
-          <div style="background:var(--grey);border:1px solid var(--border);padding:16px;margin-bottom:20px;">
-            <div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Bulk Tag by Keyword</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
-              <div><label>Match keyword in Organisation</label><input type="text" id="seg-keyword" placeholder="e.g. College, Primary, CLM…"></div>
-              <div><label>Assign Sub-Type</label>
-                <select id="seg-subtype">
-                  <option value="school_east_secondary">East Secondary (fee-paying)</option>
-                  <option value="school_east_primary">East Primary (fee-paying)</option>
-                  <option value="school_east_intermediate">East Intermediate (fee-paying)</option>
-                  <option value="school_east_private">East Private / Integrated</option>
-                  <option value="school_south_secondary">South Secondary (funded)</option>
-                  <option value="school_south_primary">South Primary (funded)</option>
-                  <option value="school_south_intermediate">South Intermediate (funded)</option>
-                  <option value="school_south_kura">Kura Kaupapa</option>
-                  <option value="gateway_sport_trust">Gateway — Sport Trust</option>
-                  <option value="gateway_youth_service">Gateway — Youth Service</option>
-                  <option value="gateway_social_work">Gateway — Social Work / Justice</option>
-                  <option value="gateway_funding">Gateway — Funder / Local Govt</option>
-                  <option value="decision_maker">Decision Maker (signs contracts)</option>
-                  <option value="influencer">Influencer (advisor / coordinator)</option>
-                  <option value="operational">Operational (delivery staff)</option>
-                </select>
-              </div>
-              <div><label>Scope</label>
-                <select id="seg-scope">
-                  <option value="school">Institutional only</option>
-                  <option value="all">All sectors</option>
-                </select>
-              </div>
-              <button class="btn" onclick="previewBulkTag()" style="height:38px;margin-top:0;"><span>Preview →</span></button>
-            </div>
-            <div id="seg-preview" style="margin:12px 0;min-height:20px;"></div>
-            <button class="btn btn-red" id="seg-apply-btn" onclick="applyBulkTag()" style="display:none;"><span>Apply Tag to Matched Contacts</span></button>
-          </div>
-
-          <!-- Segment breakdown -->
-          <div id="seg-breakdown"></div>
-          <!-- EXCEPTION QUEUE -->
-          <div id="seg-exceptions" style="margin-top:24px;"></div>
         </div>
       </div>
     </div>
@@ -1068,36 +1031,6 @@ if (window.self !== window.top) {
             <div id="strip-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin-bottom:14px;font-style:italic;"></div>
             <div class="btn-row"><button class="btn btn-ghost" onclick="previewStrip()"><span>Preview</span></button><button class="btn btn-red" onclick="executeStrip()"><span>Strip Tag</span></button></div>
           </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="ph"><div class="pt">Bulk Delete by Sector</div></div>
-        <div class="pb">
-          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Deletes all contacts whose <em>only</em> sector tag is the one selected. Contacts tagged across multiple sectors are untouched.</p>
-          <label>Sector to Delete</label>
-          <select id="bulk-del-sector">
-            <option value="gym">🥋 Gym Academy</option>
-            <option value="cgs">⚔ CGS Circuit</option>
-            <option value="school">🏫 Institutional</option>
-            <option value="corp">💼 Commercial</option>
-          </select>
-          <div id="bulk-del-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin-bottom:14px;font-style:italic;"></div>
-          <div class="btn-row">
-            <button class="btn btn-ghost" onclick="previewBulkDelete()"><span>Preview</span></button>
-            <button class="btn btn-red" onclick="executeBulkDelete()"><span>⚠ Delete All Matching</span></button>
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="ph"><div class="pt">Repair: Swap Name ↔ Organisation</div></div>
-        <div class="pb">
-          <p style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;line-height:1.8;">Finds Institutional contacts where the name and organisation fields got swapped on import and fixes them in place. No deletion required.</p>
-          <div id="repair-preview" style="font-family:var(--cormorant);font-size:15px;color:var(--muted2);margin-bottom:14px;font-style:italic;min-height:16px;"></div>
-          <div class="btn-row">
-            <button class="btn btn-ghost" onclick="previewRepair()"><span>Preview</span></button>
-            <button class="btn" onclick="executeRepair()" id="repair-apply-btn" style="display:none;"><span>Fix All →</span></button>
-          </div>
-          <div id="repair-list" style="margin-top:14px;"></div>
         </div>
       </div>
       <div class="panel">
@@ -1152,7 +1085,7 @@ if (window.self !== window.top) {
     <div class="mh"><div class="mt" id="edit-modal-name">Edit Contact</div><button class="mc" onclick="closeModal('edit-modal')">✕</button></div>
     <div class="mb">
       <input type="hidden" id="edit-key">
-      <label>First Name</label><input type="text" id="edit-firstname"><label>Last Name</label><input type="text" id="edit-lastname">
+      <label>Name</label><input type="text" id="edit-name">
       <label>Email</label><input type="text" id="edit-email" readonly style="opacity:.5;">
       <label>Phone</label><input type="text" id="edit-phone">
       <label>Sectors</label>
@@ -1270,41 +1203,12 @@ function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
 function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+s:"");document.getElementById("stxt").textContent=t;}
-function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();if(id==="segments")loadSegments();}
+function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
 
 // ─── FIREBASE ───
 async function syncFromCloud(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
-async function pushToCloud(){
-  // Write in batches of 100 to avoid Firebase 400 on large payloads
-  const BATCH=100;
-  const keys=Object.keys(db);
-  let failed=0;
-  try{
-    // First pass: write each record individually via PATCH to avoid full-replace on large sets
-    // Split into chunks
-    for(let i=0;i<keys.length;i+=BATCH){
-      const chunk={};
-      keys.slice(i,i+BATCH).forEach(k=>{chunk[k]=db[k];});
-      const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PATCH",body:JSON.stringify(chunk)});
-      if(!r.ok){failed++;log("Batch "+(Math.floor(i/BATCH)+1)+" failed: HTTP "+r.status,"err");}
-    }
-    if(!failed)log("Synced "+keys.length+" contacts.","ok");
-    else log(failed+" batch(es) failed — check Firebase.","err");
-  }catch(e){log("Push failed: "+e.message,"err");}
-}
-async function pushSingleContact(key){
-  // For single-record updates (edit, delete, ingest) — faster than full push
-  try{
-    if(db[key]){
-      const r=await eagleFetch(FB+"/directory_crm_master/"+key+".json",{method:"PUT",body:JSON.stringify(db[key])});
-      if(!r.ok)throw new Error("HTTP "+r.status);
-    }else{
-      const r=await eagleFetch(FB+"/directory_crm_master/"+key+".json",{method:"DELETE"});
-      if(!r.ok)throw new Error("HTTP "+r.status);
-    }
-  }catch(e){log("Single push failed: "+e.message,"err");}
-}
+async function pushToCloud(){try{const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
 
 // ─── STATS ───
 function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,cold:0,dormant:0,parents:0,minors:0,multi:0,adults:0};for(const k in db){t.master++;const arms=db[k].arms||[];if(arms.includes("gym"))t.gym++;if(arms.includes("cgs"))t.cgs++;if(arms.includes("school"))t.school++;if(arms.includes("corp"))t.corp++;const tier=getTier(db[k]);if(t[tier]!==undefined)t[tier]++;const age=calcAge(db[k].dob);if(age!==null&&age<18)t.minors++;else if(age!==null&&age>=18)t.adults++;if(db[k].children&&db[k].children.length>0){t.parents++;if(db[k].children.length>1)t.multi++;}}["master","gym","cgs","school","corp","hot","warm","cold","dormant","parents","minors","multi","adults"].forEach(k=>{const el=document.getElementById("cnt-"+k);if(el)el.textContent=t[k];});}
@@ -1312,447 +1216,33 @@ function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,
 // ─── AUTOMATION ───
 async function checkAutomationQueue(){try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
 async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
-function replaceVars(text,c,ev){const first=c.firstName||(c.name||(c.email||"@")).split(" ")[0],last=c.lastName||((c.name||"").split(" ").slice(-1)[0])||"",full=c.name||((first+" "+last).trim())||c.email||"",child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[LastName\]/gi,last).replace(/\[FullName\]/gi,full).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"").replace(/\[Club\]/gi,(c.club||(c.extras&&c.extras.club)||""));}
+function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
 
 // ─── IMPORT ───
-const COL={
-  // firstName keywords: NEVER include words that could match org/institutional headers
-  firstName:["first name","first","given name","student","fighter","athlete"],
-  lastName:["surname","last name","last","family name"],
-  email:["email","e-mail","mail","email address"],
-  phone:["phone number","phone","cell","contact number","tel"],
-  dob:["date of birth","dob","birth","birthday","born","mm/dd","dd/mm"],
-  ts:["timestamp","submitted","registered","created"],
-  weight:["weight"],
-  height:["height"],
-  gender:["gender","sex"],
-  // club maps to the organisation/school name — highest priority for org-type headers
-  club:["club name","club","gym name","team","organisation","organization","school name","institution"],
-  clubPhone:["club phone","gym phone","club contact"],
-  clubAddress:["club address"],
-  clubCity:["club city"],
-  coachName:["instructor","instructor/coach","coach name","coach"],
-  ecFirst:["ec name","emergency name","emergency first"],
-  ecLast:["ec surname","emergency surname","emergency last"],
-  ecPhone:["ec phone","emergency phone","emergency contact phone","emergency number"],
-  style:["style","martial art","discipline","what style"],
-  mobile:["mobile","cell","mobile number"],
-  website:["website","web","url","site"],
-  position:["position","role","job title","title"],
-  sector:["sector","industry","area"],
-  rank:["rank","belt","grade"],
-  years:["years competing","years training","experience"],
-  address:["address","physical address","street"],
-  postalAddress:["postal address","postal","po box","mailing"],
-  city:["city","suburb","town"],
-  postcode:["post code","postcode","zip"]
-};
-
-// For CGS forms: detect repeating Name/Surname/Phone blocks at end of headers
-// Pattern: last N columns contain Name, Surname, Phone in sequence = emergency contact block
-function detectECBlock(headers){
-  // Look for a trailing Name+Surname+Phone triplet after a coach/instructor column
-  let coachIdx=-1;
-  for(let i=0;i<headers.length;i++){
-    const h=headers[i].toLowerCase();
-    if(h.includes("instructor")||h.includes("coach"))coachIdx=i;
-  }
-  if(coachIdx<0)return{ecFirst:-1,ecLast:-1,ecPhone:-1};
-  // After coach col, look for Name, Surname, Phone in order
-  const tail=headers.slice(coachIdx+1);
-  let fn=-1,ln=-1,ph=-1;
-  for(let i=0;i<tail.length;i++){
-    const h=tail[i].toLowerCase().trim();
-    if(fn<0&&(h==="name"||h==="first name"))fn=coachIdx+1+i;
-    else if(fn>=0&&ln<0&&(h==="surname"||h==="last name"))ln=coachIdx+1+i;
-    else if(fn>=0&&ln>=0&&ph<0&&h.includes("phone"))ph=coachIdx+1+i;
-  }
-  return{ecFirst:fn,ecLast:ln,ecPhone:ph};
-}
-
-// Detect club phone: club block typically has address/city/country/postcode/phone
-// The club phone is the Phone Number that appears AFTER club name, distinct from fighter phone
-function detectClubPhoneCol(headers, fighterPhoneCol){
-  const phoneIdxs=[];
-  headers.forEach((h,i)=>{if(h.toLowerCase().includes("phone"))phoneIdxs.push(i);});
-  // Club phone = second distinct phone column after fighter phone
-  const others=phoneIdxs.filter(i=>i!==fighterPhoneCol);
-  // Pick the one that's closest after a club name column
-  let clubNameIdx=-1;
-  headers.forEach((h,i)=>{if(h.toLowerCase().includes("club")||h.toLowerCase().includes("gym"))clubNameIdx=Math.max(clubNameIdx,i);});
-  if(clubNameIdx>=0){
-    const afterClub=others.filter(i=>i>clubNameIdx);
-    if(afterClub.length)return afterClub[0];
-  }
-  return others.length?others[0]:-1;
-}
-
-const SECTOR_FP={
-  cgs:["weight","division","martial art","style","rank","competing","registration","fighter","tournament","competition","instructor"],
-  gym:["belt","grade","membership","fee","attendance","stripe","grading"],
-  school:["school","teacher","class","year group","programme","block","trust"],
-  corp:["company","organisation","business","corporate","seminar","invoice"]
-};
-
-function scoreCol(h,kws){
-  const hl=h.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();
-  let b=0;
-  for(const kw of kws){
-    if(hl===kw)b=Math.max(b,100);
-    else if(hl.includes(kw))b=Math.max(b,60);
-    else if(kw.split(" ").some(w=>w.length>3&&hl.includes(w)))b=Math.max(b,30);
-  }
-  return b;
-}
-
-function detectColumns(headers){
-  let best={},scores={};
-  Object.keys(COL).forEach(f=>{best[f]=-1;scores[f]=0;});
-  headers.forEach((h,i)=>{
-    for(const[f,kws]of Object.entries(COL)){
-      const s=scoreCol(h,kws);
-      if(s>scores[f]){scores[f]=s;best[f]=i;}
-    }
-  });
-  // Disambiguate: fighter phone vs club phone
-  const phoneIdxs=[];
-  headers.forEach((h,i)=>{if(scoreCol(h,COL.phone)>=60)phoneIdxs.push(i);});
-  if(phoneIdxs.length>=1)best.phone=phoneIdxs[0];
-  if(phoneIdxs.length>=2)best.clubPhone=phoneIdxs[1];
-  // Guard: if club and firstName mapped to same column, firstName loses
-  // Organisation/club headers must never be treated as a person name
-  if(best.club>=0 && best.club===best.firstName) best.firstName=-1;
-  if(best.club>=0 && best.club===best.lastName) best.lastName=-1;
-  // Also: bare "name" header without "first" or "last" = firstName only if no club header present
-  headers.forEach((h,i)=>{
-    const hl=h.toLowerCase().trim();
-    if(hl==="name" && best.club<0) best.firstName=i; // only treat bare "Name" as firstName if no org col
-    if(hl==="name" && best.club>=0 && best.firstName<0){
-      // bare "Name" with an org present = person name
-      best.firstName=i;
-    }
-  });
-  // EC block detection overrides generic name/surname for last block
-  const ec=detectECBlock(headers);
-  if(ec.ecFirst>=0)best.ecFirst=ec.ecFirst;
-  if(ec.ecLast>=0)best.ecLast=ec.ecLast;
-  if(ec.ecPhone>=0)best.ecPhone=ec.ecPhone;
-  return best;
-}
-
-function fingerprintSector(headers){
-  const all=headers.join(" ").toLowerCase();
-  let ss={cgs:0,gym:0,school:0,corp:0};
-  for(const[s,kws]of Object.entries(SECTOR_FP)){
-    for(const kw of kws){if(all.includes(kw))ss[s]+=10;}
-  }
-  const best=Object.entries(ss).sort((a,b)=>b[1]-a[1])[0];
-  return best[1]>=10?{sector:best[0]}:null;
-}
-
+const COL={name:["name","student","fighter","athlete","first","full name","fullname","contact","participant"],email:["email","e-mail","mail","email address"],phone:["phone","mobile","cell","contact number","tel"],dob:["date of birth","dob","birth","birthday","born","mm/dd","dd/mm"],ts:["timestamp","date","time","submitted","registered","created"]};
+const SECTOR_FP={cgs:["weight","division","martial art","style","rank","competing","registration","fighter","tournament","competition"],gym:["belt","grade","membership","fee","attendance","stripe","grading"],school:["school","teacher","class","year group","programme","block","trust"],corp:["company","organisation","business","corporate","seminar","invoice"]};
+function scoreCol(h,kws){const hl=h.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();let b=0;for(const kw of kws){if(hl===kw)b=Math.max(b,100);else if(hl.includes(kw))b=Math.max(b,60);else if(kw.split(" ").some(w=>w.length>3&&hl.includes(w)))b=Math.max(b,30);}return b;}
+function detectColumns(headers){let best={name:-1,email:-1,phone:-1,dob:-1,ts:-1},scores={name:0,email:0,phone:0,dob:0,ts:0};headers.forEach((h,i)=>{for(const[f,kws]of Object.entries(COL)){const s=scoreCol(h,kws);if(s>scores[f]){scores[f]=s;best[f]=i;}}});return best;}
+function fingerprintSector(headers){const all=headers.join(" ").toLowerCase();let ss={cgs:0,gym:0,school:0,corp:0};for(const[s,kws]of Object.entries(SECTOR_FP)){for(const kw of kws){if(all.includes(kw))ss[s]+=10;}}const best=Object.entries(ss).sort((a,b)=>b[1]-a[1])[0];return best[1]>=10?{sector:best[0]}:null;}
 function getProfiles(){try{return JSON.parse(localStorage.getItem("eagle_profiles")||"[]");}catch{return[];}}
-function saveProfile(label,headers,colMap,sector){
-  if(!label.trim())return;
-  const p=getProfiles(),sig=headers.join("|").toLowerCase(),i=p.findIndex(x=>x.sig===sig),entry={label,sig,colMap,sector};
-  if(i>=0)p[i]=entry;else p.push(entry);
-  localStorage.setItem("eagle_profiles",JSON.stringify(p));
-  log('Layout saved: "'+label+'"',"ok");renderProfiles();
-}
+function saveProfile(label,headers,colMap,sector){if(!label.trim())return;const p=getProfiles(),sig=headers.join("|").toLowerCase(),i=p.findIndex(x=>x.sig===sig),entry={label,sig,colMap,sector};if(i>=0)p[i]=entry;else p.push(entry);localStorage.setItem("eagle_profiles",JSON.stringify(p));log('Layout saved: "'+label+'"',"ok");renderProfiles();}
 function matchProfile(headers){const sig=headers.join("|").toLowerCase();return getProfiles().find(p=>p.sig===sig)||null;}
-function renderProfiles(){
-  const el=document.getElementById("profiles-list"),p=getProfiles();
-  if(!p.length){el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No saved layouts yet.</p>';return;}
-  el.innerHTML=p.map((x,i)=>'<div class="fix-row"><div class="fix-info"><strong>'+x.label+'</strong><span>Sector: '+x.sector+'</span></div><button class="btn btn-red btn-sm" onclick="deleteProfile('+i+')"><span>Remove</span></button></div>').join("");
-}
+function renderProfiles(){const el=document.getElementById("profiles-list"),p=getProfiles();if(!p.length){el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No saved layouts yet.</p>';return;}el.innerHTML=p.map((x,i)=>'<div class="fix-row"><div class="fix-info"><strong>'+x.label+'</strong><span>Sector: '+x.sector+'</span></div><button class="btn btn-red btn-sm" onclick="deleteProfile('+i+')"><span>Remove</span></button></div>').join("");}
 function deleteProfile(i){const p=getProfiles();p.splice(i,1);localStorage.setItem("eagle_profiles",JSON.stringify(p));renderProfiles();}
 function clearProfiles(){if(!confirm("Clear all saved layouts?"))return;localStorage.removeItem("eagle_profiles");renderProfiles();}
-
-function parseSheet(raw){
-  const first=raw.split("\n")[0],tabs=(first.match(/\t/g)||[]).length,commas=(first.match(/,/g)||[]).length,delim=tabs>=commas?"\t":",";
-  function parseLine(line){
-    if(delim==="\t")return line.split("\t").map(c=>c.trim());
-    const r=[];let cur="",inQ=false;
-    for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){r.push(cur.trim());cur="";}else cur+=ch;}
-    r.push(cur.trim());return r;
-  }
-  const lines=raw.trim().split("\n").filter(l=>l.trim());
-  if(lines.length<2)return null;
-  return{headers:parseLine(lines[0]),rows:lines.slice(1).map(parseLine)};
-}
-
-function parseTS(v){
-  if(!v)return null;
-  const gf=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
-  if(gf)return new Date(gf[3],gf[1]-1,gf[2],gf[4],gf[5]).toISOString();
-  const d=new Date(v);if(!isNaN(d))return d.toISOString();
-  return null;
-}
-function parseDOB(v){
-  if(!v)return null;
-  const iso=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)return new Date(iso[1],iso[2]-1,iso[3]).toISOString().slice(0,10);
-  // mm/dd/yyyy (Google Form default)
-  const mdy=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(mdy){const[,m,d,y]=mdy;return new Date(y,m-1,d).toISOString().slice(0,10);}
-  const dmy=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(dmy){const[,a,b,y]=dmy;const d=parseInt(a)>12?new Date(y,b-1,a):new Date(y,a-1,b);if(!isNaN(d))return d.toISOString().slice(0,10);}
-  const d=new Date(v);if(!isNaN(d))return d.toISOString().slice(0,10);
-  return null;
-}
-
-function g(cells,idx){return(idx>=0&&cells[idx])?cells[idx].trim():"";}
-function emailKey(e){return e.toLowerCase().replace(/\./g,"%2E").replace(/@/g,"%40");}
-
-// Non-destructive merge: updates fields only if new value exists; logs history for changed fields
-function mergeContact(existing, incoming, ts){
-  const now=ts||new Date().toISOString();
-  const updated={...existing};
-  const historyFields=["phone","firstName","lastName","club","org"];
-  if(!updated._history)updated._history={};
-
-  for(const f of historyFields){
-    if(incoming[f]&&incoming[f]!==existing[f]){
-      // Record old value in history before overwriting
-      if(existing[f]){
-        if(!updated._history[f])updated._history[f]=[];
-        updated._history[f].push({val:existing[f],seenUntil:now});
-      }
-      updated[f]=incoming[f];
-    }
-  }
-  // Always take latest activity
-  if(incoming.lastActivity&&(!existing.lastActivity||incoming.lastActivity>existing.lastActivity))
-    updated.lastActivity=incoming.lastActivity;
-  // Add sector if not present
-  if(incoming.arms){
-    const arms=new Set(existing.arms||[]);
-    incoming.arms.forEach(a=>arms.add(a));
-    updated.arms=[...arms];
-  }
-  // Merge extras — new keys added, existing keys not overwritten unless blank
-  if(incoming.extras){
-    if(!updated.extras)updated.extras={};
-    for(const[k,v]of Object.entries(incoming.extras)){
-      if(v&&!updated.extras[k])updated.extras[k]=v;
-    }
-  }
-  // Merge relationships
-  if(incoming.relationships){
-    if(!updated.relationships)updated.relationships=[];
-    for(const rel of incoming.relationships){
-      const exists=updated.relationships.find(r=>r.key===rel.key&&r.role===rel.role);
-      if(!exists)updated.relationships.push(rel);
-    }
-  }
-  return updated;
-}
-
-function startImport(){
-  const raw=document.getElementById("sheet-input").value.trim();
-  if(!raw){alert("Paste your data first.");return;}
-  const parsed=parseSheet(raw);
-  if(!parsed){alert("Could not read format.");return;}
-  pendingHeaders=parsed.headers;pendingRows=parsed.rows;
-  const match=matchProfile(pendingHeaders);
-  if(match){log('Recognised: "'+match.label+'" — importing directly.',"ok");runImport(match.colMap,match.sector);return;}
-  const colMap=detectColumns(pendingHeaders),fp=fingerprintSector(pendingHeaders);
-  openMapModal(colMap,fp);
-}
-
-function openMapModal(colMap,fp){
-  const noneOpt='<option value="-1">— not in this sheet —</option>',opts=pendingHeaders.map((h,i)=>'<option value="'+i+'">'+h+'</option>').join("");
-  ["m-name","m-email","m-phone","m-dob","m-ts"].forEach((id,idx)=>{
-    const el=document.getElementById(id),field=["firstName","email","phone","dob","ts"][idx];
-    el.innerHTML=noneOpt+opts;el.value=colMap[field]>=0?colMap[field]:-1;
-  });
-  if(fp){
-    document.getElementById("m-sector").value=fp.sector;
-    const labels={cgs:"⚔ CGS Circuit",gym:"🥋 Gym Academy",school:"🏫 Institutional",corp:"💼 Commercial"},b=document.getElementById("detected-banner");
-    b.innerHTML="🤖 Auto-detected: <strong style='color:var(--gold-lt);margin-left:4px;'>"+(labels[fp.sector]||fp.sector)+"</strong> — confirm or change";
-    b.style.display="flex";
-  }else document.getElementById("detected-banner").style.display="none";
-  const allH=pendingHeaders.join(" ").toLowerCase(),terms=["email","timestamp","weight","dob","martial art","belt","school","company","phone","name","birth","instructor","club","surname"];
-  document.getElementById("fp-indicators").innerHTML=terms.map(t=>'<span class="fp-tag '+(allH.includes(t)?"match":"")+'">'+ t+'</span>').join("");
-  document.getElementById("map-prev").textContent="Preview:\n"+pendingRows.slice(0,3).map(r=>r.slice(0,6).join(" | ")).join("\n");
-  document.getElementById("m-profile").value=fp?(fp.sector==="cgs"?"CGS Registration Form":fp.sector==="gym"?"Gymdesk Export":""):"";
-  document.getElementById("map-modal").classList.add("open");
-}
-
-function confirmMap(){
-  const colMap={
-    firstName:parseInt(document.getElementById("m-name").value),
-    email:parseInt(document.getElementById("m-email").value),
-    phone:parseInt(document.getElementById("m-phone").value),
-    dob:parseInt(document.getElementById("m-dob").value),
-    ts:parseInt(document.getElementById("m-ts").value)
-  };
-  // Re-run full detection to get all extended fields, then overlay the manual picks
-  const autoMap=detectColumns(pendingHeaders);
-  const merged={...autoMap,...Object.fromEntries(Object.entries(colMap).filter(([,v])=>v>=0))};
-  const sector=document.getElementById("m-sector").value,label=document.getElementById("m-profile").value.trim();
-  if(merged.email===-1){alert("Email column required.");return;}
-  if(label)saveProfile(label,pendingHeaders,merged,sector);
-  closeModal("map-modal");
-  runImport(merged,sector);
-}
-
-async function runImport(colMap,sector){
-  let added=0,merged=0,skipped=0,linked=0;
-  const now=new Date().toISOString();
-
-  for(const cells of pendingRows){
-    const rawEmail=g(cells,colMap.email);
-    if(!rawEmail||!rawEmail.includes("@")){skipped++;continue;}
-    const email=rawEmail.toLowerCase();
-    const key=emailKey(email);
-    const ts=parseTS(g(cells,colMap.ts))||now;
-
-    // ── Build fighter record ──
-    const firstName=g(cells,colMap.firstName)||g(cells,colMap.ecFirst);
-    const lastName=g(cells,colMap.lastName)||"";
-    const fullName=(firstName+(lastName?" "+lastName:"")).trim();
-    const phone=g(cells,colMap.phone);
-    const dob=parseDOB(g(cells,colMap.dob));
-    const clubName=g(cells,colMap.club)||g(cells,colMap.org);
-    const mobile=g(cells,colMap.mobile);
-    const website=g(cells,colMap.website);
-    const position=g(cells,colMap.position);
-    const sectorTag=g(cells,colMap.sector);
-    const clubPhone=g(cells,colMap.clubPhone); // = coach's number
-    const coachNameRaw=g(cells,colMap.coachName);
-    const ecFirst=g(cells,colMap.ecFirst);
-    const ecLast=g(cells,colMap.ecLast);
-    const ecPhone=g(cells,colMap.ecPhone);
-
-    // Capture all remaining columns as extras (nothing discarded)
-    const extras={};
-    pendingHeaders.forEach((h,i)=>{
-      if(!h.trim())return;
-      const usedCols=Object.values(colMap).filter(v=>v>=0);
-      if(!usedCols.includes(i)&&cells[i]){
-        const k=h.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
-        if(k)extras[k]=cells[i].trim();
-      }
-    });
-
-    const effectivePhone=phone||mobile;
-    if(mobile&&mobile!==phone&&mobile)extras.mobile=mobile;
-    if(website)extras.website=website;
-    if(position)extras.position=position;
-    if(sectorTag)extras.sector_tag=sectorTag;
-    const incoming={
-      email,firstName,lastName,
-      name:fullName,
-      phone:effectivePhone,dob,
-      club:clubName,
-      arms:[sector],
-      lastActivity:ts,
-      extras:Object.keys(extras).length?extras:undefined,
-      relationships:[]
-    };
-
-    // ── Coach relationship ──
-    // Coach name = free text in coachName col; phone = clubPhone col
-    if(coachNameRaw){
-      incoming.extras=incoming.extras||{};
-      incoming.extras.coach_name=coachNameRaw;
-      if(clubPhone)incoming.extras.coach_phone=clubPhone;
-      // If coach has a phone, create/update a stub coach record keyed by phone
-      if(clubPhone){
-        const coachStubKey="coach_"+clubPhone.replace(/\D/g,"");
-        const coachParts=coachNameRaw.trim().split(/\s+/);
-        const coachFirst=coachParts[0]||coachNameRaw;
-        const coachLast=coachParts.slice(1).join(" ")||"";
-        const coachIncoming={
-          name:coachNameRaw,firstName:coachFirst,lastName:coachLast,
-          phone:clubPhone,arms:["cgs"],
-          lastActivity:ts,
-          extras:{role:"coach",club:clubName},
-          relationships:[{key,role:"fighter",name:fullName}]
-        };
-        if(db[coachStubKey]){
-          db[coachStubKey]=mergeContact(db[coachStubKey],coachIncoming,ts);
-        }else{
-          db[coachStubKey]={...coachIncoming,added:now};
-        }
-        // Link back: fighter knows their coach
-        incoming.relationships.push({key:coachStubKey,role:"coach",name:coachNameRaw});
-        linked++;
-      }
-    }
-
-    // ── Emergency contact relationship ──
-    if(ecFirst||ecLast||ecPhone){
-      const ecName=((ecFirst||"")+" "+(ecLast||"")).trim();
-      const ecKey=ecPhone?("ec_"+ecPhone.replace(/\D/g,"")):("ec_"+ecName.toLowerCase().replace(/\s+/g,"_"));
-      // Flag probable family: same last name
-      const probablyFamily=ecLast&&lastName&&ecLast.toLowerCase()===lastName.toLowerCase();
-      const ecIncoming={
-        name:ecName,firstName:ecFirst||"",lastName:ecLast||"",
-        phone:ecPhone||"",
-        arms:[sector],
-        lastActivity:ts,
-        extras:{role:"emergency_contact"+(probablyFamily?",likely_family":""),linkedFighter:email},
-        relationships:[{key,role:"fighter",name:fullName,probablyFamily}]
-      };
-      if(db[ecKey]){
-        db[ecKey]=mergeContact(db[ecKey],ecIncoming,ts);
-      }else{
-        db[ecKey]={...ecIncoming,added:now};
-      }
-      incoming.relationships.push({key:ecKey,role:"emergency_contact",name:ecName,probablyFamily});
-      linked++;
-    }
-
-    // ── Upsert fighter ──
-    if(db[key]){
-      db[key]=mergeContact(db[key],incoming,ts);
-      merged++;
-    }else{
-      db[key]={...incoming,added:now};
-      added++;
-    }
-  }
-
-  buildFamilyLinks();
-  const classified = autoClassifyAll(false); // run rules on new/updated contacts only
-  log(`Import: ${added} new, ${merged} merged, ${linked} linked, ${skipped} skipped. Auto-classified: ${classified}.`,"ok");
-  document.getElementById("sheet-input").value="";
-  updateStats();renderTable();
-  await pushToCloud();
-  switchTab("dashboard",document.querySelector(".tab"));
-}
+function parseSheet(raw){const first=raw.split("\n")[0],tabs=(first.match(/\t/g)||[]).length,commas=(first.match(/,/g)||[]).length,delim=tabs>=commas?"\t":",";function parseLine(line){if(delim==="\t")return line.split("\t").map(c=>c.trim());const r=[];let cur="",inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){r.push(cur.trim());cur="";}else cur+=ch;}r.push(cur.trim());return r;}const lines=raw.trim().split("\n").filter(l=>l.trim());if(lines.length<2)return null;return{headers:parseLine(lines[0]),rows:lines.slice(1).map(parseLine)};}
+function parseTS(v){if(!v)return null;const d=new Date(v);if(!isNaN(d))return d.toISOString();const gf=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);if(gf)return new Date(gf[3],gf[1]-1,gf[2],gf[4],gf[5]).toISOString();return null;}
+function parseDOB(v){if(!v)return null;const iso=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)return new Date(iso[1],iso[2]-1,iso[3]).toISOString().slice(0,10);const dmy=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(dmy){const[,a,b,y]=dmy;const d=parseInt(a)>12?new Date(y,b-1,a):new Date(y,a-1,b);if(!isNaN(d))return d.toISOString().slice(0,10);}const d=new Date(v);if(!isNaN(d))return d.toISOString().slice(0,10);return null;}
+function startImport(){const raw=document.getElementById("sheet-input").value.trim();if(!raw){alert("Paste your data first.");return;}const parsed=parseSheet(raw);if(!parsed){alert("Could not read format.");return;}pendingHeaders=parsed.headers;pendingRows=parsed.rows;const match=matchProfile(pendingHeaders);if(match){log('Recognised: "'+match.label+'" — importing directly.',"ok");runImport(match.colMap,match.sector);return;}const colMap=detectColumns(pendingHeaders),fp=fingerprintSector(pendingHeaders);openMapModal(colMap,fp);}
+function openMapModal(colMap,fp){const noneOpt='<option value="-1">— not in this sheet —</option>',opts=pendingHeaders.map((h,i)=>'<option value="'+i+'">'+h+'</option>').join("");["m-name","m-email","m-phone","m-dob","m-ts"].forEach((id,idx)=>{const el=document.getElementById(id),field=["name","email","phone","dob","ts"][idx];el.innerHTML=noneOpt+opts;el.value=colMap[field];});if(fp){document.getElementById("m-sector").value=fp.sector;const labels={cgs:"⚔ CGS Circuit",gym:"🥋 Gym Academy",school:"🏫 Institutional",corp:"💼 Commercial"},b=document.getElementById("detected-banner");b.innerHTML="🤖 Auto-detected: <strong style='color:var(--gold-lt);margin-left:4px;'>"+(labels[fp.sector]||fp.sector)+"</strong> — confirm or change";b.style.display="flex";}else document.getElementById("detected-banner").style.display="none";const allH=pendingHeaders.join(" ").toLowerCase(),terms=["email","timestamp","weight","dob","martial art","belt","school","company","phone","name","birth"];document.getElementById("fp-indicators").innerHTML=terms.map(t=>'<span class="fp-tag '+(allH.includes(t)?"match":"")+'">'+ t+'</span>').join("");document.getElementById("map-prev").textContent="Preview:\n"+pendingRows.slice(0,3).map(r=>r.slice(0,6).join(" | ")).join("\n");document.getElementById("m-profile").value=fp?(fp.sector==="cgs"?"CGS Registration Form":fp.sector==="gym"?"Gymdesk Export":""):"";document.getElementById("map-modal").classList.add("open");}
+function confirmMap(){const colMap={name:parseInt(document.getElementById("m-name").value),email:parseInt(document.getElementById("m-email").value),phone:parseInt(document.getElementById("m-phone").value),dob:parseInt(document.getElementById("m-dob").value),ts:parseInt(document.getElementById("m-ts").value)},sector=document.getElementById("m-sector").value,label=document.getElementById("m-profile").value.trim();if(colMap.email===-1){alert("Email column required.");return;}if(label)saveProfile(label,pendingHeaders,colMap,sector);closeModal("map-modal");runImport(colMap,sector);}
+async function runImport(colMap,sector){let added=0,merged=0,skipped=0;for(const cells of pendingRows){const rawEmail=colMap.email>=0&&cells[colMap.email]?cells[colMap.email].trim():"";if(!rawEmail||!rawEmail.includes("@")){skipped++;continue;}const email=rawEmail.toLowerCase(),key=email.replace(/\./g,"%2E");let name="";if(colMap.name>=0&&cells[colMap.name])name=cells[colMap.name].trim();else{const fi=pendingHeaders.findIndex(h=>/\bfirst\b/i.test(h)),li=pendingHeaders.findIndex(h=>/\b(last|surname)\b/i.test(h));if(fi>=0&&cells[fi])name=cells[fi].trim();if(li>=0&&cells[li])name+=(name?" ":"")+cells[li].trim();}const phone=colMap.phone>=0&&cells[colMap.phone]?cells[colMap.phone].trim():"",dob=parseDOB(colMap.dob>=0&&cells[colMap.dob]?cells[colMap.dob].trim():""),ts=parseTS(colMap.ts>=0&&cells[colMap.ts]?cells[colMap.ts].trim():"");if(db[key]){if(!db[key].arms.includes(sector)){db[key].arms.push(sector);merged++;}if(name&&!db[key].name)db[key].name=name;if(phone&&!db[key].phone)db[key].phone=phone;if(dob&&!db[key].dob)db[key].dob=dob;if(ts&&(!db[key].lastActivity||ts>db[key].lastActivity))db[key].lastActivity=ts;}else{db[key]={email,name,phone,dob,arms:[sector],lastActivity:ts||null,added:new Date().toISOString()};added++;}}buildFamilyLinks();log("Import: "+added+" new, "+merged+" merged, "+skipped+" skipped.","ok");document.getElementById("sheet-input").value="";updateStats();renderTable();await pushToCloud();switchTab("dashboard",document.querySelector(".tab"));}
 
 // ─── TARGETING ───
 function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierStr.split(",");return Object.values(db).filter(r=>{const inS=sector==="all"||(r.arms||[]).includes(sector);if(tierStr==="parents")return inS&&isParent(r);if(tierStr==="adults"){const a=calcAge(r.dob);return inS&&(a===null||a>=18)&&!isParent(r);}return inS&&(!tiers||tiers.includes(getTier(r)));});}
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
 // ─── BROADCAST (with tracking) ───
-async function sendPreview(){
-  let k=localStorage.getItem("RESEND_KEY");
-  if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
-  const subject=document.getElementById("b-subject").value.trim();
-  const body=document.getElementById("b-body").value.trim();
-  if(!subject||!body){alert("Subject and message required.");return;}
-  // Use your own contact record as the preview recipient so variables resolve realistically
-  const previewEmail=EAGLE_USER?EAGLE_USER.email:"info@eagleds.co.nz";
-  const previewContact=Object.values(db).find(r=>r.email===previewEmail)||{
-    email:previewEmail,firstName:"Dafydd",lastName:"Sanders",name:"Dafydd Sanders",
-    club:"Eagle DS",children:[]
-  };
-  const bid="preview_"+Date.now();
-  const html=buildTrackedEmail(replaceVars(body,previewContact,""),bid,previewEmail);
-  const previewSubject="[PREVIEW] "+replaceVars(subject,previewContact,"");
-  try{
-    const r=await fetch("https://api.resend.com/emails",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},
-      body:JSON.stringify({from:FROM,to:previewEmail,subject:previewSubject,html})
-    });
-    if(r.ok){log("Preview sent to "+previewEmail,"ok");}
-    else{const e=await r.json();log("Preview failed: "+(e.message||r.status),"err");}
-  }catch(e){log("Preview error: "+e.message,"err");}
-}
-
 async function sendBroadcast(){
   let k=localStorage.getItem("RESEND_KEY");
   if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
@@ -1859,76 +1349,11 @@ async function showEngaged(bidEncoded){
 }
 
 // ─── DIRECTORY ───
-function displayName(r){
-  if(r.firstName||r.lastName)return((r.firstName||"")+" "+(r.lastName||"")).trim();
-  return r.name||"";
-}
-function renderTable(){
-  const tbody=document.getElementById("dir-body"),
-    q=(document.getElementById("dir-search")||{value:""}).value.toLowerCase().trim(),
-    sf=(document.getElementById("dir-sector")||{value:"all"}).value,
-    tf=(document.getElementById("dir-tier")||{value:"all"}).value,
-    ff=(document.getElementById("dir-family")||{value:"all"}).value,
-    keys=Object.keys(db);
-  const filtered=keys.filter(k=>{
-    const r=db[k];
-    if(sf!=="all"&&!(r.arms||[]).includes(sf))return false;
-    if(tf!=="all"&&getTier(r)!==tf)return false;
-    if(ff==="parents"&&!isParent(r))return false;
-    if(ff==="minors"&&!isMinor(r))return false;
-    if(ff==="adults"){const a=calcAge(r.dob);if(a!==null&&a<18)return false;}
-    if(!q)return true;
-    const dn=displayName(r).toLowerCase();
-    return dn.includes(q)||(r.email||"").toLowerCase().includes(q)||
-      (r.arms||[]).join(" ").includes(q)||
-      (r.extras?.club||r.club||"").toLowerCase().includes(q)||
-      (r.lastName||"").toLowerCase().includes(q);
-  });
-  document.getElementById("dir-count").textContent=filtered.length+" / "+keys.length;
-  if(!filtered.length){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">'+(keys.length?"No matches.":"No contacts yet.")+'</td></tr>';
-    return;
-  }
-  filtered.sort((a,b)=>(db[b].lastActivity||db[b].added||"").localeCompare(db[a].lastActivity||db[a].added||""));
-  tbody.innerHTML=filtered.map(k=>{
-    const r=db[k];
-    const dn=displayName(r);
-    const badges=(r.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join("");
-    const tier=getTier(r),age=calcAge(r.dob);
-    // Relationship pills
-    const rels=r.relationships||[];
-    const relHtml=rels.map(rel=>{
-      const roleLabel=rel.role==="coach"?"⚔ Coach":rel.role==="emergency_contact"?(rel.probablyFamily?"👨‍👧 Family EC":"EC"):rel.role==="fighter"?"Fighter":"";
-      return roleLabel?'<span style="font-family:var(--mono);font-size:8px;padding:2px 6px;border:1px solid var(--border2);color:var(--muted);border-radius:2px;margin-right:2px;">'+roleLabel+': '+(rel.name||"")+'</span>':"";
-    }).join("");
-    let fh="";
-    if(r.children&&r.children.length>0)fh='<span class="p-badge">Parent · '+r.children.length+' child'+(r.children.length>1?"ren":"")+'</span>';
-    else if(age!==null&&age<18)fh='<span class="c-badge">Minor · '+age+'y</span>';
-    else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';
-    const club=r.club||r.extras?.club||"";
-    const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";
-    return'<tr onclick="rowClick(event,\''+k+'\')" style="cursor:pointer;">'
-      +'<td style="width:36px;padding-left:14px;" onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-key="'+k+'" onchange="onRowCheck()" style="cursor:pointer;accent-color:var(--gold);width:14px;height:14px;"></td>'
-      +'<td class="nc">'
-      +'<strong>'+(dn||'<span style="color:var(--muted)">No name</span>')+'</strong>'
-      +(r.lastName&&r.firstName?'<span style="font-family:var(--mono);font-size:8px;color:var(--muted2);margin-left:4px;">'+r.lastName.toUpperCase()+'</span>':'')
-      +'<span>'+r.email+'</span>'
-      +(r.phone?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+r.phone+'</span>':'')
-      +(club?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+club+'</span>':'')
-      +(relHtml?'<div style="margin-top:4px;">'+relHtml+'</div>':'')
-      +'</td>'
-      +'<td>'+badges+'</td>'
-      +'<td>'+tierBadge(tier)+'</td>'
-      +'<td>'+fh+'</td>'
-      +'<td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td>'
-      +'<td style="white-space:nowrap;"><button class="edit-btn" onclick="openEdit(\''+k+'\')" title="Edit">✎</button><button class="dbtn" onclick="deleteContact(\''+k+'\')" title="Remove">✕</button></td>'
-      +'</tr>';
-  }).join("");
-}
-async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushSingleContact(key);log("Removed: "+n,"warn");}
-function openEdit(key){const r=db[key];document.getElementById("edit-key").value=key;document.getElementById("edit-modal-name").textContent=r.name||r.email;document.getElementById("edit-firstname").value=r.firstName||(r.name||"").split(" ")[0]||"";document.getElementById("edit-lastname").value=r.lastName||(r.name||"").split(" ").slice(1).join(" ")||"";document.getElementById("edit-email").value=r.email||"";document.getElementById("edit-phone").value=r.phone||"";document.querySelectorAll(".sector-tiles .stile").forEach(el=>{el.className="stile";if((r.arms||[]).includes(el.dataset.s))el.classList.add("on-"+el.dataset.s);});document.getElementById("edit-modal").classList.add("open");}
+function renderTable(){const tbody=document.getElementById("dir-body"),q=(document.getElementById("dir-search")||{value:""}).value.toLowerCase().trim(),sf=(document.getElementById("dir-sector")||{value:"all"}).value,tf=(document.getElementById("dir-tier")||{value:"all"}).value,ff=(document.getElementById("dir-family")||{value:"all"}).value,keys=Object.keys(db);const filtered=keys.filter(k=>{const r=db[k];if(sf!=="all"&&!(r.arms||[]).includes(sf))return false;if(tf!=="all"&&getTier(r)!==tf)return false;if(ff==="parents"&&!isParent(r))return false;if(ff==="minors"&&!isMinor(r))return false;if(ff==="adults"){const a=calcAge(r.dob);if(a!==null&&a<18)return false;}if(!q)return true;return(r.name||"").toLowerCase().includes(q)||(r.email||"").toLowerCase().includes(q)||(r.arms||[]).join(" ").includes(q);});document.getElementById("dir-count").textContent=filtered.length+" / "+keys.length;if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">'+(keys.length?"No matches.":"No contacts yet.")+'</td></tr>';return;}filtered.sort((a,b)=>(db[b].lastActivity||db[b].added||"").localeCompare(db[a].lastActivity||db[a].added||""));tbody.innerHTML=filtered.map(k=>{const r=db[k],badges=(r.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join(""),tier=getTier(r),age=calcAge(r.dob);let fh="";if(r.children&&r.children.length>0)fh='<span class="p-badge">Parent · '+r.children.length+' child'+(r.children.length>1?"ren":"")+'</span>';else if(age!==null&&age<18)fh='<span class="c-badge">Minor · '+age+'y</span>';else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";return'<tr><td class="nc"><strong>'+(r.name||'<span style="color:var(--muted)">No name</span>')+'</strong><span>'+r.email+'</span>'+(r.phone?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+r.phone+'</span>':'')+'</td><td>'+badges+'</td><td>'+tierBadge(tier)+'</td><td>'+fh+'</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td><td style="white-space:nowrap;"><button class="edit-btn" onclick="openEdit(\''+k+'\')" title="Edit">✎</button><button class="dbtn" onclick="deleteContact(\''+k+'\')" title="Remove">✕</button></td></tr>';}).join("");}
+async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushToCloud();log("Removed: "+n,"warn");}
+function openEdit(key){const r=db[key];document.getElementById("edit-key").value=key;document.getElementById("edit-modal-name").textContent=r.name||r.email;document.getElementById("edit-name").value=r.name||"";document.getElementById("edit-email").value=r.email||"";document.getElementById("edit-phone").value=r.phone||"";document.querySelectorAll(".sector-tiles .stile").forEach(el=>{el.className="stile";if((r.arms||[]).includes(el.dataset.s))el.classList.add("on-"+el.dataset.s);});document.getElementById("edit-modal").classList.add("open");}
 function toggleEditSector(el){const s=el.dataset.s;if(el.classList.contains("on-"+s))el.className="stile";else{el.className="stile";el.classList.add("on-"+s);}}
-async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});const ef=document.getElementById("edit-firstname").value.trim(),el2=document.getElementById("edit-lastname").value.trim();db[key].firstName=ef;db[key].lastName=el2;db[key].name=(ef+(el2?" "+el2:"")).trim()||db[key].name;db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushSingleContact(key);log("Updated: "+db[key].name,"ok");}
+async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});db[key].name=document.getElementById("edit-name").value.trim();db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushToCloud();log("Updated: "+db[key].name,"ok");}
 
 // ─── TOOLS ───
 function previewFix(){const from=document.getElementById("fix-from").value,scope=document.getElementById("fix-scope").value,n=Object.values(db).filter(r=>{const arms=r.arms||[];return scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);}).length;document.getElementById("fix-preview").textContent=n+" contacts will be affected.";}
@@ -1936,28 +1361,6 @@ async function executeFix(){const from=document.getElementById("fix-from").value
 function previewStrip(){const s=document.getElementById("strip-sector").value,n=Object.values(db).filter(r=>(r.arms||[]).includes(s)).length;document.getElementById("strip-preview").textContent=n+" contacts have ["+s+"] tag.";}
 async function executeStrip(){const s=document.getElementById("strip-sector").value,affected=Object.keys(db).filter(k=>(db[k].arms||[]).includes(s));if(!affected.length){alert("None found.");return;}if(!confirm("Strip ["+s+"] from "+affected.length+" contacts?"))return;affected.forEach(k=>{db[k].arms=(db[k].arms||[]).filter(a=>a!==s);});updateStats();renderTable();await pushToCloud();log("Stripped ["+s+"] from "+affected.length,"warn");}
 function exportCSV(){const rows=[["Name","Email","Phone","DOB","Age","Sectors","Tier","Family","Last Activity","Added"]];for(const k in db){const r=db[k],age=calcAge(r.dob);rows.push([r.name||"",r.email||"",r.phone||"",r.dob||"",age!==null?age:"",(r.arms||[]).join(";"),getTier(r),isParent(r)?"Parent":(age!==null&&age<18?"Minor":"Adult"),r.lastActivity||"",r.added||""]);}const csv=rows.map(r=>r.map(c=>'"'+(c||"").replace(/"/g,'""')+'"').join(",")).join("\n"),a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="eagle-ds-"+new Date().toISOString().slice(0,10)+".csv";a.click();log("CSV exported.","ok");}
-function previewBulkDelete(){
-  const s=document.getElementById('bulk-del-sector').value;
-  const affected=Object.keys(db).filter(k=>{const arms=db[k].arms||[];return arms.length===1&&arms[0]===s;});
-  document.getElementById('bulk-del-preview').textContent=affected.length+' contacts will be permanently deleted (only tagged as '+s+').';
-}
-async function executeBulkDelete(){
-  const s=document.getElementById('bulk-del-sector').value;
-  const affected=Object.keys(db).filter(k=>{const arms=db[k].arms||[];return arms.length===1&&arms[0]===s;});
-  if(!affected.length){alert('No contacts found with only the ['+s+'] tag.');return;}
-  if(!confirm('Permanently delete '+affected.length+' contacts tagged only as ['+s+']? This cannot be undone.'))return;
-  setStatus("","deleting...");
-  const payload={};
-  affected.forEach(k=>{ payload["/directory_crm_master/"+k]=null; });
-  try{
-    await firebase.database().ref().update(payload);
-    affected.forEach(k=>delete db[k]);
-    updateStats();renderTable();
-    setStatus("live","live");
-    log('Bulk deleted '+affected.length+' ['+s+'] contacts.','err');
-  }catch(e){ setStatus("err","offline"); log('Bulk delete failed: '+e.message,'err'); }
-  document.getElementById('bulk-del-preview').textContent='';
-}
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
 
 // ─── WEB LEADS INBOX ───
@@ -2017,538 +1420,247 @@ async function ingestLead(k){
 async function dismissLead(k){if(!confirm("Dismiss this enquiry?"))return;await eagleFetch(FB+"/web_leads/"+k+".json",{method:"DELETE"});delete webLeads[k];loadLeads();log("Lead dismissed.","warn");}
 function emailLead(email){document.getElementById("b-sector").value="all";switchTab("broadcast",document.querySelectorAll(".tab")[3]);document.getElementById("b-subject").focus();log("Compose an email — recipient: "+email,"info");}
 
+
+// ═══ GYMDESK IMPORT MODULE ═══
+let gdStatus = null, gdRows = [], gdHeaders = [], gdDone = false;
+
+function gdSelectStatus(s) {
+  gdStatus = s;
+  const colors = {current:'#22b64a',visitor:'#3d8eff',frozen:'#9d55f5',cancelled:'var(--gold)',lead:'var(--orange)'};
+  ['current','visitor','frozen','cancelled','lead'].forEach(x => {
+    const t = document.getElementById('gd-tile-' + x);
+    if (!t) return;
+    if (x === s) {
+      t.style.borderColor = colors[x];
+      t.style.background = 'rgba(200,150,12,0.08)';
+    } else {
+      t.style.borderColor = 'var(--border)';
+      t.style.background = 'var(--grey)';
+    }
+  });
+  gdCheckReady();
+}
+
+const gdDrop = document.getElementById('gd-drop');
+if (gdDrop) {
+  gdDrop.addEventListener('dragover', e => { e.preventDefault(); gdDrop.style.borderColor = 'var(--gold-dk)'; });
+  gdDrop.addEventListener('dragleave', () => { gdDrop.style.borderColor = 'var(--border2)'; });
+  gdDrop.addEventListener('drop', e => { e.preventDefault(); gdDrop.style.borderColor = 'var(--border2)'; if (e.dataTransfer.files[0]) gdHandleFile(e.dataTransfer.files[0]); });
+}
+
+function gdHandleFile(file) {
+  if (!file || !file.name.match(/\.(csv|txt)$/i)) { gdLog('Please upload a .csv file.', 'err'); return; }
+  document.getElementById('gd-file-label').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+  const reader = new FileReader();
+  reader.onload = e => gdParseCSV(e.target.result);
+  reader.readAsText(file);
+}
+
+function gdParseCSV(text) {
+  const rows = [];
+  let cur = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], nxt = text[i+1];
+    if (inQ) {
+      if (ch === '"' && nxt === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === '\t' || ch === ',') { cur.push(field); field = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && nxt === '\n') i++;
+        cur.push(field); field = '';
+        if (cur.some(c => c.trim())) rows.push(cur);
+        cur = [];
+      } else field += ch;
+    }
+  }
+  if (field || cur.length) { cur.push(field); if (cur.some(c => c.trim())) rows.push(cur); }
+  if (rows.length < 2) { gdLog('CSV appears empty.', 'err'); return; }
+  gdHeaders = rows[0];
+  gdRows = rows.slice(1).filter(r => r.length >= 3);
+  gdLog('Parsed ' + gdRows.length + ' rows, ' + gdHeaders.length + ' columns.', 'ok');
+  gdRenderPreview();
+  gdCheckReady();
+}
+
+const GD_COLS = {id:'Member ID',firstName:'First Name',lastName:'Last Name',phone:'Phone',phone2:'2nd Phone',email:'Email',email2:'2nd Email',dob:'Date of birth',age:'Age',address:'Address',city:'City',state:'State',country:'Country',zip:'Zip code',gender:'Gender',type:'Type',membership:'Membership',soldBy:'Sold By',contacts:'Contacts',status:'Status',source:'Source',joined:'Joined',checkin:'Check-in code',lastVisit:'Last Visit',lastPayment:'Last Payment',lastLogin:'Last Login',notes:'Notes',ranks:'Ranks',cancelled:'Canceled'};
+
+function gdGetIdx() {
+  const idx = {};
+  Object.entries(GD_COLS).forEach(([key, label]) => {
+    idx[key] = gdHeaders.findIndex(h => h.trim().toLowerCase() === label.toLowerCase());
+  });
+  return idx;
+}
+
+function gdCell(row, i) { return (i >= 0 && i < row.length) ? (row[i] || '').trim() : ''; }
+
+function gdRenderPreview() {
+  const idx = gdGetIdx();
+  document.getElementById('gd-preview-count').textContent = gdRows.length + ' records';
+  document.getElementById('gd-preview-panel').style.display = 'block';
+  document.getElementById('gd-import-panel').style.display = 'block';
+  document.getElementById('gd-preview-head').innerHTML = '<tr><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Name</th><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Email</th><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Phone</th><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Age</th><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Joined</th><th style="font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--black-2);">Ranks</th></tr>';
+  const preview = gdRows.slice(0, 15);
+  document.getElementById('gd-preview-body').innerHTML = preview.map(r => {
+    const name = [gdCell(r,idx.firstName), gdCell(r,idx.lastName)].filter(Boolean).join(' ') || '—';
+    const email = gdCell(r,idx.email) || '<span style="color:var(--red);">no email</span>';
+    const phone = gdCell(r,idx.phone) || '—';
+    const age = gdCell(r,idx.age);
+    const ageNum = parseInt(age);
+    const ageBadge = ageNum > 0 && ageNum < 18 ? ' <span style="font-family:var(--mono);font-size:8px;color:#9d55f5;border:1px solid #9d55f5;padding:1px 4px;">U18</span>' : '';
+    const joined = gdCell(r,idx.joined) || '—';
+    const ranks = (gdCell(r,idx.ranks) || '—').split('\n')[0];
+    return '<tr><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);">' + name + ageBadge + '</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--muted);">' + email + '</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--muted);">' + phone + '</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--muted);">' + (age||'—') + '</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--muted);">' + joined + '</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + gdCell(r,idx.ranks) + '">' + ranks + '</td></tr>';
+  }).join('');
+  if (gdRows.length > 15) {
+    document.getElementById('gd-preview-body').innerHTML += '<tr><td colspan="6" style="text-align:center;padding:10px;font-family:var(--mono);font-size:9px;color:var(--muted);">… and ' + (gdRows.length-15) + ' more</td></tr>';
+  }
+}
+
+function gdCheckReady() {
+  const btn = document.getElementById('gd-import-btn');
+  if (!btn) return;
+  const ready = gdStatus && gdRows.length > 0 && !gdDone;
+  btn.disabled = !ready;
+  if (ready) document.getElementById('gd-import-btn-text').textContent = '⚡ Import ' + gdRows.length + ' records';
+}
+
+function gdParseDOB(str) {
+  if (!str) return null;
+  const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  return null;
+}
+
+async function gdRunImport() {
+  if (!gdStatus || !gdRows.length) return;
+  document.getElementById('gd-import-btn').disabled = true;
+  const dupMode = document.querySelector('input[name="gd-dup"]:checked').value;
+  gdLog('Starting — ' + gdRows.length + ' rows · status: ' + gdStatus.toUpperCase() + ' · mode: ' + dupMode, 'gold');
+
+  const workingDb = JSON.parse(JSON.stringify(db));
+  const idx = gdGetIdx();
+  let added = 0, merged = 0, skipped = 0, noEmail = 0;
+  const familyGroups = {};
+
+  for (const row of gdRows) {
+    const rawEmail = gdCell(row, idx.email);
+    if (!rawEmail || !rawEmail.includes('@')) { noEmail++; continue; }
+    const email = rawEmail.toLowerCase();
+    const key = email.replace(/\./g, '%2E');
+    const firstName = gdCell(row, idx.firstName);
+    const lastName  = gdCell(row, idx.lastName);
+    const name = [firstName, lastName].filter(Boolean).join(' ');
+    const phone = gdCell(row, idx.phone) || gdCell(row, idx.phone2) || '';
+    const dob   = gdParseDOB(gdCell(row, idx.dob));
+    const gender = gdCell(row, idx.gender);
+    const address = [gdCell(row,idx.address), gdCell(row,idx.city), gdCell(row,idx.state)].filter(Boolean).join(', ');
+    const zip = gdCell(row, idx.zip);
+    const source = gdCell(row, idx.source);
+    const joined = gdCell(row, idx.joined);
+    const lastVisit = gdCell(row, idx.lastVisit);
+    const lastPayment = gdCell(row, idx.lastPayment);
+    const notes = gdCell(row, idx.notes);
+    const ranks = gdCell(row, idx.ranks);
+    const membership = gdCell(row, idx.membership);
+    const contacts = gdCell(row, idx.contacts);
+    const gymId = gdCell(row, idx.id);
+
+    let lastActivity = null;
+    const tryDate = s => { if (!s) return null; const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0') : null; };
+    lastActivity = tryDate(lastVisit) || tryDate(lastPayment) || tryDate(joined);
+
+    if (!familyGroups[email]) familyGroups[email] = [];
+    familyGroups[email].push(name);
+
+    if (workingDb[key]) {
+      if (dupMode === 'skip') { skipped++; continue; }
+      if (name && !workingDb[key].name) workingDb[key].name = name;
+      if (phone && !workingDb[key].phone) workingDb[key].phone = phone;
+      if (dob && !workingDb[key].dob) workingDb[key].dob = dob;
+      if (gender && !workingDb[key].gender) workingDb[key].gender = gender.toLowerCase();
+      if (address && !workingDb[key].address) workingDb[key].address = address;
+      if (zip && !workingDb[key].zip) workingDb[key].zip = zip;
+      if (!workingDb[key].arms.includes('gym')) workingDb[key].arms.push('gym');
+      workingDb[key].gymdesk_status = gdStatus;
+      if (gymId) workingDb[key].gymdesk_id = gymId;
+      if (source && !workingDb[key].source) workingDb[key].source = source;
+      if (notes) workingDb[key].notes = notes + (workingDb[key].notes ? '\n---\n' + workingDb[key].notes : '');
+      if (ranks) workingDb[key].ranks = ranks;
+      if (membership) workingDb[key].membership = membership;
+      if (contacts) workingDb[key].contacts = contacts;
+      if (lastActivity && (!workingDb[key].lastActivity || lastActivity > workingDb[key].lastActivity)) workingDb[key].lastActivity = lastActivity;
+      merged++;
+    } else {
+      workingDb[key] = { email, name, phone, dob, gender: gender ? gender.toLowerCase() : null, address: address || null, zip: zip || null, arms: ['gym'], gymdesk_status: gdStatus, gymdesk_id: gymId || null, source: source || null, notes: notes || null, ranks: ranks || null, membership: membership || null, contacts: contacts || null, lastActivity, added: new Date().toISOString() };
+      added++;
+    }
+  }
+
+  const familyCount = Object.values(familyGroups).filter(g => g.length > 1).length;
+  document.getElementById('gd-stat-new').textContent = added;
+  document.getElementById('gd-stat-merged').textContent = merged;
+  document.getElementById('gd-stat-skipped').textContent = skipped + noEmail;
+  document.getElementById('gd-stat-family').textContent = familyCount;
+  gdLog(added + ' new · ' + merged + ' merged · ' + (skipped+noEmail) + ' skipped · ' + familyCount + ' family groups', 'ok');
+  gdLog('Writing to Firebase…', 'gold');
+
+  try {
+    const r = await eagleFetch(FB + '/directory_crm_master.json', { method: 'PUT', body: JSON.stringify(workingDb) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    db = workingDb;
+    buildFamilyLinks();
+    updateStats();
+    renderTable();
+    gdLog('Done. CRM total: ' + Object.keys(db).length + ' contacts.', 'ok');
+    document.getElementById('gd-summary').style.display = 'block';
+    document.getElementById('gd-summary-text').textContent = added + ' new contacts · ' + merged + ' enriched · ' + (skipped+noEmail) + ' skipped · Total: ' + Object.keys(db).length;
+    gdDone = true;
+  } catch(e) {
+    gdLog('Firebase write failed: ' + e.message, 'err');
+    document.getElementById('gd-import-btn').disabled = false;
+  }
+}
+
+function gdLog(msg, type) {
+  const el = document.getElementById('gd-log');
+  if (!el) return;
+  const ts = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const div = document.createElement('div');
+  div.className = 'log ' + (type||'info');
+  div.textContent = '[' + ts + '] ' + msg;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function gdReset() {
+  gdStatus = null; gdRows = []; gdHeaders = []; gdDone = false;
+  ['current','visitor','frozen','cancelled','lead'].forEach(x => {
+    const t = document.getElementById('gd-tile-' + x);
+    if (t) { t.style.borderColor = 'var(--border)'; t.style.background = 'var(--grey)'; }
+  });
+  const fl = document.getElementById('gd-file-label');
+  if (fl) fl.textContent = 'or click to browse';
+  const fi = document.getElementById('gd-file-input');
+  if (fi) fi.value = '';
+  document.getElementById('gd-preview-panel').style.display = 'none';
+  document.getElementById('gd-import-panel').style.display = 'none';
+  document.getElementById('gd-summary').style.display = 'none';
+  const gl = document.getElementById('gd-log');
+  if (gl) gl.innerHTML = '';
+  ['gd-stat-new','gd-stat-merged','gd-stat-skipped','gd-stat-family'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '0';
+  });
+  gdCheckReady();
+}
+// ═══ END GYMDESK MODULE ═══
+
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
-
-
-
-// ─── REPAIR: NAME ↔ ORGANISATION SWAP ───
-// Detects contacts where org ended up in name field and vice versa
-
-const ORG_KEYWORDS = /College|School|Primary|Secondary|Intermediate|Trust|Centre|Center|Hub|Services|Foundation|Ministry|Council|Board|CLM|Youthline|Genesis|STRIVE|Barnardos|Oranga|Lifewise|Reconnect|Ara Taiohi|Springboard|VisionWest|Solomon|Kia Pu/i;
-const PERSON_NAME_PATTERN = /^[A-Z][a-z]+ [A-Z][a-z]+/; // "Firstname Lastname"
-
-function looksLikeOrg(str){ return str && ORG_KEYWORDS.test(str); }
-function looksLikePerson(str){ return str && PERSON_NAME_PATTERN.test(str.trim()); }
-
-function findSwappedContacts(){
-  return Object.keys(db).filter(k=>{
-    const r = db[k];
-    if(!(r.arms||[]).includes('school')) return false;
-    const name = r.name||'';
-    const club = r.club||'';
-    // Case 1: name looks like an org, club is blank or looks like a person
-    if(looksLikeOrg(name) && (!club || looksLikePerson(club))) return true;
-    // Case 2: name looks like an org and firstName/lastName are also org-like
-    if(looksLikeOrg(name) && looksLikeOrg(r.firstName||'')) return true;
-    // Case 3: name is an org keyword with no space (single-word org stored as name)
-    if(looksLikeOrg(name) && !name.includes(' ')) return true;
-    return false;
-  });
-}
-
-let repairTargets = [];
-
-function previewRepair(){
-  repairTargets = findSwappedContacts();
-  const previewEl = document.getElementById('repair-preview');
-  const listEl = document.getElementById('repair-list');
-  const applyBtn = document.getElementById('repair-apply-btn');
-
-  if(!repairTargets.length){
-    previewEl.textContent = 'No swapped records found.';
-    applyBtn.style.display='none';
-    listEl.innerHTML='';
-    return;
-  }
-
-  previewEl.textContent = repairTargets.length + ' contacts with swapped name/organisation found.';
-  applyBtn.style.display='inline-block';
-
-  let html = '<div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);background:var(--black);">';
-  html += '<table style="width:100%;border-collapse:collapse;">';
-  html += '<thead><tr>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Current Name (wrong)</th>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Current Org</th>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Will become</th>'
-    +'</tr></thead><tbody>';
-
-  repairTargets.forEach(k=>{
-    const r = db[k];
-    const currentName = r.name||'—';
-    const currentClub = r.club||'—';
-    // After fix: name becomes club (if it looks like a person), org becomes current name
-    const newName = looksLikePerson(currentClub) ? currentClub : '(email only)';
-    const newOrg = currentName;
-    html += '<tr style="border-bottom:1px solid var(--border);">'
-      +'<td style="padding:7px 12px;font-size:12px;color:var(--red);">'+currentName+'</td>'
-      +'<td style="padding:7px 12px;font-size:11px;color:var(--muted2);">'+currentClub+'</td>'
-      +'<td style="padding:7px 12px;font-size:11px;color:var(--green);">'+newOrg+' / '+newName+'</td>'
-      +'</tr>';
-  });
-  html += '</tbody></table></div>';
-  listEl.innerHTML = html;
-}
-
-async function executeRepair(){
-  if(!repairTargets.length) return;
-  if(!confirm('Fix '+repairTargets.length+' contacts — swap name and organisation fields?')) return;
-
-  const payload = {};
-  repairTargets.forEach(k=>{
-    const r = db[k];
-    const currentName = r.name||'';
-    const currentClub = r.club||'';
-    // Swap: org = what was in name, name = what was in club (if person-like)
-    const newClub = currentName;
-    const newName = looksLikePerson(currentClub) ? currentClub : '';
-    const parts = newName.trim().split(' ');
-    db[k].club = newClub;
-    db[k].name = newName;
-    db[k].firstName = parts[0]||'';
-    db[k].lastName = parts.slice(1).join(' ')||'';
-    payload['/directory_crm_master/'+k] = db[k];
-  });
-
-  setStatus('','repairing...');
-  try{
-    await firebase.database().ref().update(payload);
-    setStatus('live','live');
-    log('Repaired '+repairTargets.length+' contacts.','ok');
-    repairTargets=[];
-    document.getElementById('repair-apply-btn').style.display='none';
-    document.getElementById('repair-preview').textContent='Repair complete.';
-    document.getElementById('repair-list').innerHTML='';
-    updateStats(); renderTable();
-  }catch(e){
-    setStatus('err','offline');
-    log('Repair failed: '+e.message,'err');
-  }
-}
-
-// ─── BULK SELECTION ───
-let selectedKeys = new Set();
-
-function onRowCheck(){
-  selectedKeys = new Set();
-  document.querySelectorAll('.row-chk:checked').forEach(chk => selectedKeys.add(chk.dataset.key));
-  updateBulkBar();
-}
-
-function toggleSelectAll(masterChk){
-  document.querySelectorAll('.row-chk').forEach(chk => {
-    chk.checked = masterChk.checked;
-  });
-  onRowCheck();
-}
-
-function rowClick(event, key){
-  // Clicking a row (not the checkbox cell) toggles the checkbox
-  if(event.target.type === 'checkbox') return;
-  const chk = document.querySelector('.row-chk[data-key="'+key+'"]');
-  if(chk){ chk.checked = !chk.checked; onRowCheck(); }
-}
-
-function updateBulkBar(){
-  const bar = document.getElementById('bulk-bar');
-  const countEl = document.getElementById('bulk-count');
-  const n = selectedKeys.size;
-  if(n > 0){
-    bar.style.display = 'flex';
-    countEl.textContent = n + ' selected';
-  } else {
-    bar.style.display = 'none';
-    const masterChk = document.getElementById('select-all-chk');
-    if(masterChk) masterChk.checked = false;
-  }
-}
-
-function clearSelection(){
-  selectedKeys.clear();
-  document.querySelectorAll('.row-chk').forEach(chk => chk.checked = false);
-  const masterChk = document.getElementById('select-all-chk');
-  if(masterChk) masterChk.checked = false;
-  updateBulkBar();
-}
-
-async function bulkDelete(){
-  if(!selectedKeys.size) return;
-  if(!confirm('Permanently delete '+selectedKeys.size+' contacts? This cannot be undone.')) return;
-  const keys = [...selectedKeys];
-  setStatus("","deleting...");
-  const payload = {};
-  keys.forEach(k => { payload["/directory_crm_master/"+k] = null; });
-  try{
-    await firebase.database().ref().update(payload);
-    keys.forEach(k => delete db[k]);
-    clearSelection();
-    updateStats(); renderTable();
-    setStatus("live","live");
-    log('Deleted '+keys.length+' contacts.','err');
-  }catch(e){
-    setStatus("err","offline");
-    log('Bulk delete failed: '+e.message,'err');
-  }
-}
-
-async function bulkMove(){
-  const sector = document.getElementById('bulk-move-sector').value;
-  if(!sector){ alert('Select a sector to move to.'); return; }
-  if(!selectedKeys.size) return;
-  const keys = [...selectedKeys];
-  if(!confirm('Add sector ['+sector+'] to '+keys.length+' contacts?')) return;
-  keys.forEach(k => {
-    if(!db[k]) return;
-    if(!db[k].arms) db[k].arms = [];
-    if(!db[k].arms.includes(sector)) db[k].arms.push(sector);
-  });
-  clearSelection();
-  updateStats(); renderTable();
-  await pushToCloud();
-  log('Moved '+keys.length+' contacts → ['+sector+'].','ok');
-}
-
-
-// ═══════════════════════════════════════════════════════════════
-// AUTO-CLASSIFICATION RULES ENGINE
-// Runs on import and on demand. Never overwrites a manually-set tag
-// unless forceOverride=true. Returns count of contacts classified.
-// ═══════════════════════════════════════════════════════════════
-
-const CLASSIFICATION_RULES = [
-  // ── GATEWAY ORGS (match by known org name first — most specific) ──
-  { test: r => /CLM|Community (Leisure|Sport)/i.test(orgOf(r)),           tag: 'gateway_sport_trust' },
-  { test: r => /Counties Manukau Sport|Sport Trust|CMS/i.test(orgOf(r)), tag: 'gateway_sport_trust' },
-  { test: r => /Youthline|Youth ?line/i.test(orgOf(r)),                    tag: 'gateway_youth_service' },
-  { test: r => /Genesis Youth|STRIVE|Kia Pu[aā]wai|Solomon Group|Springboard|VisionWest/i.test(orgOf(r)), tag: 'gateway_youth_service' },
-  { test: r => /Lifewise|Barnardos|Oranga Tamariki|Reconnect/i.test(orgOf(r)), tag: 'gateway_social_work' },
-  { test: r => /Ara Taiohi|Foundation North|Local Board|Auckland Council/i.test(orgOf(r)), tag: 'gateway_funding' },
-  { test: r => /Salvation Army|City Mission|Presbyterian|Methodist|Baptist.*Trust/i.test(orgOf(r)), tag: 'gateway_social_work' },
-
-  // ── PRIVATE / INTEGRATED SCHOOLS ──
-  { test: r => /Saint Kentigern|St Kentigern|Elim|Sancta Maria|Sacred Heart|Tyndale|Christian College|Catholic College|Marist|Carmel|De La Salle/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_private' : 'school_east_private' },
-
-  // ── KURA ──
-  { test: r => /[Kk]ura|Te Kura|Kura Kaupapa|Rumaki/i.test(orgOf(r)), tag: 'school_south_kura' },
-
-  // ── SECONDARY (COLLEGE / HIGH) ──
-  { test: r => /(College|High School|Senior College)/i.test(orgOf(r)) && !/Primary|Intermediate|Junior College/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_secondary' : 'school_south_secondary' },
-
-  // ── JUNIOR COLLEGE / INTERMEDIATE ──
-  { test: r => /Junior College|Intermediate/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_intermediate' : 'school_south_intermediate' },
-
-  // ── PRIMARY ──
-  { test: r => /Primary|School/i.test(orgOf(r)) && !/College|High|Intermediate|Junior College|[Kk]ura/i.test(orgOf(r)), tag: r => eastOrSouth(r) === 'east' ? 'school_east_primary' : 'school_south_primary' },
-
-  // ── DECISION MAKER OVERLAY (position-based, applied on top of school tag) ──
-  // Note: this adds a second tag via extras.role, not sub_type
-];
-
-// East vs South determination — based on suburb keywords in address/org/city
-const EAST_KEYWORDS = /Howick|Botany|Pakuranga|Bucklands Beach|Half Moon Bay|Eastern Beach|Dannemora|Flat Bush|Ormiston|Mission Heights|East Tamaki|Beachlands|Maraetai|Whitford|Somerville|Cockle Bay|Farm Cove|Sunnyhills|Mellons Bay|Pigeon Mountain|Highland Park|Glendowie|St Heliers|Kohimarama/i;
-const SOUTH_KEYWORDS = /Otara|Papatoetoe|Manurewa|Mangere|Otahuhu|Papakura|Clendon|Wiri|Manukau|Pukekohe|Tuakau|Waiuku|Manurewa|Clover Park|Randwick Park/i;
-
-function orgOf(r){ return (r.club||r.extras?.club||r.extras?.organisation||r.name||''); }
-
-function eastOrSouth(r){
-  const haystack = [orgOf(r), r.extras?.physical_address||'', r.extras?.city||'', r.extras?.address||''].join(' ');
-  if(SOUTH_KEYWORDS.test(haystack)) return 'south';
-  if(EAST_KEYWORDS.test(haystack)) return 'east';
-  // Default: if org has a high decile hint or no south keyword, assume east
-  return 'east';
-}
-
-function classifyContact(r, forceOverride){
-  // Never touch manually-confirmed tags unless force
-  if(!forceOverride && r.extras?.sub_type_confirmed) return null;
-  // Don't classify non-institutional contacts
-  if(!(r.arms||[]).includes('school')) return null;
-
-  for(const rule of CLASSIFICATION_RULES){
-    if(rule.test(r)){
-      const tag = typeof rule.tag === 'function' ? rule.tag(r) : rule.tag;
-      // Don't overwrite existing tag unless force
-      if(!forceOverride && r.extras?.sub_type && r.extras.sub_type === tag) return null;
-      if(!forceOverride && r.extras?.sub_type) return null; // has a tag already, leave it
-      return tag;
-    }
-  }
-  return null; // no rule matched — goes to exception queue
-}
-
-function autoClassifyAll(forceOverride){
-  let count = 0;
-  for(const k in db){
-    const tag = classifyContact(db[k], forceOverride);
-    if(tag){
-      if(!db[k].extras) db[k].extras = {};
-      db[k].extras.sub_type = tag;
-      count++;
-    }
-  }
-  return count;
-}
-
-async function runReclassifyAll(){
-  const force = confirm('Reclassify ALL institutional contacts?\n\nOK = reclassify everything including manually-tagged contacts.\nCancel = only classify untagged contacts.');
-  const count = autoClassifyAll(force);
-  if(!count){ log('Nothing to reclassify.','info'); loadSegments(); return; }
-  await pushToCloud();
-  log('Reclassified '+count+' contacts.','ok');
-  loadSegments();
-}
-
-// ── EXCEPTION QUEUE ──
-// Shows institutional contacts that no rule could classify
-function renderExceptions(){
-  const el = document.getElementById('seg-exceptions');
-  if(!el) return;
-  const unclassifiable = Object.keys(db).filter(k => {
-    const r = db[k];
-    if(!(r.arms||[]).includes('school')) return false;
-    if(r.extras?.sub_type) return false; // already tagged
-    return true; // no tag, no rule matched
-  });
-  if(!unclassifiable.length){
-    el.innerHTML = '';
-    return;
-  }
-  let html = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;">⚠ '+unclassifiable.length+' contacts could not be auto-classified</div>';
-  html += '<div style="max-height:320px;overflow-y:auto;border:1px solid rgba(224,112,32,0.3);background:var(--black);">';
-  html += '<table style="width:100%;border-collapse:collapse;">';
-  html += '<thead><tr>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Contact</th>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Organisation</th>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;">Fix</th>'
-    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;width:40px;"></th>'
-    +'</tr></thead><tbody>';
-  unclassifiable.forEach(k => {
-    const r = db[k];
-    html += '<tr style="border-bottom:1px solid var(--border);" id="exc-row-'+k+'">'
-      +'<td style="padding:7px 12px;font-size:12px;color:var(--text);">'+displayName(r)+'<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+r.email+'</div></td>'
-      +'<td style="padding:7px 12px;font-size:11px;color:var(--muted2);">'+(orgOf(r)||'—')+'</td>'
-      +'<td style="padding:7px 12px;">'
-      +'<select class="exc-select" data-key="'+k+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;font-family:var(--mono);">'
-      +'<option value="">— select tag —</option>'
-      +Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')
-      +'</select></td>'
-      +'<td style="padding:7px 12px;"><button class="exc-fix-btn btn btn-ghost btn-sm" data-key="'+k+'"><span>✓</span></button></td>'
-      +'</tr>';
-  });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-
-  // Delegated listeners
-  el.querySelectorAll('.exc-select').forEach(function(sel){
-    sel.addEventListener('change', function(){
-      const row = document.getElementById('exc-row-'+this.dataset.key);
-      if(row) row.style.background = this.value ? 'rgba(200,150,12,0.06)' : '';
-    });
-  });
-  el.querySelectorAll('.exc-fix-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){ fixException(this.dataset.key); });
-  });
-}
-
-async function fixException(key){
-  const sel = document.querySelector('.exc-select[data-key="'+key+'"]');
-  if(!sel||!sel.value){ alert('Select a tag first.'); return; }
-  if(!db[key]) return;
-  if(!db[key].extras) db[key].extras = {};
-  db[key].extras.sub_type = sel.value;
-  db[key].extras.sub_type_confirmed = true; // mark as manually confirmed — rules won't overwrite
-  await pushSingleContact(key);
-  log('Fixed: '+displayName(db[key])+' → '+SEG_LABELS[sel.value],'ok');
-  const row = document.getElementById('exc-row-'+key);
-  if(row) row.remove();
-  // Update breakdown count
-  loadSegments();
-}
-
-// ─── SEGMENTS ───
-const SEG_LABELS = {
-  school_east_secondary:  '🏫 East Secondary — fee-paying',
-  school_east_primary:    '🏫 East Primary — fee-paying',
-  school_east_intermediate:'🏫 East Intermediate — fee-paying',
-  school_east_private:    '🏛 East Private / Integrated',
-  school_south_secondary: '🏫 South Secondary — funded',
-  school_south_primary:   '🏫 South Primary — funded',
-  school_south_intermediate:'🏫 South Intermediate — funded',
-  school_south_kura:      '🌿 Kura Kaupapa',
-  gateway_sport_trust:    '⚽ Gateway — Sport Trust',
-  gateway_youth_service:  '🤝 Gateway — Youth Service',
-  gateway_social_work:    '⚖ Gateway — Social Work / Justice',
-  gateway_funding:        '💰 Gateway — Funder / Local Govt',
-  decision_maker:         '⭐ Decision Maker',
-  influencer:             '◈ Influencer',
-  operational:            '◇ Operational'
-};
-
-function getSubType(r){ return (r.extras&&r.extras.sub_type)||null; }
-
-function loadSegments(){
-  const el=document.getElementById('seg-breakdown');
-  const counts={};
-  let untagged=0;
-  const institutional=Object.values(db).filter(r=>(r.arms||[]).includes('school'));
-  institutional.forEach(r=>{
-    const st=getSubType(r);
-    if(st){counts[st]=(counts[st]||0)+1;}else{untagged++;}
-  });
-  const total=institutional.length;
-  let html='<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:14px;letter-spacing:.1em;text-transform:uppercase;">'+total+' Institutional contacts · '+untagged+' untagged</div>';
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:20px;">';
-  for(const[st,label]of Object.entries(SEG_LABELS)){
-    const n=counts[st]||0;
-    html+='<div style="background:var(--grey);border:1px solid var(--border);padding:14px;display:flex;justify-content:space-between;align-items:center;">'
-      +'<div style="font-size:12px;color:var(--text);">'+label+'</div>'
-      +'<div style="font-family:var(--bebas);font-size:28px;color:'+(n>0?'var(--gold)':'var(--muted)')+';">'+n+'</div>'
-      +'</div>';
-  }
-  if(untagged){
-    html+='<div style="background:var(--grey);border:1px solid rgba(200,150,12,.3);padding:14px;display:flex;justify-content:space-between;align-items:center;">'
-      +'<div style="font-size:12px;color:var(--gold);">⚠ Untagged Institutional</div>'
-      +'<div style="font-family:var(--bebas);font-size:28px;color:var(--orange);">'+untagged+'</div>'
-      +'</div>';
-  }
-  html+='</div>';
-  // List untagged contacts for quick tagging
-  if(untagged){
-    html+='<div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:10px;">Untagged Contacts</div>';
-    html+='<div class="twrap"><table><thead><tr><th>Contact</th><th>Organisation</th><th>Assign Sub-Type</th></tr></thead><tbody>';
-    institutional.filter(r=>!getSubType(r)).forEach(r=>{
-      const key=emailKey(r.email);
-      html+='<tr>'
-        +'<td class="nc"><strong>'+displayName(r)+'</strong><span>'+r.email+'</span></td>'
-        +'<td style="font-size:12px;color:var(--muted2);">'+(r.club||r.extras?.organisation||'—')+'</td>'
-        +'<td><select class="seg-inline-select" data-key="'+key+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;">'
-        +'<option value="">— select —</option>'
-        +Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')
-        +'</select></td>'
-        +'</tr>';
-    });
-    html+='</tbody></table></div>';
-  }
-  el.innerHTML=html;
-  renderExceptions();
-  // Delegated listener for inline segment selects — avoids inline onchange quoting issues
-  el.querySelectorAll('.seg-inline-select').forEach(function(sel){
-    sel.addEventListener('change', function(){
-      tagSingleContact(this.dataset.key, this.value);
-    });
-  });
-}
-
-async function tagSingleContact(key,subType){
-  if(!subType||!db[key])return;
-  if(!db[key].extras)db[key].extras={};
-  db[key].extras.sub_type=subType;
-  await pushSingleContact(key);
-  log('Tagged '+displayName(db[key])+' → '+SEG_LABELS[subType],'ok');
-  loadSegments();
-}
-
-let bulkTagMatches=[];
-function previewBulkTag(){
-  const kw=document.getElementById('seg-keyword').value.trim().toLowerCase();
-  const scope=document.getElementById('seg-scope').value;
-  if(!kw){document.getElementById('seg-preview').textContent='Enter a keyword first.';return;}
-  bulkTagMatches=Object.keys(db).filter(k=>{
-    const r=db[k];
-    if(scope==='school'&&!(r.arms||[]).includes('school'))return false;
-    const org=(r.club||r.extras?.club||r.extras?.organisation||r.name||'').toLowerCase();
-    const pos=(r.extras?.position||'').toLowerCase();
-    return org.includes(kw)||pos.includes(kw);
-  });
-  const el=document.getElementById('seg-preview');
-  if(!bulkTagMatches.length){
-    el.innerHTML='<span style="color:var(--muted);">No contacts match "'+kw+'".</span>';
-    document.getElementById('seg-apply-btn').style.display='none';
-    return;
-  }
-  let html='<div style="font-family:var(--mono);font-size:9px;color:var(--gold);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase;">'+bulkTagMatches.length+' contacts match \"'+kw+'\"</div>';
-  html+='<div style="max-height:240px;overflow-y:auto;border:1px solid var(--border);background:var(--black);">';
-  html+='<table style="width:100%;border-collapse:collapse;">';
-  html+='<thead><tr><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Name</th><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Organisation</th><th style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.1em;">Assign Tag</th></tr></thead>';
-  html+='<tbody>';
-  bulkTagMatches.forEach(k=>{
-    const r=db[k];
-    const name=displayName(r)||r.email;
-    const org=r.club||r.extras?.club||r.extras?.organisation||'—';
-    const current=getSubType(r)||'';
-    const opts=Object.entries(SEG_LABELS).map(([v,l])=>'<option value="'+v+'"'+(current===v?' selected':'')+'>'+l+'</option>').join('');
-    html+='<tr style="border-bottom:1px solid var(--border);">'
-      +'<td style="padding:7px 12px;font-size:12px;color:var(--text);">'+name+'<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+r.email+'</div></td>'
-      +'<td style="padding:7px 12px;font-size:11px;color:var(--muted2);">'+org+'</td>'
-      +'<td style="padding:7px 12px;">'
-      +'<select class="seg-row-select" data-key="'+k+'" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:4px 6px;font-size:11px;font-family:var(--mono);">'
-      +'<option value="">— untagged —</option>'+opts
-      +'</select>'
-      +'</td>'
-      +'</tr>';
-  });
-  html+='</tbody></table></div>';
-  el.innerHTML=html;
-  document.getElementById('seg-apply-btn').style.display='inline-block';
-  // Instant single-contact tagging from row dropdown
-  el.querySelectorAll('.seg-row-select').forEach(function(sel){
-    sel.addEventListener('change',function(){
-      const k=this.dataset.key;
-      const v=this.value;
-      if(!db[k])return;
-      if(!db[k].extras)db[k].extras={};
-      if(v) db[k].extras.sub_type=v;
-      else delete db[k].extras.sub_type;
-      pushSingleContact(k);
-      // Update bulkTagMatches to reflect manual override
-      this.closest('tr').style.background='rgba(200,150,12,0.06)';
-      log('Tagged '+displayName(db[k])+' → '+(v?SEG_LABELS[v]:'untagged'),'ok');
-    });
-  });
-}
-
-async function applyBulkTag(){
-  const subType=document.getElementById('seg-subtype').value;
-  if(!subType||!bulkTagMatches.length)return;
-  if(!confirm('Tag '+bulkTagMatches.length+' contacts as "'+SEG_LABELS[subType]+'"?'))return;
-  // Read each row's dropdown — allows per-row overrides before applying
-  const rowSelects=document.querySelectorAll('.seg-row-select');
-  let tagged=0;
-  rowSelects.forEach(sel=>{
-    const k=sel.dataset.key;
-    const v=sel.value||subType;
-    if(!db[k])return;
-    if(!db[k].extras)db[k].extras={};
-    if(v){db[k].extras.sub_type=v;tagged++;}
-  });
-  // Fall back to bulk tag for any rows without a select
-  bulkTagMatches.forEach(k=>{
-    if(!db[k])return;
-    if(!db[k].extras)db[k].extras={};
-    if(!db[k].extras.sub_type&&subType){db[k].extras.sub_type=subType;tagged++;}
-  });
-  await pushToCloud();
-  log('Tagged '+tagged+' contacts.','ok');
-  bulkTagMatches=[];
-  document.getElementById('seg-apply-btn').style.display='none';
-  document.getElementById('seg-preview').textContent='';
-  loadSegments();
-}
-
-// Extend broadcast to filter by sub_type
-// Hook into getTargetEmails — if tier filter contains 'seg:' prefix, filter by sub_type
-const _origGetTargetEmails=getTargetEmails;
-window.getTargetEmails=function(sector,tierStr){
-  if(tierStr&&tierStr.startsWith('seg:')){
-    const subType=tierStr.slice(4);
-    return Object.values(db).filter(r=>{
-      const inS=sector==='all'||(r.arms||[]).includes(sector);
-      return inS&&getSubType(r)===subType;
-    });
-  }
-  return _origGetTargetEmails(sector,tierStr);
-};
 
 function onAuthReady(){ log&&log("Signed in as "+(EAGLE_USER?EAGLE_USER.email:"")); syncFromCloud();renderProfiles();loadLeads(); }
 eagleInitAuth();
