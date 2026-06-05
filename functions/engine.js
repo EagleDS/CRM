@@ -120,7 +120,7 @@ const blogShell = (title, body, postNum, postUrl, recipientEmail) => `
 // Event shape: { type, email, name, arm, data:{...}, ts }
 // ═══════════════════════════════════════════════════════════════
 exports.trialAutomationEngine = onValueCreated(
-  { ref: "/events/{id}", secrets: [resendKey] },
+  { ref: "/events/{id}", database: "taekwondo-scoreboard-e58ec-default-rtdb", secrets: [resendKey] },
   async (event) => {
     const e = event.data.val();
     const resend = new Resend(resendKey.value());
