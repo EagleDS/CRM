@@ -955,7 +955,7 @@ async function submitCapture() {
   btn.textContent = "Sending…";
 
   const name = (first + " " + last).trim();
-  const key  = email.replace(/\./g, "%2E");
+  const key  = email.replace(/\./g, "_").replace(/@/g, "_at_");
   const ts   = new Date().toISOString();
   const arms = selectedSectors.length ? selectedSectors : ["gym"];
 
@@ -985,6 +985,17 @@ async function submitCapture() {
     // where the authenticated merge into the master directory happens safely.
     await fetch(FB + "/web_leads/" + key + "_" + Date.now() + ".json", {
       method: "PUT", body: JSON.stringify(lead)
+    });
+
+    // Trigger the engine — fires welcome email, files to directory, starts follow-up sequence
+    await fetch(FB + "/events.json", {
+      method: "POST",
+      body: JSON.stringify({
+        type: "enquiry",
+        email, name, arm: arms[0] || "gym",
+        data: { source: "web_capture", arms, phone, message: msg || null },
+        ts
+      })
     });
 
     // Send confirmation email (uses stored Resend key or falls back silently)
