@@ -119,7 +119,7 @@ const blogShell = (title, body, postNum, postUrl, recipientEmail) => `
 //
 // Event shape: { type, email, name, arm, data:{...}, ts }
 // ═══════════════════════════════════════════════════════════════
-exports.engine = onValueCreated(
+exports.trialAutomationEngine = onValueCreated(
   { ref: "/events/{id}", secrets: [resendKey] },
   async (event) => {
     const e = event.data.val();
