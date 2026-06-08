@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMBO Certification Syllabus</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c0392b;
+    --gold: #b8860b;
+    --dark: #0d0d0d;
+    --mid: #1a1a1a;
+    --panel: #111111;
+    --border: #2a2a2a;
+    --text: #e0e0e0;
+    --muted: #777;
+    --white: #f5f0e8;
+
+    --white-patch: #f5f5f5;
+    --yellow-patch: #f5c518;
+    --orange-patch: #e87722;
+    --green-patch: #2e8b57;
+    --purple-patch: #6a0dad;
+    --brown-patch: #8b4513;
+    --black-patch: #111;
+    --maroon-patch: #800000;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--mid);
+    border-bottom: 2px solid var(--red);
+    padding: 24px 32px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 4px;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  header .subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--red);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .belt-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .belt-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .belt-btn:hover { border-color: var(--red); color: var(--text); }
+  .belt-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(184,134,11,0.08); }
+
+  .patch-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .level-panel {
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .level-panel.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .level-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .patch-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .level-title { flex: 1; }
+
+  .level-title h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .level-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 24px 0 12px;
+    padding-left: 10px;
+    border-left: 2px solid var(--red);
+  }
+
+  .category-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .category-title {
+    padding: 10px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-transform: uppercase;
+    background: rgba(184,134,11,0.06);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .technique-list {
+    list-style: none;
+    padding: 8px 0;
+  }
+
+  .technique-list li {
+    padding: 5px 14px 5px 28px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .technique-list li::before {
+    content: '—';
+    position: absolute;
+    left: 14px;
+    color: var(--muted);
+    font-size: 10px;
+    top: 7px;
+  }
+
+  .flat-list {
+    list-style: none;
+  }
+
+  .flat-list li {
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    line-height: 1.4;
+  }
+
+  .flat-list li:last-child { border-bottom: none; }
+
+  .theory-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .theory-block .flat-list li::before {
+    content: none;
+  }
+
+  .note {
+    margin-top: 20px;
+    padding: 12px 14px;
+    background: rgba(192,57,43,0.07);
+    border: 1px solid rgba(192,57,43,0.25);
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  /* Scoring table */
+  .scoring-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .scoring-table th {
+    background: rgba(184,134,11,0.12);
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scoring-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .scoring-table tr:last-child td { border-bottom: none; }
+
+  .score-5 { color: #4caf50; font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .score-4 { color: #ff9800; font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .score-3 { color: #f44336; font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  .section-divider {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .section-divider td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 12px !important;
+    font-style: normal !important;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Register table */
+  .register-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .register-table th {
+    background: rgba(192,57,43,0.15);
+    color: var(--red);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .register-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+    color: var(--text);
+  }
+
+  .register-table tr:last-child td { border-bottom: none; }
+
+  .belt-swatch {
+    display: inline-block;
+    width: 40px;
+    height: 14px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .stage-name {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 16px;
+    color: var(--white);
+  }
+
+  .degree-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    background: rgba(184,134,11,0.15);
+    color: var(--gold);
+    padding: 2px 6px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  footer {
+    margin-top: 60px;
+    padding: 24px 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>SAMBO</h1>
+    <div>
+      <div class="subtitle">FIAS Certification Syllabus</div>
+      <div class="subtitle" style="color: var(--muted); margin-top:2px;">Student & Master Qualification Degrees</div>
+    </div>
+  </div>
+  <div class="belt-nav">
+    <button class="belt-btn active" onclick="show('register')">
+      <span class="patch-dot" style="background:linear-gradient(90deg,#2196F3 50%,#f44336 50%)"></span> Register
+    </button>
+    <button class="belt-btn" onclick="show('l1')">
+      <span class="patch-dot" style="background:var(--white-patch); border:1px solid #ccc"></span> L1 White
+    </button>
+    <button class="belt-btn" onclick="show('l2')">
+      <span class="patch-dot" style="background:var(--yellow-patch)"></span> L2 Yellow
+    </button>
+    <button class="belt-btn" onclick="show('l3')">
+      <span class="patch-dot" style="background:var(--orange-patch)"></span> L3 Orange
+    </button>
+    <button class="belt-btn" onclick="show('l4')">
+      <span class="patch-dot" style="background:var(--green-patch)"></span> L4 Green
+    </button>
+    <button class="belt-btn" onclick="show('l5')">
+      <span class="patch-dot" style="background:var(--purple-patch)"></span> L5 Purple
+    </button>
+    <button class="belt-btn" onclick="show('l6')">
+      <span class="patch-dot" style="background:var(--purple-patch)"></span> L6 Purple
+    </button>
+    <button class="belt-btn" onclick="show('m1')">
+      <span class="patch-dot" style="background:var(--brown-patch)"></span> M1 Brown
+    </button>
+    <button class="belt-btn" onclick="show('m2')">
+      <span class="patch-dot" style="background:var(--black-patch); border:1px solid #444"></span> M2 Black
+    </button>
+    <button class="belt-btn" onclick="show('m3')">
+      <span class="patch-dot" style="background:var(--maroon-patch)"></span> M3 Maroon
+    </button>
+    <button class="belt-btn" onclick="show('scoring')">
+      <span class="patch-dot" style="background:#4caf50"></span> Scoring
+    </button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- REGISTER -->
+<div id="register" class="level-panel active">
+  <div class="level-header">
+    <div>
+      <div class="level-title">
+        <h2>Register of Qualification Degrees</h2>
+        <div class="level-meta">Student Degrees · Master Degrees · Coaching Degrees</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Student & Master Degrees</div>
+  <div class="category-block">
+    <table class="register-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Stage</th>
+          <th>Degree</th>
+          <th>Patch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1st year</td>
+          <td class="stage-name">1st Level Student</td>
+          <td><span class="degree-tag">1st Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--white-patch)"></span> White</td>
+        </tr>
+        <tr>
+          <td>2nd year</td>
+          <td class="stage-name">2nd Level Student</td>
+          <td><span class="degree-tag">2nd Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--yellow-patch)"></span> Yellow</td>
+        </tr>
+        <tr>
+          <td>3rd year</td>
+          <td class="stage-name">3rd Level Student</td>
+          <td><span class="degree-tag">3rd Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--orange-patch)"></span> Orange</td>
+        </tr>
+        <tr>
+          <td>4th year</td>
+          <td class="stage-name">4th Level Student</td>
+          <td><span class="degree-tag">4th Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--green-patch)"></span> Green</td>
+        </tr>
+        <tr>
+          <td>5th year</td>
+          <td class="stage-name">5th Level Student</td>
+          <td><span class="degree-tag">5th Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--purple-patch)"></span> Purple</td>
+        </tr>
+        <tr>
+          <td>6th year</td>
+          <td class="stage-name">6th Level Student</td>
+          <td><span class="degree-tag">6th Trainee</span></td>
+          <td><span class="belt-swatch" style="background:var(--purple-patch)"></span> Purple</td>
+        </tr>
+        <tr>
+          <td>7–8th year</td>
+          <td class="stage-name">Candidate Master</td>
+          <td><span class="degree-tag">1st Master</span></td>
+          <td><span class="belt-swatch" style="background:var(--brown-patch)"></span> Brown</td>
+        </tr>
+        <tr>
+          <td>9–10th year</td>
+          <td class="stage-name">Master</td>
+          <td><span class="degree-tag">2nd Master</span></td>
+          <td><span class="belt-swatch" style="background:var(--black-patch)"></span> Black</td>
+        </tr>
+        <tr>
+          <td>11–12th year</td>
+          <td class="stage-name">Grandmaster</td>
+          <td><span class="degree-tag">3rd Master</span></td>
+          <td><span class="belt-swatch" style="background:var(--maroon-patch)"></span> Maroon</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Coaching Degrees</div>
+  <div class="category-block">
+    <table class="register-table">
+      <thead>
+        <tr><th>Stage</th><th>Degree</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="stage-name">Master of the 1st Level</td>
+          <td><span class="degree-tag">1st Coaching</span></td>
+          <td>National SAMBO Federation</td>
+        </tr>
+        <tr>
+          <td class="stage-name">Master of the 2nd Level</td>
+          <td><span class="degree-tag">2nd Coaching</span></td>
+          <td>Continental SAMBO Federation</td>
+        </tr>
+        <tr>
+          <td class="stage-name">Master of the 3rd Level</td>
+          <td><span class="degree-tag">3rd Coaching</span></td>
+          <td>International SAMBO Federation</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- L1 WHITE -->
+<div id="l1" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--white-patch)"></div>
+    <div class="level-title">
+      <h2>1st Level Student — White Patch</h2>
+      <div class="level-meta">Annex 3 · 1st Year of Training · Beginner → 1st Level Student</div>
+    </div>
+  </div>
+
+  <div class="section-label">Beginner (Pre-Exam)</div>
+  <div class="category-block">
+    <div class="category-title">Breakfalls</div>
+    <ul class="technique-list">
+      <li>On the back with a roll from the squat position</li>
+      <li>To the side with a roll from the squat position</li>
+      <li>On the side by rolling from the squat position</li>
+      <li>Forward on hands from the squat position</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Hold-Downs</div>
+    <ul class="technique-list">
+      <li>From the head</li>
+      <li>On top (mount position)</li>
+      <li>From the side with a grip of the arm and neck</li>
+      <li>Cross body with hand grip by hands</li>
+      <li>From the legs with a girth of the torso along with the arm</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Turning (Rollovers)</div>
+    <ul class="technique-list">
+      <li>By a lever</li>
+      <li>By hands gripping from the side</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Unbalancing</div>
+    <ul class="technique-list">
+      <li>By twisting an opponent standing on their knee</li>
+      <li>By pushing an opponent standing on their knee</li>
+      <li>By pulling an opponent in a squat position</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Beginner Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>What is SAMBO (definition, basic principle)</li>
+      <li>Hygienic requirements for SAMBO uniform and footwear, for the training grounds</li>
+      <li>SAMBO uniform, wearing rules, belt tying rules</li>
+    </ul>
+  </div>
+
+  <div class="section-label">1st Level Student — Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Breakfalls</div>
+    <ul class="technique-list">
+      <li>On the back with a roll from the standing position</li>
+      <li>To the side with a roll from the standing position</li>
+      <li>On the side by rolling from the standing position</li>
+      <li>Forward on hands from the standing position</li>
+      <li>Forward onto a bridge by rolling from the squat position</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Hold-Downs</div>
+    <ul class="technique-list">
+      <li>From the side by gripping the torso and the arm</li>
+      <li>From the head with a torso girth</li>
+      <li>On top (mount position) with outside legs vine</li>
+      <li>Cross body by grabbing the arm and the hip</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Shoulder knot from side hold-down</li>
+      <li>Elbow lever through the hip from side hold-down</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Ground / Throwing Techniques</div>
+    <ul class="flat-list">
+      <li>Turning (rollovers) by leg and hand gripping an opponent in a squat position</li>
+      <li>Unbalancing: by pushing; by twisting</li>
+      <li>Leg throw by inside shin gripping</li>
+      <li>Back trip by an arm and belt grip</li>
+    </ul>
+  </div>
+
+  <div class="section-label">1st Level Student — Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>The history of the creation of SAMBO</li>
+      <li>The cause of injuries. Injury prevention. Breakfalls techniques</li>
+      <li>SAMBO warm-up plan</li>
+    </ul>
+  </div>
+
+  <div class="note">* In exceptional cases (large number of participants), exercises can be performed simultaneously in a row(s) or column(s)</div>
+</div>
+
+<!-- L2 YELLOW -->
+<div id="l2" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--yellow-patch)"></div>
+    <div class="level-title">
+      <h2>2nd Level Student — Yellow Patch</h2>
+      <div class="level-meta">Annex 4 · 2nd Year of Training</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Breakfalls</div>
+    <ul class="technique-list">
+      <li>On the back by jumping back from the standing position</li>
+      <li>On the back by jumping forward from the standing position (half-flip)</li>
+      <li>On side with rolling from the standing position over the opponent's hand</li>
+      <li>Forward on arms by jumping from the standing position</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Hold-Downs</div>
+    <ul class="technique-list">
+      <li>From the side grabbing both hands</li>
+      <li>From the head on the knees by grabbing lapels from under the arms</li>
+      <li>Reverse cross body by grabbing a hand and a hip</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Shoulder knot with the leg from side hold-down</li>
+      <li>Elbow lever from cross body hold-down</li>
+      <li>Knee lever, locking hip with crossed legs</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Turning (Rollovers)</div>
+    <ul class="technique-list">
+      <li>By gripping the wing of the jacket: by twisting an opponent standing on their knee; by pushing an opponent standing on their knee</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Leg throw by inside ankle gripping</li>
+      <li>Front trip by an arm and belt grip</li>
+      <li>Back reaping by an arm and belt grip</li>
+      <li>Hip throw with the belt grip</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Self-Defense</div>
+    <ul class="technique-list">
+      <li>Defender in a ground position when attacked by an opponent (standing and lying down): from the legs, on top (mount position), from the side, from the head</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>Sambo terms (general and special-preparatory exercises)</li>
+      <li>The general of the day regime of the sambo wrestler's</li>
+      <li>Information about the human musculoskeletal system</li>
+    </ul>
+  </div>
+  <div class="note">Demonstration of hold-downs, painful holds, and throws is carried out to the right or left, at the commission's discretion</div>
+</div>
+
+<!-- L3 ORANGE -->
+<div id="l3" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--orange-patch)"></div>
+    <div class="level-title">
+      <h2>3rd Level Student — Orange Patch</h2>
+      <div class="level-meta">Annex 5 · 3rd Year of Training</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Reverse shoulder knot from side hold-down</li>
+      <li>Elbow lever to an opponent lying on their chest</li>
+      <li>Knee lever made by a leg hook to an opponent standing on the knees and hands</li>
+      <li>Achilles crush in the sitting position by grabbing the ankle under the shoulder (same-sided or opposite foot)</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Turning (Rollovers)</div>
+    <ul class="technique-list">
+      <li>By gripping the wing of the jacket: by grabbing the belt, placing the leg on the neck; by grabbing the forearm from the inside</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Leg throw by gripping of the shin from the outside</li>
+      <li>Legs throw by pushing</li>
+      <li>Back trip on the heel with grabbing an arm with both arms</li>
+      <li>Inside shin hook by pushing</li>
+      <li>Back reaping by arm and belt grip on the stomach</li>
+      <li>Circle throw (over head) with the ankle, with a grip of the neck and the arm</li>
+      <li>Throw over back by gripping the arm on the shoulder (shoulder throw)</li>
+      <li>Backwards throw (suplex) by sitting down with a grip of the same-side arm and torso from the side</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Self-Defense</div>
+    <ul class="technique-list">
+      <li>Against the arm grip (same-sided, opposite) with the arm(-s)</li>
+      <li>Against the grip of clothing on the chest (on the shoulder)</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>Types of martial arts of the peoples of the world. National wrestling varieties as the SAMBO base</li>
+      <li>Information about the drinking regime and nutrition</li>
+      <li>SAMBO techniques: throws, painful holds, hold-downs, kicks and chokeholds</li>
+      <li>The SAMBO competitions, their goals and objectives. Weight categories. Prohibited techniques in SAMBO</li>
+    </ul>
+  </div>
+  <div class="note">Demonstration of hold-downs and painful holds, and throws is carried out to the right or left, at the commission's discretion. Self-defense techniques demonstration is carried out in one direction.</div>
+</div>
+
+<!-- L4 GREEN -->
+<div id="l4" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--green-patch)"></div>
+    <div class="level-title">
+      <h2>4th Level Student — Green Patch</h2>
+      <div class="level-meta">Annex 6 · 4th Year of Training</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Elbow lever by gripping the arm between the legs</li>
+      <li>Direct shoulder knot after cross-body hold-down</li>
+      <li>Foot lever to the opponent attacking from behind from above (crossing his legs on the body)</li>
+      <li>Calf muscle crush in the sitting position by grabbing the ankle under the shoulder (same-sided or opposite foot)</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Chokeholds (by hands)</div>
+    <ul class="technique-list">
+      <li>With the forearm from behind</li>
+      <li>By shoulder and forearm from behind pressing on the back of the head</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Leg throw by gripping heel from the outside by twisting</li>
+      <li>Legs throw, taking them to the side</li>
+      <li>Back trip with leg grip</li>
+      <li>Front sweep in the knee while stepping back</li>
+      <li>Outside foot hook</li>
+      <li>Inside reaping by stepping-in</li>
+      <li>Inside lifting throw</li>
+      <li>Circle throw (over head) with the ankle, with a grip of an arm and belt</li>
+      <li>Hip throw with the torso girth</li>
+      <li>Throw over back by gripping a lapel with both arms</li>
+      <li>Backwards throw (suplex) by grabbing the same hand and torso with a deflection</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Self-Defense</div>
+    <ul class="technique-list">
+      <li>Against the torso grip from the front without arms</li>
+      <li>Against the torso grip from the front with arm(s)</li>
+      <li>Against the torso grip from behind without hands</li>
+      <li>Against the torso grip from behind with arm(s)</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>SAMBO disciplines (varieties), distinctive features</li>
+      <li>Athlete's weight, weight correction methods</li>
+      <li>The SAMBO athlete's physical training, fundamental principles</li>
+      <li>Weigh-in procedure at competitions</li>
+    </ul>
+  </div>
+  <div class="note">Demonstration of hold-downs and painful holds, and throws is carried out to the right or left, at the commission's discretion. Self-defense technique demonstration is performed in one direction.</div>
+</div>
+
+<!-- L5 PURPLE (5th Level) - not fully detailed in docs, included as placeholder from register -->
+<div id="l5" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--purple-patch)"></div>
+    <div class="level-title">
+      <h2>5th Level Student — Purple Patch</h2>
+      <div class="level-meta">Annex 7 · 5th Year of Training</div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:0; margin-bottom:16px;">The full 5th Level (Annex 7) requirements were not included in the provided documents. Refer to the official FIAS regulations for the complete syllabus.</div>
+  <div class="section-label">Stage Overview</div>
+  <div class="category-block">
+    <ul class="flat-list">
+      <li>5th year of training</li>
+      <li>Qualification degree: 5th (fifth) Trainee</li>
+      <li>Distinction sign: Purple patch</li>
+    </ul>
+  </div>
+</div>
+
+<!-- L6 PURPLE -->
+<div id="l6" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--purple-patch)"></div>
+    <div class="level-title">
+      <h2>6th Level Student — Purple Patch</h2>
+      <div class="level-meta">Annex 8 · 6th Year of Training</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Elbow lever by gripping the hand between the legs, to an opponent standing on their knees and hands sitting back</li>
+      <li>Reverse shoulder knot with the arms after cross-body hold-down</li>
+      <li>Knee lever in combination after a grapevine</li>
+      <li>Hip knot with arms after cross-body hold-down</li>
+      <li>Achilles crush on the opponent's crossed legs as a counter action against Achilles crush</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Chokeholds (using jacket lapels)</div>
+    <ul class="technique-list">
+      <li>From behind with two lapels</li>
+      <li>From behind with a lapel, disconnecting the hand</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Ground Techniques</div>
+    <ul class="flat-list">
+      <li>Turning an opponent lying on the chest by gripping two lapels with a fall on the back followed by transition to hold-down with reverse neck grip and lapel grip from under the opponent options</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Leg throw by reverse gripping heel from the outside</li>
+      <li>"Windmill" by gripping the arm and opposite leg</li>
+      <li>Legs throw with remove the legs to the side</li>
+      <li>Front trip on the heel with an arm grip under the shoulder</li>
+      <li>Back sweep</li>
+      <li>Inside foot hook</li>
+      <li>Inside reaping by jump</li>
+      <li>Lifting throw hip to hip inside</li>
+      <li>Circle throw (over head) with foot by gripping an arm and lapel</li>
+      <li>Hip throw by gripping the same-side arm and belt on the back</li>
+      <li>Throw over back with the arm grip under the shoulder</li>
+      <li>Suplex by gripping an arm and a leg from the inside</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Striking Techniques</div>
+    <ul class="technique-list">
+      <li>Hand strikes (straight, side, from the bottom, wide, with a turn), with a fist, with a wrist base, palm, fingers, elbow</li>
+      <li>Leg kicks (straight, side, from the bottom, with a turn), with a knee, with a toe, with a foot rib, with a heel</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>National SAMBO Federation, history of its foundation, management, outstanding SAMBO athletes</li>
+      <li>Sports nutrition and dietary supplements</li>
+      <li>SAMBO refereeing rules — responsibilities and rights of an athlete</li>
+    </ul>
+  </div>
+  <div class="note">Demonstration of hold-downs and painful holds, and throws is carried out to the right or left, at the commission's discretion. Chokeholds and self-defense technique demonstration is carried out in one direction.</div>
+</div>
+
+<!-- M1 BROWN - Candidate Master -->
+<div id="m1" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--brown-patch)"></div>
+    <div class="level-title">
+      <h2>Candidate Master — Brown Patch</h2>
+      <div class="level-meta">Annex 9 · 7–8th Year of Training · I Master's Degree</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Elbow lever by the legs to an opponent standing on their knees and hands</li>
+      <li>Reverse shoulder knot by the leg to an opponent attacking from the legs</li>
+      <li>Biceps crush over the forearm, by gripping the arm between the legs</li>
+      <li>Both hips lever after transition to the calf crush to an opponent standing on their knees and hands</li>
+      <li>The hip knot during side hold-down when the opponent attacking with the shin hook (or pushing leg to had)</li>
+      <li>Calf crush to an opponent standing on the knees and hands through the opposite shin</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Chokeholds & Ground</div>
+    <ul class="flat-list">
+      <li>Chokeholds performed with legs when the opponent attacking from the legs</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Leg throw by gripping an shin and an opposite hand</li>
+      <li>"Windmill" by gripping an arm and an opposite leg</li>
+      <li>Legs throw by alternating leg grabbing</li>
+      <li>Front trip from the knee</li>
+      <li>Side sweep in the step pace</li>
+      <li>Grapevine</li>
+      <li>Back reaping with the arm grip under the shoulder</li>
+      <li>Lifting throw with the shin to both hip ("Horsie")</li>
+      <li>Circle throw (over head) with the foot on the hip</li>
+      <li>Hip throw with the leg grip</li>
+      <li>Throw over back with lapels grip</li>
+      <li>Suplex with an arm and a leg grip from the outside</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Self-Defense Against Strikes with Arms</div>
+    <ul class="technique-list">
+      <li>By arms (rebounds, parrying, cover-ups, grips)</li>
+      <li>By torso (dives, ducking)</li>
+      <li>By legs (closing-up, distancing, squatting)</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Self-Defense Against Kicks with Legs</div>
+    <ul class="technique-list">
+      <li>By arms (rebounds, parrying, cover-ups, grips)</li>
+      <li>By torso (dives, ducking)</li>
+      <li>By legs (kick-backs, blocks, cover-ups, closing-up, distancing, squatting)</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Striking Techniques</div>
+    <ul class="flat-list">
+      <li>Head kicks (front, back)</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>Refereeing beach SAMBO rules</li>
+      <li>Training session planning, control of sports loading, its amount and intensity</li>
+      <li>Doping and its consequences</li>
+      <li>Referee board in sambo, the functional duties of the referee</li>
+    </ul>
+  </div>
+  <div class="note">SAMBO and self-defense technique demonstration is carried out in one direction.</div>
+</div>
+
+<!-- M2 BLACK - Master (Annex 10 not fully provided) -->
+<div id="m2" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--black-patch); border:1px solid #444"></div>
+    <div class="level-title">
+      <h2>Master — Black Patch</h2>
+      <div class="level-meta">Annex 10 · 9–10th Year of Training · II Master's Degree</div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:0; margin-bottom:16px;">The full Master (Annex 10) requirements were not included in the provided documents. Refer to the official FIAS regulations for the complete syllabus.</div>
+  <div class="section-label">Stage Overview</div>
+  <div class="category-block">
+    <ul class="flat-list">
+      <li>9–10th year of training</li>
+      <li>Qualification degree: 2nd (second) Master</li>
+      <li>Distinction sign: Black patch</li>
+    </ul>
+  </div>
+</div>
+
+<!-- M3 MAROON - Grandmaster -->
+<div id="m3" class="level-panel">
+  <div class="level-header">
+    <div class="patch-badge" style="background:var(--maroon-patch)"></div>
+    <div class="level-title">
+      <h2>Grandmaster — Maroon Patch</h2>
+      <div class="level-meta">Annex 11 · 11–12th Year of Training · III Master's Degree</div>
+    </div>
+  </div>
+
+  <div class="section-label">Technical Section</div>
+  <div class="category-block">
+    <div class="category-title">Painful Holds</div>
+    <ul class="technique-list">
+      <li>Transition to the elbow lever with a leap, unbalancing the opponent by twisting</li>
+      <li>Reverse shoulder knot with legs by rolling to an opponent standing on their knees and hands</li>
+      <li>Knee lever after "Scissors" throw (on one or both legs)</li>
+      <li>Hip(-s) knot by rotation in a standing position, to an opponent lying on his back after a throw by the legs</li>
+      <li>Achilles crush after a leg throw and turning the opponent on the chest by stepping-on with a turn</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Chokeholds</div>
+    <ul class="flat-list">
+      <li>Combined options of chokeholds</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Throws & Standing Techniques</div>
+    <ul class="flat-list">
+      <li>Screw by reverse hand gripping with two hands</li>
+      <li>Front turning throw (body drop)</li>
+      <li>"Windmill" by gripping a leg and neck</li>
+      <li>Legs throw, throwing an opponent back</li>
+      <li>Lateral (side) sweep stepping in a circle</li>
+      <li>Shin hook from behind</li>
+      <li>Back reaping with the leg grip</li>
+      <li>"Scissors" throw under both legs</li>
+      <li>Circle throw (over head) with the foot in the stomach, lying across</li>
+      <li>Lateral (side) hip throw</li>
+      <li>Throw over back with a grip of crossed arms</li>
+      <li>Reverse hip throw</li>
+      <li>Reverse throw over back</li>
+      <li>Suplex with spring hip throw</li>
+    </ul>
+  </div>
+  <div class="category-block">
+    <div class="category-title">Armed Self-Defense</div>
+    <ul class="technique-list">
+      <li>Self-defense against the opponent armed with a stick</li>
+      <li>Self-defense against the opponent armed with a knife</li>
+      <li>Self-defense against the opponent armed with a pistol</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="theory-block">
+    <ul class="flat-list">
+      <li>International sports movement. The place of SAMBO in the international sports movement</li>
+      <li>Specifics of refereeing combat sambo competitions</li>
+      <li>Prospective planning of sambist training</li>
+      <li>The competition officials of the sambo competitions</li>
+    </ul>
+  </div>
+  <div class="note">SAMBO and self-defense technique demonstration is carried out in one direction.</div>
+</div>
+
+<!-- SCORING -->
+<div id="scoring" class="level-panel">
+  <div class="level-header">
+    <div class="level-title">
+      <h2>Requirements for Evaluation of Certification Exams</h2>
+      <div class="level-meta">Annex 12 · Scoring Criteria for Practical and Theoretical Sections</div>
+    </div>
+  </div>
+
+  <div class="section-label">Practical Section</div>
+  <div class="category-block">
+    <table class="scoring-table">
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th><span class="score-5">5 pts</span></th>
+          <th><span class="score-4">4 pts</span></th>
+          <th><span class="score-3">3 pts</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Breakfalls Technique</strong></td>
+          <td>Amplitude performance, proper cushioning and tucking</td>
+          <td>Small performance amplitude, mistakes in cushioning and tucking</td>
+          <td>No amplitude, cushioning and tucking</td>
+        </tr>
+        <tr>
+          <td><strong>2. SAMBO technique in ground position</strong></td>
+          <td>Correct position locking, accurate painful hold or chokehold impact</td>
+          <td>Mistakes in position locking, insufficient painful hold or chokehold impact</td>
+          <td>No position locking, incorrect or absent painful hold or chokehold impact</td>
+        </tr>
+        <tr>
+          <td><strong>3. SAMBO technique in standing position</strong></td>
+          <td>Proper phase structure of a throw, correct direction of strength, balance control</td>
+          <td>Mistakes in phase structure of a throw, mistakes in direction of strength, unstable balance</td>
+          <td>The absence of one of the throw phases, wrong direction of strength, loss of balance</td>
+        </tr>
+        <tr>
+          <td><strong>4. Striking technique</strong></td>
+          <td>Correct phase structure of a strike</td>
+          <td>Errors in the phase structure of a strike</td>
+          <td>Incorrect phase structure of a strike</td>
+        </tr>
+        <tr>
+          <td><strong>5. Self Defense Technique</strong></td>
+          <td>Proper phase structure of a technique, correct direction of strength, balance control</td>
+          <td>Mistakes in phase structure of a technique, mistakes in direction of strength, unstable balance</td>
+          <td>The absence of one of a technique phases, wrong direction of strength, loss of balance</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Theoretical Section</div>
+  <div class="category-block">
+    <table class="scoring-table">
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th><span class="score-5">5 pts</span></th>
+          <th><span class="score-4">4 pts</span></th>
+          <th><span class="score-3">3 pts</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>6. SAMBO History</strong></td>
+          <td>Exact, comprehensive answer</td>
+          <td>Inaccuracies in the answers</td>
+          <td>Incorrect answer</td>
+        </tr>
+        <tr>
+          <td><strong>7. SAMBO Rules</strong></td>
+          <td>Exact, comprehensive answer</td>
+          <td>Inaccuracies in the answers</td>
+          <td>Incorrect answer</td>
+        </tr>
+        <tr>
+          <td><strong>8. SAMBO Athlete's Training</strong></td>
+          <td>Exact, comprehensive answer</td>
+          <td>Inaccuracies in the answers</td>
+          <td>Incorrect answer</td>
+        </tr>
+        <tr>
+          <td><strong>9. Biological Fundamentals of SAMBO Training</strong></td>
+          <td>Exact, comprehensive answer</td>
+          <td>Inaccuracies in the answers</td>
+          <td>Incorrect answer</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<footer>FIAS · Regulations on Certification of SAMBO Athletes, Coaches and Accreditation of SAMBO Clubs</footer>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.level-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.belt-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>
