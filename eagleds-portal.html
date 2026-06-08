@@ -956,6 +956,43 @@ body {
   .nav-item.active { border-bottom-color: var(--gold); border-left: none; }
 }
 
+/* ── CHAIN EDITOR ── */
+.chain-item { margin-bottom: 2px; }
+.chain-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  flex-wrap: wrap;
+}
+.chain-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted2);
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.chain-btn:hover { border-color: var(--gold); color: var(--gold); }
+.chain-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+.insert-row { padding: 4px 0; }
+.insert-btn {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted2);
+  padding: 4px 14px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+}
+.insert-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-glow); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); }
@@ -1746,6 +1783,29 @@ async function loadSequences(){
   renderSequences();
 }
 
+// ── Convert legacy lines/moves format to flat chain on load ──
+function normaliseFlatChain(s){
+  // If already flat chain format, return as-is
+  if(s.chain && Array.isArray(s.chain)) return s.chain;
+  // Convert from old lines/moves format
+  const chain = [];
+  if(s.lines && Array.isArray(s.lines)){
+    s.lines.forEach(line => {
+      (line.moves||[]).forEach(m => {
+        chain.push({
+          actor: line.actor||'A',
+          name: m.name||'',
+          technical: m.technical||[],
+          coaching: m.coaching||[],
+          examiner: m.examiner||[],
+          branches: []  // future: variation branches live here
+        });
+      });
+    });
+  }
+  return chain;
+}
+
 function renderSequences(){
   const container = document.getElementById('sequences-container');
   if(!SEQUENCES_DATA){ container.innerHTML='<div style="color:var(--muted);padding:20px;">No sequence data.</div>'; return; }
@@ -1753,161 +1813,233 @@ function renderSequences(){
   const order = Object.keys(SEQUENCES_DATA).sort((a,b)=>SEQUENCES_DATA[a].num-SEQUENCES_DATA[b].num);
   container.innerHTML = order.map(key => {
     const s = SEQUENCES_DATA[key];
-    const seqNum = s.num;
-    const unlocked = canSeeSeq(seqNum);
+    const unlocked = canSeeSeq(s.num);
     const beltColor = getBeltColor(s.belt);
-    const isInDev = s.inDevelopment;
 
     return `<div class="sequence-block${!unlocked?' locked':''}" id="seqblock-${key}">
       <div class="sequence-header" onclick="${unlocked?`toggleSeq('${key}')`:'showLockedMsg()'}">
-        <div class="sequence-num">SEQ ${String(seqNum).padStart(2,'0')}</div>
-        <div class="sequence-title">${s.title}${isInDev?` <span class="dev-badge" style="margin-left:8px">In Development</span>`:''}</div>
+        <div class="sequence-num">SEQ ${String(s.num).padStart(2,'0')}</div>
+        <div class="sequence-title">${s.title}${s.inDevelopment?` <span class="dev-badge">In Development</span>`:''}</div>
         <div class="sequence-belt-tags">
-          <div class="belt-tag" style="background:${beltColor};${s.belt==='white'?'border:1px solid #888':''}" title="${s.beltLabel||''}"></div>
+          <div class="belt-tag" style="background:${beltColor};${s.belt==='white'?'border:1px solid #888':''}"></div>
         </div>
         ${!unlocked?'<span class="lock-icon">🔒</span>':'<div class="chevron">▼</div>'}
       </div>
       ${unlocked ? `<div class="sequence-body" id="seqbody-${key}">
-        ${ADMIN_MODE ? renderSeqEditForm(key, s) : ''}
-        <div class="seq-flow" id="seqflow-${key}">
-          ${renderFlowLines(key, s)}
-        </div>
-        ${s.video ? `<div class="video-slot"><iframe src="${getEmbedUrl(s.video)}" allowfullscreen></iframe></div>` :
-          `<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
-        ${s.integration ? `<div class="integration-note">⚡ Integration: ${s.integration}</div>` : ''}
-        ${ADMIN_MODE ? `<div style="margin-top:12px;"><button class="edit-btn primary" onclick="saveSequence('${key}')">Save Sequence</button></div>` : ''}
+        ${ADMIN_MODE ? renderSeqMeta(key, s) : ''}
+        <div id="chain-${key}">${renderChain(key, s)}</div>
+        ${s.video
+          ? `<div class="video-slot"><iframe src="${getEmbedUrl(s.video)}" allowfullscreen></iframe></div>`
+          : `<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
+        ${s.integration ? `<div class="integration-note">⚡ ${s.integration}</div>` : ''}
       </div>` : ''}
     </div>`;
   }).join('');
 }
 
-function renderFlowLines(key, s){
-  if(!s.lines||!s.lines.length) return '<div style="color:var(--muted);font-size:12px;">Flow not yet constructed.</div>';
-  return s.lines.map((line, li) => {
-    const actorClass = line.actor==='A' ? 'actor-a' : 'actor-b';
-    const moves = line.moves||[];
-    const movePills = moves.map((m, mi) => {
-      const moveKey = `${key}_${li}_${mi}`;
-      return `<span class="move-pill" id="pill-${moveKey}" onclick="toggleBreakdown('${key}',${li},${mi})">${m.name}</span>${mi<moves.length-1?'<span class="move-arrow">→</span>':''}`;
-    }).join('');
-    return `<div class="flow-line">
-      <span class="${actorClass}">${line.actor}:</span>
-      <div class="flow-moves">${movePills}</div>
-    </div>
-    <div class="move-breakdown" id="breakdown-${key}-${li}-0">
-      <!-- populated by toggleBreakdown -->
+function renderChain(key, s){
+  const chain = normaliseFlatChain(s);
+  if(!chain.length) return ADMIN_MODE
+    ? renderInsertBtn(key, 0) + '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No moves yet — add the first one above.</div>'
+    : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Flow not yet constructed.</div>';
+
+  let html = '';
+  if(ADMIN_MODE) html += renderInsertBtn(key, 0);
+
+  chain.forEach((move, i) => {
+    const actorClass = move.actor==='A' ? 'actor-a' : 'actor-b';
+    const pillId = `pill-${key}-${i}`;
+    const bdId = `bd-${key}-${i}`;
+
+    html += `<div class="chain-item" id="chainitem-${key}-${i}">
+      <div class="chain-row">
+        <span class="${actorClass}" style="font-size:11px;font-weight:700;width:18px;flex-shrink:0;">${move.actor}:</span>
+        <span class="move-pill" id="${pillId}" onclick="toggleBreakdown('${key}',${i})">${move.name||'Unnamed'}</span>
+        ${ADMIN_MODE ? `
+          <button class="chain-btn" onclick="editMoveInline('${key}',${i})" title="Edit">✎</button>
+          <button class="chain-btn danger" onclick="removeMove('${key}',${i})" title="Remove">✕</button>
+        ` : ''}
+      </div>
+      <div class="move-breakdown" id="${bdId}"></div>
+      ${ADMIN_MODE ? renderInsertBtn(key, i+1) : ''}
     </div>`;
-  }).join('');
+  });
+
+  return html;
 }
 
-function toggleBreakdown(key, li, mi){
-  const s = SEQUENCES_DATA[key];
-  if(!s||!s.lines||!s.lines[li]||!s.lines[li].moves||!s.lines[li].moves[mi]) return;
-  const move = s.lines[li].moves[mi];
-  const bdId = `breakdown-${key}-${li}-0`;
-  const pillId = `pill-${key}_${li}_${mi}`;
+function renderInsertBtn(key, insertAt){
+  return `<div class="insert-row" id="insertrow-${key}-${insertAt}">
+    <button class="insert-btn" onclick="showInsertForm('${key}',${insertAt})">+ Add Move</button>
+    <div class="insert-form" id="insertform-${key}-${insertAt}" style="display:none;">
+      <select id="ins-actor-${key}-${insertAt}" style="background:var(--surface3);border:1px solid var(--gold-dim);color:var(--white);padding:6px 10px;font-size:12px;">
+        <option value="A">A</option>
+        <option value="B">B</option>
+      </select>
+      <input class="edit-input" style="display:inline-block;width:200px;margin:0 8px;" id="ins-name-${key}-${insertAt}" placeholder="Move name…">
+      <button class="edit-btn save" onclick="confirmInsert('${key}',${insertAt})">Add</button>
+      <button class="edit-btn" onclick="cancelInsert('${key}',${insertAt})">Cancel</button>
+    </div>
+  </div>`;
+}
 
-  // Close all other breakdowns in this sequence
-  document.querySelectorAll('.move-breakdown').forEach(el => {
-    if(el.id!==bdId){ el.classList.remove('active'); el.innerHTML=''; }
-  });
-  document.querySelectorAll('.move-pill').forEach(el => el.classList.remove('active'));
+function showInsertForm(key, insertAt){
+  document.getElementById(`insertform-${key}-${insertAt}`).style.display='flex';
+  document.getElementById(`insertform-${key}-${insertAt}`).style.alignItems='center';
+  document.getElementById(`insertform-${key}-${insertAt}`).style.gap='6px';
+  document.getElementById(`insertform-${key}-${insertAt}`).style.flexWrap='wrap';
+  document.getElementById(`insertform-${key}-${insertAt}`).style.marginTop='6px';
+  document.getElementById(`ins-name-${key}-${insertAt}`)?.focus();
+  // Default actor to same as move above if exists
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  if(insertAt > 0 && chain[insertAt-1]){
+    document.getElementById(`ins-actor-${key}-${insertAt}`).value = chain[insertAt-1].actor;
+  }
+}
 
+function cancelInsert(key, insertAt){
+  document.getElementById(`insertform-${key}-${insertAt}`).style.display='none';
+}
+
+async function confirmInsert(key, insertAt){
+  const actor = document.getElementById(`ins-actor-${key}-${insertAt}`)?.value || 'A';
+  const name = document.getElementById(`ins-name-${key}-${insertAt}`)?.value.trim();
+  if(!name){ toast('Enter a move name', true); return; }
+
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  const newMove = { actor, name, technical:[], coaching:[], examiner:[], branches:[] };
+  chain.splice(insertAt, 0, newMove);
+  SEQUENCES_DATA[key].chain = chain;
+
+  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+  toast('Move added ✓');
+  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+}
+
+async function removeMove(key, i){
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  chain.splice(i, 1);
+  SEQUENCES_DATA[key].chain = chain;
+  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+  toast('Move removed');
+  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+}
+
+function editMoveInline(key, i){
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  const move = chain[i];
+  if(!move) return;
+  const bdId = `bd-${key}-${i}`;
   const bdEl = document.getElementById(bdId);
   if(!bdEl) return;
 
-  if(bdEl.classList.contains('active')){
-    bdEl.classList.remove('active'); bdEl.innerHTML=''; return;
-  }
+  // Close all others
+  document.querySelectorAll('.move-breakdown').forEach(el => { el.classList.remove('active'); el.innerHTML=''; });
+
+  bdEl.innerHTML = `
+    <div class="edit-section" style="margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="edit-section-title" style="margin:0;">Editing: ${move.name}</div>
+        <select id="eact-${key}-${i}" style="background:var(--surface3);border:1px solid var(--gold-dim);color:var(--white);padding:5px 8px;font-size:11px;">
+          <option value="A"${move.actor==='A'?' selected':''}>Actor A</option>
+          <option value="B"${move.actor==='B'?' selected':''}>Actor B</option>
+        </select>
+      </div>
+      <label class="edit-label">Move Name</label>
+      <input class="edit-input" id="ename-${key}-${i}" value="${move.name}">
+      <label class="edit-label">Technical Requirements (one per line)</label>
+      <textarea class="edit-textarea" id="etech-${key}-${i}">${(move.technical||[]).join('\n')}</textarea>
+      <label class="edit-label">Coaching Cues — your eyes only (one per line)</label>
+      <textarea class="edit-textarea" id="ecoach-${key}-${i}">${(move.coaching||[]).join('\n')}</textarea>
+      <label class="edit-label">Examiner Points (one per line)</label>
+      <textarea class="edit-textarea" id="eexam-${key}-${i}">${(move.examiner||[]).join('\n')}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="edit-btn save" onclick="saveMoveEdit('${key}',${i})">Save Move</button>
+        <button class="edit-btn" onclick="closeMoveEdit('${key}',${i})">Cancel</button>
+      </div>
+    </div>`;
+  bdEl.classList.add('active');
+}
+
+function closeMoveEdit(key, i){
+  const bdEl = document.getElementById(`bd-${key}-${i}`);
+  if(bdEl){ bdEl.classList.remove('active'); bdEl.innerHTML=''; }
+}
+
+async function saveMoveEdit(key, i){
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  chain[i].actor = document.getElementById(`eact-${key}-${i}`)?.value || chain[i].actor;
+  chain[i].name = document.getElementById(`ename-${key}-${i}`)?.value.trim() || chain[i].name;
+  chain[i].technical = document.getElementById(`etech-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
+  chain[i].coaching = document.getElementById(`ecoach-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
+  chain[i].examiner = document.getElementById(`eexam-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
+  SEQUENCES_DATA[key].chain = chain;
+  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+  toast('Move saved ✓');
+  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+}
+
+function toggleBreakdown(key, i){
+  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
+  const move = chain[i];
+  if(!move) return;
+  const bdId = `bd-${key}-${i}`;
+  const pillId = `pill-${key}-${i}`;
+  const bdEl = document.getElementById(bdId);
+  if(!bdEl) return;
+
+  // Close all breakdowns
+  document.querySelectorAll('.move-breakdown').forEach(el => { if(el.id!==bdId){ el.classList.remove('active'); el.innerHTML=''; }});
+  document.querySelectorAll('.move-pill').forEach(el => el.classList.remove('active'));
+
+  if(bdEl.classList.contains('active')){ bdEl.classList.remove('active'); bdEl.innerHTML=''; return; }
 
   document.getElementById(pillId)?.classList.add('active');
 
   const techPoints = (move.technical||[]).map(p=>`<li>${p}</li>`).join('');
   const coachPoints = (move.coaching||[]).map(p=>`<li>${p}</li>`).join('');
   const examPoints = (move.examiner||[]).map(p=>`<li>${p}</li>`).join('');
+  const hasContent = techPoints || coachPoints || examPoints;
 
-  const coachSection = (USER_ROLE==='admin'||USER_ROLE==='coach') && coachPoints ?
-    `<div class="breakdown-section">
-      <div class="breakdown-section-label" style="color:#5b9bd5;">Coaching Cues (Coach View)</div>
-      <ul class="breakdown-points">${coachPoints}</ul>
-    </div>` : '';
+  const coachSection = (USER_ROLE==='admin'||USER_ROLE==='coach') && coachPoints
+    ? `<div class="breakdown-section"><div class="breakdown-section-label" style="color:#5b9bd5;">Coaching Cues</div><ul class="breakdown-points">${coachPoints}</ul></div>` : '';
 
   bdEl.innerHTML = `
     <div class="breakdown-header">
       <div class="breakdown-title">${move.name}</div>
-      <div class="breakdown-close" onclick="closeBreakdown('${bdId}','${pillId}')">✕</div>
+      <div class="breakdown-close" onclick="document.getElementById('${bdId}').classList.remove('active');document.getElementById('${bdId}').innerHTML='';document.getElementById('${pillId}')?.classList.remove('active');">✕</div>
     </div>
-    ${techPoints ? `<div class="breakdown-section">
-      <div class="breakdown-section-label">Technical Requirements</div>
-      <ul class="breakdown-points">${techPoints}</ul>
-    </div>` : ''}
+    ${techPoints ? `<div class="breakdown-section"><div class="breakdown-section-label">Technical Requirements</div><ul class="breakdown-points">${techPoints}</ul></div>` : ''}
     ${coachSection}
-    ${examPoints ? `<div class="examiner-box">
-      <div class="examiner-label">What the Examiner Looks For</div>
-      <ul class="breakdown-points examiner-points">${examPoints}</ul>
-    </div>` : ''}
-    ${ADMIN_MODE ? renderMoveEditForm(key, li, mi, move) : ''}
+    ${examPoints ? `<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${examPoints}</ul></div>` : ''}
+    ${!hasContent ? `<div style="color:var(--muted2);font-size:12px;font-style:italic;">No breakdown added yet.${ADMIN_MODE?' Tap ✎ to edit.':''}</div>` : ''}
   `;
   bdEl.classList.add('active');
 }
 
-function closeBreakdown(bdId, pillId){
-  document.getElementById(bdId)?.classList.remove('active');
-  document.getElementById(pillId)?.classList.remove('active');
-}
-
-function renderMoveEditForm(key, li, mi, move){
-  const techVal = (move.technical||[]).join('\n');
-  const coachVal = (move.coaching||[]).join('\n');
-  const examVal = (move.examiner||[]).join('\n');
-  return `<div class="edit-section" style="margin-top:14px;">
-    <div class="edit-section-title">Edit Move: ${move.name}</div>
-    <label class="edit-label">Technical Requirements (one per line)</label>
-    <textarea class="edit-textarea" id="edit-tech-${key}-${li}-${mi}">${techVal}</textarea>
-    <label class="edit-label">Coaching Cues — coach view only (one per line)</label>
-    <textarea class="edit-textarea" id="edit-coach-${key}-${li}-${mi}">${coachVal}</textarea>
-    <label class="edit-label">Examiner Points (one per line)</label>
-    <textarea class="edit-textarea" id="edit-exam-${key}-${li}-${mi}">${examVal}</textarea>
-    <button class="edit-btn save" onclick="saveMoveBreakdown('${key}',${li},${mi})">Save Move</button>
-  </div>`;
-}
-
-async function saveMoveBreakdown(key, li, mi){
-  const tech = document.getElementById(`edit-tech-${key}-${li}-${mi}`)?.value.split('\n').filter(Boolean)||[];
-  const coach = document.getElementById(`edit-coach-${key}-${li}-${mi}`)?.value.split('\n').filter(Boolean)||[];
-  const exam = document.getElementById(`edit-exam-${key}-${li}-${mi}`)?.value.split('\n').filter(Boolean)||[];
-
-  SEQUENCES_DATA[key].lines[li].moves[mi].technical = tech;
-  SEQUENCES_DATA[key].lines[li].moves[mi].coaching = coach;
-  SEQUENCES_DATA[key].lines[li].moves[mi].examiner = exam;
-
-  await db.ref(`portal_sequences/${key}/lines/${li}/moves/${mi}`).update({technical:tech,coaching:coach,examiner:exam});
-  toast('Move saved ✓');
-}
-
-function renderSeqEditForm(key, s){
-  return `<div class="edit-section">
-    <div class="edit-section-title">Edit Sequence Header</div>
+function renderSeqMeta(key, s){
+  return `<div class="edit-section" style="margin-bottom:14px;">
+    <div class="edit-section-title">Sequence Settings</div>
     <label class="edit-label">Title</label>
     <input class="edit-input" id="edit-title-${key}" value="${s.title||''}">
     <label class="edit-label">Video URL (Cloudflare Stream or YouTube)</label>
     <input class="edit-input" id="edit-video-${key}" value="${s.video||''}" placeholder="https://...">
     <label class="edit-label">Integration Note</label>
-    <input class="edit-input" id="edit-integration-${key}" value="${s.integration||''}" placeholder="e.g. Front kick combination integration required">
+    <input class="edit-input" id="edit-integration-${key}" value="${s.integration||''}" placeholder="e.g. Front kick integration required">
+    <button class="edit-btn save" style="margin-top:4px;" onclick="saveSeqMeta('${key}')">Save Settings</button>
   </div>`;
 }
 
-async function saveSequence(key){
-  const title = document.getElementById(`edit-title-${key}`)?.value;
-  const video = document.getElementById(`edit-video-${key}`)?.value;
-  const integration = document.getElementById(`edit-integration-${key}`)?.value;
-  const updates = {};
-  if(title!==undefined) updates.title=title;
-  if(video!==undefined) updates.video=video;
-  if(integration!==undefined) updates.integration=integration;
+async function saveSeqMeta(key){
+  const updates = {
+    title: document.getElementById(`edit-title-${key}`)?.value||'',
+    video: document.getElementById(`edit-video-${key}`)?.value||'',
+    integration: document.getElementById(`edit-integration-${key}`)?.value||''
+  };
   await db.ref(`portal_sequences/${key}`).update(updates);
-  SEQUENCES_DATA[key] = {...SEQUENCES_DATA[key], ...updates};
-  toast('Sequence saved ✓');
+  Object.assign(SEQUENCES_DATA[key], updates);
+  toast('Settings saved ✓');
+  renderSequences();
 }
 
 function getEmbedUrl(url){
