@@ -138,22 +138,9 @@ body {
   text-align: center;
   min-height: 18px;
 }
-.login-register {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
-}
-.login-register a {
-  color: var(--gold);
-  cursor: pointer;
-  text-decoration: none;
-}
 
-/* ── REGISTER PANEL ── */
-#register-panel { display: none; }
-#register-panel.active { display: block; }
-#login-panel.hidden { display: none; }
+
+
 
 /* ── MAIN APP ── */
 #app { display: none; }
@@ -996,50 +983,6 @@ body {
       </div>
       <button class="login-btn" onclick="doLogin()">SIGN IN</button>
       <div class="login-err" id="li-err"></div>
-      <div class="login-register">
-        New to Eagle DS? <a onclick="showRegister()">Request access →</a>
-      </div>
-    </div>
-
-    <div id="register-panel">
-      <div class="login-field">
-        <label class="login-label">Full Name</label>
-        <input class="login-input" type="text" id="rg-name" placeholder="Your full name">
-      </div>
-      <div class="login-field">
-        <label class="login-label">Email</label>
-        <input class="login-input" type="email" id="rg-email" placeholder="your@email.com">
-      </div>
-      <div class="login-field">
-        <label class="login-label">Password</label>
-        <input class="login-input" type="password" id="rg-pass" placeholder="Choose a password">
-      </div>
-      <div class="login-field">
-        <label class="login-label">I am registering as</label>
-        <select class="login-input" id="rg-type" style="background:var(--surface2)">
-          <option value="student">Student</option>
-          <option value="coach">Coach / Coaching Course Participant</option>
-        </select>
-      </div>
-      <div class="login-field">
-        <label class="login-label">Current Belt (students)</label>
-        <select class="login-input" id="rg-belt" style="background:var(--surface2)">
-          <option value="white">White Belt</option>
-          <option value="yellow_stripe">Yellow Stripe</option>
-          <option value="yellow">Yellow Belt</option>
-          <option value="orange_stripe">Orange Stripe</option>
-          <option value="orange">Orange Belt</option>
-          <option value="green_stripe">Green Stripe</option>
-          <option value="green">Green Belt</option>
-          <option value="blue_stripe">Blue Stripe</option>
-          <option value="blue">Blue Belt</option>
-        </select>
-      </div>
-      <button class="login-btn" onclick="doRegister()">REQUEST ACCESS</button>
-      <div class="login-err" id="rg-err"></div>
-      <div class="login-register">
-        Already have access? <a onclick="showLogin()">Sign in →</a>
-      </div>
     </div>
   </div>
 </div>
@@ -1589,16 +1532,42 @@ function canSeeSeq(seqNum){
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    showLoginScreen(); return;
-  }
+  if (!user) { showLoginScreen(); return; }
   CURRENT_USER = user;
+
   const snap = await db.ref(`portal_users/${user.uid}`).once('value');
-  const profile = snap.val();
+  let profile = snap.val();
 
   if (!profile) {
-    // No profile yet — check if just registered
-    showLoginScreen(); return;
+    // No portal_users record — check if any admin exists in the system yet
+    const adminSnap = await db.ref('portal_users').orderByChild('role').equalTo('admin').limitToFirst(1).once('value');
+    const anyAdmin = adminSnap.val();
+
+    if (!anyAdmin) {
+      // No admin exists yet — this is the first login. Bootstrap as admin.
+      profile = {
+        name: 'Dafydd Sanders',
+        email: user.email,
+        role: 'admin',
+        belt: 'black',
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
+      await db.ref(`portal_users/${user.uid}`).set(profile);
+      toast('Admin account created — welcome, Dafydd.');
+    } else {
+      // Admin already exists, this user has no record — send to pending screen
+      await db.ref(`portal_users/${user.uid}`).set({
+        email: user.email,
+        role: 'student',
+        belt: 'white',
+        status: 'pending',
+        registeredAt: new Date().toISOString()
+      });
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('pending-screen').classList.add('active');
+      return;
+    }
   }
 
   if (profile.status === 'pending') {
@@ -1675,37 +1644,7 @@ async function doLogin(){
   }
 }
 
-async function doRegister(){
-  const name = document.getElementById('rg-name').value.trim();
-  const email = document.getElementById('rg-email').value.trim();
-  const pass = document.getElementById('rg-pass').value;
-  const type = document.getElementById('rg-type').value;
-  const belt = document.getElementById('rg-belt').value;
-  document.getElementById('rg-err').textContent = '';
-  if(!name||!email||!pass){ document.getElementById('rg-err').textContent='All fields required.'; return; }
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    await db.ref(`portal_users/${cred.user.uid}`).set({
-      name, email, role: type, belt, status:'pending',
-      registeredAt: new Date().toISOString()
-    });
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('pending-screen').classList.add('active');
-  } catch(e){
-    document.getElementById('rg-err').textContent = friendlyError(e.code);
-  }
-}
-
 function doLogout(){ auth.signOut(); }
-
-function showRegister(){
-  document.getElementById('login-panel').classList.add('hidden');
-  document.getElementById('register-panel').classList.add('active');
-}
-function showLogin(){
-  document.getElementById('register-panel').classList.remove('active');
-  document.getElementById('login-panel').classList.remove('hidden');
-}
 
 function friendlyError(code){
   const map = {
