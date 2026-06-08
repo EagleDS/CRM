@@ -1539,12 +1539,12 @@ auth.onAuthStateChanged(async (user) => {
   let profile = snap.val();
 
   if (!profile) {
-    // No portal_users record — check if any admin exists in the system yet
-    const adminSnap = await db.ref('portal_users').orderByChild('role').equalTo('admin').limitToFirst(1).once('value');
-    const anyAdmin = adminSnap.val();
+    // No portal_users record — check the bootstrap flag
+    const bootstrapSnap = await db.ref('portal_bootstrap/done').once('value');
+    const bootstrapped = bootstrapSnap.val();
 
-    if (!anyAdmin) {
-      // No admin exists yet — this is the first login. Bootstrap as admin.
+    if (!bootstrapped) {
+      // First login ever — create admin profile and set bootstrap flag
       profile = {
         name: 'Dafydd Sanders',
         email: user.email,
@@ -1554,9 +1554,10 @@ auth.onAuthStateChanged(async (user) => {
         createdAt: new Date().toISOString()
       };
       await db.ref(`portal_users/${user.uid}`).set(profile);
+      await db.ref('portal_bootstrap').set({ done: true, uid: user.uid, at: new Date().toISOString() });
       toast('Admin account created — welcome, Dafydd.');
     } else {
-      // Admin already exists, this user has no record — send to pending screen
+      // Bootstrap done, admin exists — this is an unknown user
       await db.ref(`portal_users/${user.uid}`).set({
         email: user.email,
         role: 'student',
