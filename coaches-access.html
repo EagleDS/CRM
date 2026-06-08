@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Coaches Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --black: #080808;
+  --surface: #101010;
+  --border: #1e1e1e;
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.15);
+  --white: #f0ece4;
+  --muted: #666;
+  --red: #c0392b;
+}
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* Corner accents */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 200px; height: 200px;
+  background: radial-gradient(ellipse at top left, rgba(201,168,76,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.corner-br {
+  position: fixed;
+  bottom: 0; right: 0;
+  width: 300px; height: 300px;
+  background: radial-gradient(ellipse at bottom right, rgba(201,168,76,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px;
+  animation: fadeUp 0.5s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* Logo */
+.logo {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.logo-mark {
+  width: 56px; height: 56px;
+  background: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 0.05em;
+  color: var(--black);
+  margin: 0 auto 16px;
+  position: relative;
+}
+
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(201,168,76,0.2);
+}
+
+.logo-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; letter-spacing: 0.18em;
+  color: var(--white);
+  line-height: 1;
+}
+
+.logo-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--muted);
+  margin-top: 5px;
+}
+
+/* PIN display */
+.pin-display {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.pin-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.pin-dot.filled {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+}
+
+.pin-dot.error {
+  background: var(--red);
+  border-color: var(--red);
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Keypad */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.key {
+  height: 64px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px; letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.key::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.key:active::after { opacity: 0.08; }
+.key:active { border-color: var(--gold); transform: scale(0.97); }
+
+.key.zero {
+  grid-column: 2;
+}
+
+.key.del {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  font-family: 'DM Sans', sans-serif;
+}
+.key.del:active { border-color: transparent; }
+
+/* Error message */
+.error-msg {
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-top: 20px;
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.error-msg.show { opacity: 1; }
+
+/* Access label */
+.access-label {
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* Success flash */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.success-overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+.success-inner {
+  text-align: center;
+}
+.success-mark {
+  width: 64px; height: 64px;
+  background: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+}
+.success-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 0.15em;
+  color: var(--gold);
+}
+</style>
+</head>
+<body>
+
+<div class="corner-br"></div>
+
+<div class="success-overlay" id="success">
+  <div class="success-inner">
+    <div class="success-mark">✓</div>
+    <div class="success-text">Access Granted</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-mark">DS</div>
+    <div class="logo-name">EAGLE DS</div>
+    <div class="logo-sub">Coaches Portal · Restricted Access</div>
+  </div>
+
+  <div class="access-label">Enter PIN to continue</div>
+
+  <div class="pin-display">
+    <div class="pin-dot" id="dot-0"></div>
+    <div class="pin-dot" id="dot-1"></div>
+    <div class="pin-dot" id="dot-2"></div>
+    <div class="pin-dot" id="dot-3"></div>
+  </div>
+
+  <div class="keypad">
+    <div class="key" onclick="press('1')">1</div>
+    <div class="key" onclick="press('2')">2</div>
+    <div class="key" onclick="press('3')">3</div>
+    <div class="key" onclick="press('4')">4</div>
+    <div class="key" onclick="press('5')">5</div>
+    <div class="key" onclick="press('6')">6</div>
+    <div class="key" onclick="press('7')">7</div>
+    <div class="key" onclick="press('8')">8</div>
+    <div class="key" onclick="press('9')">9</div>
+    <div class="key zero" onclick="press('0')">0</div>
+    <div class="key del" onclick="del()">⌫</div>
+  </div>
+
+  <div class="error-msg" id="err">Incorrect PIN</div>
+</div>
+
+<script>
+const PIN = '1234';
+let entry = '';
+
+function press(digit){
+  if(entry.length >= 4) return;
+  entry += digit;
+  updateDots();
+  if(entry.length === 4) setTimeout(check, 120);
+}
+
+function del(){
+  if(!entry.length) return;
+  entry = entry.slice(0, -1);
+  updateDots();
+  document.getElementById('err').classList.remove('show');
+}
+
+function updateDots(){
+  for(let i=0; i<4; i++){
+    const dot = document.getElementById(`dot-${i}`);
+    dot.classList.toggle('filled', i < entry.length);
+    dot.classList.remove('error');
+  }
+}
+
+function check(){
+  if(entry === PIN){
+    // Success
+    document.getElementById('success').classList.add('show');
+    setTimeout(() => {
+      window.location.href = 'eagleds-portal.html';
+    }, 800);
+  } else {
+    // Error
+    for(let i=0; i<4; i++){
+      document.getElementById(`dot-${i}`).classList.remove('filled');
+      document.getElementById(`dot-${i}`).classList.add('error');
+    }
+    document.getElementById('err').classList.add('show');
+    setTimeout(() => {
+      entry = '';
+      updateDots();
+    }, 600);
+  }
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if(e.key >= '0' && e.key <= '9') press(e.key);
+  if(e.key === 'Backspace') del();
+});
+</script>
+</body>
+</html>
