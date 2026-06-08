@@ -46,98 +46,6 @@ body {
 }
 
 /* ── LOGIN SCREEN ── */
-#login-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--black);
-  position: relative;
-  overflow: hidden;
-}
-#login-screen::before {
-  content: '';
-  position: absolute;
-  top: -40%;
-  left: -20%;
-  width: 60%;
-  height: 80%;
-  background: radial-gradient(ellipse, rgba(201,168,76,0.04) 0%, transparent 70%);
-  pointer-events: none;
-}
-.login-box {
-  width: 100%;
-  max-width: 400px;
-  padding: 48px 40px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  position: relative;
-  z-index: 1;
-}
-.login-logo {
-  text-align: center;
-  margin-bottom: 36px;
-}
-.login-badge {
-  width: 52px; height: 52px;
-  background: var(--gold);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px; letter-spacing: 0.05em;
-  color: var(--black);
-  margin: 0 auto 12px;
-}
-.login-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px; letter-spacing: 0.15em;
-  color: var(--white);
-}
-.login-sub {
-  font-size: 10px; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--muted);
-  margin-top: 3px;
-}
-.login-field {
-  margin-bottom: 14px;
-}
-.login-label {
-  display: block;
-  font-size: 10px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--muted);
-  margin-bottom: 6px;
-}
-.login-input {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border-light);
-  color: var(--white);
-  padding: 12px 14px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.login-input:focus { border-color: var(--gold); }
-.login-btn {
-  width: 100%;
-  background: var(--gold);
-  color: var(--black);
-  border: none;
-  padding: 14px;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px; letter-spacing: 0.15em;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: opacity 0.2s;
-}
-.login-btn:hover { opacity: 0.88; }
-.login-err {
-  color: var(--red);
-  font-size: 12px;
-  margin-top: 10px;
-  text-align: center;
-  min-height: 18px;
-}
 
 
 
@@ -1000,20 +908,7 @@ body {
 </head>
 <body>
 
-    <div id="login-panel">
-      <div class="login-field">
-        <label class="login-label">Email</label>
-        <input class="login-input" type="email" id="li-email" placeholder="your@email.com" autocomplete="email">
-      </div>
-      <div class="login-field">
-        <label class="login-label">Password</label>
-        <input class="login-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="login-btn" onclick="doLogin()">SIGN IN</button>
-      <div class="login-err" id="li-err"></div>
-    </div>
-  </div>
-</div>
+
 
 <!-- ═══════════════════ MAIN APP ═══════════════════ -->
 <div id="app" class="active" style="display:flex;flex-direction:column;min-height:100vh;">
@@ -2581,8 +2476,6 @@ function getDefaultSequences(){
 }
 
 // Enter key on login
-document.getElementById('li-pass')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('li-email')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 </script>
 </body>
 </html>
