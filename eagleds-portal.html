@@ -1286,8 +1286,15 @@ body {
         <div class="page-title">TAEKWONDO</div>
         <div class="page-sub">Taeguek Poomsae system · Power test · Pre-arranged sequences · Self-defence routines</div>
 
+        <div class="admin-edit-bar" id="tkd-edit-bar">
+          <div class="admin-edit-label">⚡ Edit Mode</div>
+          <div class="admin-edit-sub">Paste Cloudflare Stream URLs to add videos. Saves instantly to Firebase.</div>
+        </div>
+
         <div class="section-title" style="margin-bottom:14px;">Poomsae <span>Pathway</span></div>
-        <div class="poomsae-grid" id="poomsae-grid"></div>
+        <div id="poomsae-container">
+          <div style="color:var(--muted);font-size:13px;">Loading…</div>
+        </div>
 
         <div class="section-divider"></div>
         <div class="section-title">Power <span>Test</span></div>
@@ -1317,27 +1324,8 @@ body {
         </div>
 
         <div class="section-title">Pre-Arranged <span>Sequences</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-          <div style="background:var(--surface2);border:1px solid var(--border);padding:18px 20px;">
-            <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Closed Stance</div>
-            <div style="font-size:12px;color:var(--muted);line-height:2.1;">
-              1) Round Kick Attack, slide back Round Kick Counter x2<br>
-              2) Round Kick Attack, side step Round Kick Counter x 2<br>
-              3) Back Kick Attack, slide back Round Kick Counter x2<br>
-              4) Round Kick Attack, slide back double kick counter x2<br>
-              5) Front Leg Round Kick, Rear Leg (Both Sides, Both Partners)
-            </div>
-          </div>
-          <div style="background:var(--surface2);border:1px solid var(--border);padding:18px 20px;">
-            <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Switch to Open Stance</div>
-            <div style="font-size:12px;color:var(--muted);line-height:2.1;">
-              6) Round Kick Attack, Back Kick Counter x 2<br>
-              7) Round Kick Attack, Step back Round Kick Counter x 2<br>
-              8) Round Kick Attack, Step back Round Kick, Back Kick x 2<br>
-              9) Round Kick Attack, Reverse Step, Spinning Round Kick x 2<br>
-              10) Front Leg Side Kick Attack, Hip bump Spin Hook Counter x2
-            </div>
-          </div>
+        <div id="prearranged-container">
+          <div style="color:var(--muted);font-size:13px;">Loading…</div>
         </div>
       </div>
 
@@ -1840,29 +1828,57 @@ function renderSequences(){
 function renderChain(key, s){
   const chain = normaliseFlatChain(s);
   if(!chain.length) return ADMIN_MODE
-    ? renderInsertBtn(key, 0) + '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No moves yet — add the first one above.</div>'
+    ? renderInsertBtn(key, 0) + '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No moves yet — add the first one.</div>'
     : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Flow not yet constructed.</div>';
+
+  // Group consecutive same-actor moves into visual lines
+  // Each group: { actor, indices: [i, i+1, ...] }
+  const groups = [];
+  chain.forEach((move, i) => {
+    const last = groups[groups.length - 1];
+    if(last && last.actor === move.actor){
+      last.indices.push(i);
+    } else {
+      groups.push({ actor: move.actor, indices: [i] });
+    }
+  });
 
   let html = '';
   if(ADMIN_MODE) html += renderInsertBtn(key, 0);
 
-  chain.forEach((move, i) => {
-    const actorClass = move.actor==='A' ? 'actor-a' : 'actor-b';
-    const pillId = `pill-${key}-${i}`;
-    const bdId = `bd-${key}-${i}`;
+  groups.forEach((group, gi) => {
+    const isA = group.actor === 'A';
+    const actorColor = isA ? '#5b9bd5' : '#e07060';
+    const actorBorder = isA ? 'rgba(91,155,213,0.15)' : 'rgba(224,112,96,0.15)';
 
-    html += `<div class="chain-item" id="chainitem-${key}-${i}">
+    // Build pills for this group
+    const pills = group.indices.map((i, pos) => {
+      const move = chain[i];
+      const pillId = `pill-${key}-${i}`;
+      const editControls = ADMIN_MODE
+        ? `<button class="chain-btn" onclick="event.stopPropagation();editMoveInline('${key}',${i})" title="Edit">✎</button>
+           <button class="chain-btn danger" onclick="event.stopPropagation();removeMove('${key}',${i})" title="Remove">✕</button>`
+        : '';
+      const arrow = pos < group.indices.length - 1 ? '<span class="move-arrow">→</span>' : '';
+      return `<span class="move-pill" id="${pillId}" onclick="toggleBreakdown('${key}',${i})">${move.name||'Unnamed'}</span>${editControls}${arrow}`;
+    }).join('');
+
+    // Breakdown panels for each move in this group (rendered below the line)
+    const breakdowns = group.indices.map(i =>
+      `<div class="move-breakdown" id="bd-${key}-${i}"></div>`
+    ).join('');
+
+    html += `<div class="chain-group" style="border-left:2px solid ${actorColor};padding-left:10px;margin-bottom:6px;background:${actorBorder};padding:8px 10px 8px 12px;">
       <div class="chain-row">
-        <span class="${actorClass}" style="font-size:11px;font-weight:700;width:18px;flex-shrink:0;">${move.actor}:</span>
-        <span class="move-pill" id="${pillId}" onclick="toggleBreakdown('${key}',${i})">${move.name||'Unnamed'}</span>
-        ${ADMIN_MODE ? `
-          <button class="chain-btn" onclick="editMoveInline('${key}',${i})" title="Edit">✎</button>
-          <button class="chain-btn danger" onclick="removeMove('${key}',${i})" title="Remove">✕</button>
-        ` : ''}
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.1em;color:${actorColor};flex-shrink:0;width:22px;">${group.actor}</span>
+        <div class="flow-moves">${pills}</div>
       </div>
-      <div class="move-breakdown" id="${bdId}"></div>
-      ${ADMIN_MODE ? renderInsertBtn(key, i+1) : ''}
+      ${breakdowns}
     </div>`;
+
+    // Insert button after this group (between groups, and after the last)
+    const insertAt = group.indices[group.indices.length - 1] + 1;
+    if(ADMIN_MODE) html += renderInsertBtn(key, insertAt);
   });
 
   return html;
@@ -1884,16 +1900,19 @@ function renderInsertBtn(key, insertAt){
 }
 
 function showInsertForm(key, insertAt){
-  document.getElementById(`insertform-${key}-${insertAt}`).style.display='flex';
-  document.getElementById(`insertform-${key}-${insertAt}`).style.alignItems='center';
-  document.getElementById(`insertform-${key}-${insertAt}`).style.gap='6px';
-  document.getElementById(`insertform-${key}-${insertAt}`).style.flexWrap='wrap';
-  document.getElementById(`insertform-${key}-${insertAt}`).style.marginTop='6px';
+  const form = document.getElementById(`insertform-${key}-${insertAt}`);
+  if(!form) return;
+  form.style.display='flex';
+  form.style.alignItems='center';
+  form.style.gap='6px';
+  form.style.flexWrap='wrap';
+  form.style.marginTop='6px';
   document.getElementById(`ins-name-${key}-${insertAt}`)?.focus();
-  // Default actor to same as move above if exists
+  // Default actor: opposite of move above if exists
   const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
   if(insertAt > 0 && chain[insertAt-1]){
-    document.getElementById(`ins-actor-${key}-${insertAt}`).value = chain[insertAt-1].actor;
+    const prevActor = chain[insertAt-1].actor;
+    document.getElementById(`ins-actor-${key}-${insertAt}`).value = prevActor === 'A' ? 'B' : 'A';
   }
 }
 
@@ -2069,10 +2088,14 @@ function toggleAdminMode(){
   ADMIN_MODE = !ADMIN_MODE;
   const btn = document.getElementById('admin-toggle-btn');
   const bar = document.getElementById('seq-edit-bar');
+  const tkdBar = document.getElementById('tkd-edit-bar');
   btn.textContent = ADMIN_MODE ? 'EDIT MODE ON' : 'EDIT MODE OFF';
   btn.classList.toggle('active', ADMIN_MODE);
   bar?.classList.toggle('show', ADMIN_MODE);
+  tkdBar?.classList.toggle('show', ADMIN_MODE);
   renderSequences();
+  renderPoomsae();
+  renderPrearranged();
   toast(ADMIN_MODE ? 'Edit mode enabled' : 'Edit mode off');
 }
 
@@ -2165,29 +2188,131 @@ function toggleWeek(num){
 }
 
 // ═══════════════════════════════════════════
-// TAEKWONDO POOMSAE
+// TAEKWONDO — FIREBASE DRIVEN
 // ═══════════════════════════════════════════
-function buildPoomsae(){
-  const poomsae = [
-    {num:1,name:'Taeguek 1',belt:'Yellow Belt',color:'#f0c040',lock:'yellow'},
-    {num:2,name:'Taeguek 2',belt:'Green Stripe',color:'#2e8b57',lock:'green_stripe'},
-    {num:3,name:'Taeguek 3',belt:'Green Belt',color:'#2e8b57',lock:'green'},
-    {num:4,name:'Taeguek 4',belt:'Blue Stripe',color:'#2060a0',lock:'blue_stripe'},
-    {num:5,name:'Taeguek 5',belt:'Blue Belt',color:'#2060a0',lock:'blue'},
-    {num:6,name:'Taeguek 6',belt:'Red Stripe',color:'#b02020',lock:'blue'},
-    {num:7,name:'Taeguek 7',belt:'Red Belt',color:'#b02020',lock:'blue'},
-    {num:8,name:'Taeguek 8',belt:'Black Tab',color:'#444',lock:'blue'}
-  ];
-  const grid = document.getElementById('poomsae-grid');
-  if(!grid) return;
-  grid.innerHTML = poomsae.map(p => {
+const TKD_POOMSAE = [
+  {key:'taeguek_1', num:1, name:'Taeguek 1', belt:'Yellow Belt', color:'#f0c040', lock:'yellow'},
+  {key:'taeguek_2', num:2, name:'Taeguek 2', belt:'Green Stripe', color:'#2e8b57', lock:'green_stripe'},
+  {key:'taeguek_3', num:3, name:'Taeguek 3', belt:'Green Belt',  color:'#2e8b57', lock:'green'},
+  {key:'taeguek_4', num:4, name:'Taeguek 4', belt:'Blue Stripe', color:'#2060a0', lock:'blue_stripe'},
+  {key:'taeguek_5', num:5, name:'Taeguek 5', belt:'Blue Belt',   color:'#2060a0', lock:'blue'},
+  {key:'taeguek_6', num:6, name:'Taeguek 6', belt:'Red Stripe',  color:'#b02020', lock:'blue'},
+  {key:'taeguek_7', num:7, name:'Taeguek 7', belt:'Red Belt',    color:'#b02020', lock:'blue'},
+  {key:'taeguek_8', num:8, name:'Taeguek 8', belt:'Black Tab',   color:'#888',    lock:'blue'}
+];
+
+const TKD_PREARRANGED = [
+  {key:'pa_1', num:1, stance:'Closed Stance', desc:'Round Kick Attack, slide back Round Kick Counter x2'},
+  {key:'pa_2', num:2, stance:'Closed Stance', desc:'Round Kick Attack, side step Round Kick Counter x 2'},
+  {key:'pa_3', num:3, stance:'Closed Stance', desc:'Back Kick Attack, slide back Round Kick Counter x2'},
+  {key:'pa_4', num:4, stance:'Closed Stance', desc:'Round Kick Attack, slide back double kick counter x2'},
+  {key:'pa_5', num:5, stance:'Closed Stance', desc:'Front Leg Round Kick, Rear Leg (Both Sides, Both Partners)'},
+  {key:'pa_6', num:6, stance:'Open Stance',   desc:'Round Kick Attack, Back Kick Counter x 2'},
+  {key:'pa_7', num:7, stance:'Open Stance',   desc:'Round Kick Attack, Step back Round Kick Counter x 2'},
+  {key:'pa_8', num:8, stance:'Open Stance',   desc:'Round Kick Attack, Step back Round Kick, Back Kick x 2'},
+  {key:'pa_9', num:9, stance:'Open Stance',   desc:'Round Kick Attack, Reverse Step, Spinning Round Kick x 2'},
+  {key:'pa_10',num:10,stance:'Open Stance',   desc:'Front Leg Side Kick Attack, Hip bump Spin Hook Counter x2'}
+];
+
+let TKD_DATA = {};
+
+async function buildPoomsae(){
+  // Load video data from Firebase
+  try {
+    const snap = await db.ref('portal_taekwondo').once('value');
+    TKD_DATA = snap.val() || {};
+  } catch(e){ TKD_DATA = {}; }
+
+  renderPoomsae();
+  renderPrearranged();
+
+  // Show edit bar if admin mode
+  if(ADMIN_MODE) document.getElementById('tkd-edit-bar')?.classList.add('show');
+}
+
+function renderPoomsae(){
+  const container = document.getElementById('poomsae-container');
+  if(!container) return;
+
+  container.innerHTML = TKD_POOMSAE.map(p => {
     const locked = USER_ROLE==='student' && beltIndex(USER_BELT) < beltIndex(p.lock);
-    return `<div class="poomsae-card${locked?' locked':''}">
-      <div class="poomsae-num">Taeguek ${p.num}</div>
-      <div class="poomsae-name" style="color:${p.color}">${p.name}</div>
-      <div class="poomsae-belt" style="color:${p.color}">${p.belt}</div>
+    const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || '';
+    const blockId = `poomsae-block-${p.key}`;
+
+    return `<div class="sequence-block${locked?' locked':''}" id="${blockId}" style="margin-bottom:8px;">
+      <div class="sequence-header" onclick="${locked?'showLockedMsg()':`toggleTkdBlock('${blockId}')`}">
+        <div class="sequence-num" style="color:${p.color};width:auto;margin-right:8px;">T${p.num}</div>
+        <div class="sequence-title">${p.name}</div>
+        <span style="font-size:10px;letter-spacing:0.12em;color:${p.color};margin-right:8px;">${p.belt}</span>
+        ${locked ? '<span class="lock-icon">🔒</span>' : '<div class="chevron">▼</div>'}
+      </div>
+      ${!locked ? `<div class="sequence-body" id="body-${blockId}">
+        ${renderTkdVideoSlot('poomsae', p.key, videoUrl)}
+        ${ADMIN_MODE ? renderTkdVideoEdit('poomsae', p.key, videoUrl) : ''}
+      </div>` : ''}
     </div>`;
   }).join('');
+}
+
+function renderPrearranged(){
+  const container = document.getElementById('prearranged-container');
+  if(!container) return;
+
+  let currentStance = '';
+  container.innerHTML = TKD_PREARRANGED.map(pa => {
+    const videoUrl = TKD_DATA.prearranged?.[pa.key]?.video || '';
+    const blockId = `pa-block-${pa.key}`;
+    let stanceHeader = '';
+    if(pa.stance !== currentStance){
+      currentStance = pa.stance;
+      stanceHeader = `<div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:16px 0 8px;padding-left:2px;">${pa.stance}</div>`;
+    }
+
+    return `${stanceHeader}<div class="sequence-block" id="${blockId}" style="margin-bottom:6px;">
+      <div class="sequence-header" onclick="toggleTkdBlock('${blockId}')">
+        <div class="sequence-num" style="width:auto;margin-right:8px;">PA ${pa.num}</div>
+        <div class="sequence-title">${pa.desc}</div>
+        <div class="chevron">▼</div>
+      </div>
+      <div class="sequence-body" id="body-${blockId}">
+        ${renderTkdVideoSlot('prearranged', pa.key, videoUrl)}
+        ${ADMIN_MODE ? renderTkdVideoEdit('prearranged', pa.key, videoUrl) : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTkdVideoSlot(section, key, url){
+  if(url) return `<div class="video-slot" style="margin-top:12px;"><iframe src="${getEmbedUrl(url)}" allowfullscreen></iframe></div>`;
+  return `<div class="video-slot" style="margin-top:12px;">
+    <div class="video-placeholder">
+      <div class="video-placeholder-icon">▶</div>
+      <div class="video-placeholder-text">Video coming</div>
+    </div>
+  </div>`;
+}
+
+function renderTkdVideoEdit(section, key, url){
+  return `<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <input class="edit-input" style="flex:1;min-width:200px;margin:0;" id="tkd-url-${section}-${key}" value="${url}" placeholder="Cloudflare Stream URL…">
+    <button class="edit-btn save" onclick="saveTkdVideo('${section}','${key}')">Save Video</button>
+  </div>`;
+}
+
+async function saveTkdVideo(section, key){
+  const url = document.getElementById(`tkd-url-${section}-${key}`)?.value.trim()||'';
+  if(!TKD_DATA[section]) TKD_DATA[section] = {};
+  if(!TKD_DATA[section][key]) TKD_DATA[section][key] = {};
+  TKD_DATA[section][key].video = url;
+  await db.ref(`portal_taekwondo/${section}/${key}/video`).set(url);
+  toast('Video saved ✓');
+  renderPoomsae();
+  renderPrearranged();
+}
+
+function toggleTkdBlock(blockId){
+  const block = document.getElementById(blockId);
+  block?.classList.toggle('open');
 }
 
 // ═══════════════════════════════════════════
