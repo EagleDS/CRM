@@ -108,6 +108,48 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border-light); }
+
+/* ── STEP BREAKDOWN ── */
+.step-item {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  padding: 12px 14px;
+}
+.step-num-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: 0.08em;
+  color: var(--gold); margin-bottom: 5px;
+}
+.step-tech { list-style: none; margin-bottom: 8px; }
+.step-tech li {
+  font-size: 12px; color: var(--muted);
+  padding: 3px 0 3px 12px;
+  position: relative; line-height: 1.5;
+}
+.step-tech li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--gold-dim); font-size: 10px;
+}
+.step-exam {
+  background: rgba(201,168,76,0.05);
+  border: 1px solid var(--gold-dim);
+  padding: 8px 12px; margin-top: 6px;
+}
+.step-exam-label {
+  font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 4px;
+}
+.step-exam ul { list-style: none; }
+.step-exam ul li {
+  font-size: 12px; color: var(--white);
+  padding: 2px 0 2px 12px; position: relative;
+}
+.step-exam ul li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--gold-dim); font-size: 10px;
+}
 </style>
 </head>
 <body>
@@ -511,24 +553,19 @@ function renderPoomsae(){
   const container = document.getElementById('poomsae-container');
   if(!container) return;
 
-  // Store steps globally so onclick can reference by key/index
-  window.TKD_STEPS_CACHE = {};
-  TKD_POOMSAE.forEach(p => {
-    window.TKD_STEPS_CACHE[p.key] = TKD_DATA.poomsae?.[p.key]?.steps || [];
-  });
-
   container.innerHTML = TKD_POOMSAE.map(p => {
     const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || '';
     const steps = window.TKD_STEPS_CACHE[p.key];
     const blockId = `poomsae-${p.key}`;
     const stepsHtml = steps.length
       ? steps.map((step,si) => {
-          const pillId = `tkd-pill-${p.key}-${si}`;
-          const bdId = `tkd-bd-${p.key}-${si}`;
-          return `<div style="display:flex;align-items:flex-start;gap:6px;padding:3px 0;flex-wrap:wrap;">
-            <span style="font-size:12px;color:var(--muted2);flex-shrink:0;min-width:18px;">${si+1}</span>
-            <span class="move-pill" id="${pillId}" onclick="toggleTkdBreakdown('${p.key}',${si})">${step.name||`Step ${si+1}`}</span>
-          </div><div class="move-breakdown" id="${bdId}"></div>`;
+          const tech = (step.technical||[]).map(t=>`<li>${t}</li>`).join('');
+          const exam = (step.examiner||[]).map(e=>`<li>${e}</li>`).join('');
+          return `<div class="step-item">
+            <div class="step-num-label">${step.name||`Step ${si+1}`}</div>
+            ${tech ? `<ul class="step-tech">${tech}</ul>` : ''}
+            ${exam ? `<div class="step-exam"><div class="step-exam-label">Examiner looks for</div><ul>${exam}</ul></div>` : ''}
+          </div>`;
         }).join('')
       : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Steps coming soon.</div>';
     return `<div class="poomsae-block" id="${blockId}">
@@ -548,31 +585,6 @@ function renderPoomsae(){
     </div>`;
   }).join('');
 }
-function toggleTkdBreakdown(pKey, si){
-  const steps = window.TKD_STEPS_CACHE?.[pKey] || [];
-  const step = steps[si];
-  if(!step) return;
-  const bdId=`tkd-bd-${pKey}-${si}`, pillId=`tkd-pill-${pKey}-${si}`;
-  const bdEl=document.getElementById(bdId);
-  if(!bdEl) return;
-  document.querySelectorAll('.move-breakdown').forEach(el=>{if(el.id!==bdId){el.classList.remove('active');el.innerHTML='';}});
-  document.querySelectorAll('.move-pill').forEach(el=>el.classList.remove('active'));
-  if(bdEl.classList.contains('active')){bdEl.classList.remove('active');bdEl.innerHTML='';return;}
-  document.getElementById(pillId)?.classList.add('active');
-  const tech=(step.technical||[]).map(p=>`<li>${p}</li>`).join('');
-  const exam=(step.examiner||[]).map(p=>`<li>${p}</li>`).join('');
-  bdEl.innerHTML=`
-    <div class="breakdown-header">
-      <div class="breakdown-title">${step.name||`Step ${si+1}`}</div>
-      <div class="breakdown-close" onclick="document.getElementById('${bdId}').classList.remove('active');document.getElementById('${bdId}').innerHTML='';document.getElementById('${pillId}')?.classList.remove('active');">✕</div>
-    </div>
-    ${tech?`<div class="breakdown-section"><div class="breakdown-section-label">Technique</div><ul class="breakdown-points">${tech}</ul></div>`:''}
-    ${exam?`<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${exam}</ul></div>`:''}
-    ${!tech&&!exam?'<div style="color:var(--muted2);font-size:12px;font-style:italic;">Breakdown coming soon.</div>':''}
-  `;
-  bdEl.classList.add('active');
-}
-
 function renderPrearranged(){
   const container = document.getElementById('prearranged-container');
   if(!container) return;
