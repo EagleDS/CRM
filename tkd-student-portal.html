@@ -495,14 +495,14 @@ function getDefaultPoomsaeSteps(num){
 
 
 const TKD_POOMSAE = [
-  {key:'taeguek_1',num:1,name:'Taeguek 1 — Il Jang',belt:'Yellow Belt',color:'#f0c040',meaning:'Keon — Heaven. The beginning of all things.',steps:getDefaultPoomsaeSteps(1)},
-  {key:'taeguek_2',num:2,name:'Taeguek 2 — I Jang',belt:'Green Stripe',color:'#2e8b57',meaning:'Tae — Lake. Inner firmness, outer softness.',steps:getDefaultPoomsaeSteps(2)},
-  {key:'taeguek_3',num:3,name:'Taeguek 3 — Sam Jang',belt:'Green Belt',color:'#2e8b57',meaning:'Ree — Fire. Crackling energy, bursts of power.',steps:getDefaultPoomsaeSteps(3)},
-  {key:'taeguek_4',num:4,name:'Taeguek 4 — Sa Jang',belt:'Blue Stripe',color:'#2060a0',meaning:'Jin — Thunder. Great power and dignity.',steps:getDefaultPoomsaeSteps(4)},
-  {key:'taeguek_5',num:5,name:'Taeguek 5 — Oh Jang',belt:'Blue Belt',color:'#2060a0',meaning:'Seon — Wind. Powerful and gentle simultaneously.',steps:getDefaultPoomsaeSteps(5)},
-  {key:'taeguek_6',num:6,name:'Taeguek 6 — Yook Jang',belt:'Red Stripe',color:'#b02020',meaning:'Kam — Water. Flowing, persistent, uninterrupted.',steps:getDefaultPoomsaeSteps(6)},
-  {key:'taeguek_7',num:7,name:'Taeguek 7 — Chil Jang',belt:'Red Belt',color:'#b02020',meaning:'Gan — Mountain. Unyielding and immovable.',steps:getDefaultPoomsaeSteps(7)},
-  {key:'taeguek_8',num:8,name:'Taeguek 8 — Pal Jang',belt:'Black Tab',color:'#888',meaning:'Gon — Earth. Foundation of all things.',steps:getDefaultPoomsaeSteps(8)}
+  {key:'taeguek_1',num:1,name:'Taeguek 1 — Il Jang',belt:'Yellow Belt',color:'#f0c040',meaning:'Keon — Heaven. The beginning of all things.'},
+  {key:'taeguek_2',num:2,name:'Taeguek 2 — I Jang',belt:'Green Stripe',color:'#2e8b57',meaning:'Tae — Lake. Inner firmness, outer softness.'},
+  {key:'taeguek_3',num:3,name:'Taeguek 3 — Sam Jang',belt:'Green Belt',color:'#2e8b57',meaning:'Ree — Fire. Crackling energy, bursts of power.'},
+  {key:'taeguek_4',num:4,name:'Taeguek 4 — Sa Jang',belt:'Blue Stripe',color:'#2060a0',meaning:'Jin — Thunder. Great power and dignity.'},
+  {key:'taeguek_5',num:5,name:'Taeguek 5 — Oh Jang',belt:'Blue Belt',color:'#2060a0',meaning:'Seon — Wind. Powerful and gentle simultaneously.'},
+  {key:'taeguek_6',num:6,name:'Taeguek 6 — Yook Jang',belt:'Red Stripe',color:'#b02020',meaning:'Kam — Water. Flowing, persistent, uninterrupted.'},
+  {key:'taeguek_7',num:7,name:'Taeguek 7 — Chil Jang',belt:'Red Belt',color:'#b02020',meaning:'Gan — Mountain. Unyielding and immovable.'},
+  {key:'taeguek_8',num:8,name:'Taeguek 8 — Pal Jang',belt:'Black Tab',color:'#888',meaning:'Gon — Earth. Foundation of all things.'}
 ];
 
 const TKD_PREARRANGED = [
@@ -529,8 +529,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // If Firebase returned nothing, fall back to default steps baked into TKD_POOMSAE
   if(!TKD_DATA.poomsae){
     TKD_DATA.poomsae = {};
-    TKD_POOMSAE.forEach(p => {
-      TKD_DATA.poomsae[p.key] = { steps: p.steps || [], video: '' };
+    TKD_POOMSAE.forEach((p, idx) => {
+      TKD_DATA.poomsae[p.key] = { steps: getDefaultPoomsaeSteps(idx+1), video: '' };
     });
   }
   renderPoomsae();
