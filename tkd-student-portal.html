@@ -268,14 +268,14 @@ if(!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
 const db = firebase.database();
 
 const TKD_POOMSAE = [
-  {key:'taeguek_1',num:1,name:'Taeguek 1',belt:'Yellow Belt',color:'#f0c040'},
-  {key:'taeguek_2',num:2,name:'Taeguek 2',belt:'Green Stripe',color:'#2e8b57'},
-  {key:'taeguek_3',num:3,name:'Taeguek 3',belt:'Green Belt',color:'#2e8b57'},
-  {key:'taeguek_4',num:4,name:'Taeguek 4',belt:'Blue Stripe',color:'#2060a0'},
-  {key:'taeguek_5',num:5,name:'Taeguek 5',belt:'Blue Belt',color:'#2060a0'},
-  {key:'taeguek_6',num:6,name:'Taeguek 6',belt:'Red Stripe',color:'#b02020'},
-  {key:'taeguek_7',num:7,name:'Taeguek 7',belt:'Red Belt',color:'#b02020'},
-  {key:'taeguek_8',num:8,name:'Taeguek 8',belt:'Black Tab',color:'#888'}
+  {key:'taeguek_1',num:1,name:'Taeguek 1 — Il Jang',belt:'Yellow Belt',color:'#f0c040',meaning:'Keon — Heaven. The beginning of all things.'},
+  {key:'taeguek_2',num:2,name:'Taeguek 2 — I Jang',belt:'Green Stripe',color:'#2e8b57',meaning:'Tae — Lake. Inner firmness, outer softness.'},
+  {key:'taeguek_3',num:3,name:'Taeguek 3 — Sam Jang',belt:'Green Belt',color:'#2e8b57',meaning:'Ree — Fire. Crackling energy, bursts of power.'},
+  {key:'taeguek_4',num:4,name:'Taeguek 4 — Sa Jang',belt:'Blue Stripe',color:'#2060a0',meaning:'Jin — Thunder. Great power and dignity.'},
+  {key:'taeguek_5',num:5,name:'Taeguek 5 — Oh Jang',belt:'Blue Belt',color:'#2060a0',meaning:'Seon — Wind. Powerful and gentle simultaneously.'},
+  {key:'taeguek_6',num:6,name:'Taeguek 6 — Yook Jang',belt:'Red Stripe',color:'#b02020',meaning:'Kam — Water. Flowing, persistent, uninterrupted.'},
+  {key:'taeguek_7',num:7,name:'Taeguek 7 — Chil Jang',belt:'Red Belt',color:'#b02020',meaning:'Gan — Mountain. Unyielding and immovable.'},
+  {key:'taeguek_8',num:8,name:'Taeguek 8 — Pal Jang',belt:'Black Tab',color:'#888',meaning:'Gon — Earth. Foundation of all things.'}
 ];
 
 const TKD_PREARRANGED = [
@@ -320,7 +320,18 @@ function renderPoomsae(){
   if(!container) return;
   container.innerHTML = TKD_POOMSAE.map(p => {
     const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || '';
+    const steps = TKD_DATA.poomsae?.[p.key]?.steps || [];
     const blockId = `poomsae-${p.key}`;
+    const stepsHtml = steps.length
+      ? steps.map((step,si) => {
+          const pillId = `tkd-pill-${p.key}-${si}`;
+          const bdId = `tkd-bd-${p.key}-${si}`;
+          return `<div style="display:flex;align-items:flex-start;gap:6px;padding:3px 0;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--muted2);flex-shrink:0;min-width:18px;">${si+1}</span>
+            <span class="move-pill" id="${pillId}" onclick="toggleTkdBreakdown('${p.key}',${si},${JSON.stringify(steps).replace(/\/g,'\\').replace(/"/g,'\"').replace(/'/g,"\'")})">${step.name||`Step ${si+1}`}</span>
+          </div><div class="move-breakdown" id="${bdId}"></div>`;
+        }).join('')
+      : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Steps coming soon.</div>';
     return `<div class="poomsae-block" id="${blockId}">
       <div class="poomsae-header" onclick="toggleBlock('${blockId}')">
         <div class="poomsae-num" style="color:${p.color}">T${p.num}</div>
@@ -329,12 +340,39 @@ function renderPoomsae(){
         <div class="chevron">▼</div>
       </div>
       <div class="poomsae-body">
+        ${p.meaning ? `<div style="font-size:11px;color:var(--muted);font-style:italic;padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:10px;">${p.meaning}</div>` : ''}
+        <div style="padding-top:8px;">${stepsHtml}</div>
         ${videoUrl
-          ?`<div class="video-slot"><iframe src="${getEmbedUrl(videoUrl)}" allowfullscreen></iframe></div>`
-          :`<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
+          ?`<div class="video-slot" style="margin-top:12px;"><iframe src="${getEmbedUrl(videoUrl)}" allowfullscreen></iframe></div>`
+          :`<div class="video-slot" style="margin-top:12px;"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleTkdBreakdown(pKey, si, stepsJson){
+  const steps = typeof stepsJson === 'string' ? JSON.parse(stepsJson) : stepsJson;
+  const step = steps[si];
+  if(!step) return;
+  const bdId=`tkd-bd-${pKey}-${si}`, pillId=`tkd-pill-${pKey}-${si}`;
+  const bdEl=document.getElementById(bdId);
+  if(!bdEl) return;
+  document.querySelectorAll('.move-breakdown').forEach(el=>{if(el.id!==bdId){el.classList.remove('active');el.innerHTML='';}});
+  document.querySelectorAll('.move-pill').forEach(el=>el.classList.remove('active'));
+  if(bdEl.classList.contains('active')){bdEl.classList.remove('active');bdEl.innerHTML='';return;}
+  document.getElementById(pillId)?.classList.add('active');
+  const tech=(step.technical||[]).map(p=>`<li>${p}</li>`).join('');
+  const exam=(step.examiner||[]).map(p=>`<li>${p}</li>`).join('');
+  bdEl.innerHTML=`
+    <div class="breakdown-header">
+      <div class="breakdown-title">${step.name||`Step ${si+1}`}</div>
+      <div class="breakdown-close" onclick="document.getElementById('${bdId}').classList.remove('active');document.getElementById('${bdId}').innerHTML='';document.getElementById('${pillId}')?.classList.remove('active');">✕</div>
+    </div>
+    ${tech?`<div class="breakdown-section"><div class="breakdown-section-label">Technique</div><ul class="breakdown-points">${tech}</ul></div>`:''}
+    ${exam?`<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${exam}</ul></div>`:''}
+    ${!tech&&!exam?'<div style="color:var(--muted2);font-size:12px;font-style:italic;">Breakdown coming soon.</div>':''}
+  `;
+  bdEl.classList.add('active');
 }
 
 function renderPrearranged(){
