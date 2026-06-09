@@ -1032,7 +1032,7 @@ body {
         <div class="section-title">Pathway <span>Overview</span></div>
         <div style="background:var(--surface2);border:1px solid var(--border);padding:20px 24px;">
           <div style="font-size:13px;color:var(--muted);line-height:1.9;">
-            Every student follows the same pathway. Every grading is assessed against the same criteria. Sequences 1–4 take a student to Orange Belt. Sequences 5–8 take a student to Blue Belt. Blue Belt qualifies a coach to teach kids. Black Belt qualifies a coach to take adults — content in development.
+            Every student follows the same pathway. Every grading is assessed against the same criteria. Sequences 1–4 take a student to Orange Belt. Sequences 5–8 take a student to Blue Belt. Blue Belt + coaching course completion qualifies you to teach kids. The coaching course is open to anyone aged 13+ — no belt required to enrol, and completing it fast-tracks you to Blue Belt. Black Belt + coaching course qualifies you to take adults — content in development.
           </div>
           <div style="margin-top:14px;display:flex;gap:24px;flex-wrap:wrap;">
             <div>
@@ -1045,7 +1045,7 @@ body {
             </div>
             <div>
               <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Blue Belt</div>
-              <div style="font-size:13px;color:var(--white);">Qualified to teach kids</div>
+              <div style="font-size:13px;color:var(--white);">Blue Belt + course = teach kids</div>
             </div>
             <div>
               <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Black Belt</div>
@@ -1229,7 +1229,8 @@ body {
             Weeks 15–24: Technical delivery — Boxing, Kickboxing, MMA syllabus teaching<br>
             Weeks 25–32: Sambo &amp; Taekwondo delivery<br>
             Weeks 33–36: Competition coaching — CGS, cornering, athlete preparation<br>
-            Weeks 37–40: Running a gym — systems, communication, grading events
+            Weeks 37–40: Running a gym — systems, communication, grading events<br>
+            <br><strong style="color:var(--white);">Enrolment:</strong> Open to anyone aged 13+. No belt required to start. Completing the course fast-tracks you to Blue Belt. Blue Belt + course completion = qualified to teach kids. Black Belt + course completion = qualified to take adults.
           </div>
         </div>
 
@@ -1466,7 +1467,7 @@ async function buildDashboard(){
     {k:'green_stripe',c:'#2e8b57',n:'Green Stripe',seq:'Seq 1–6'},
     {k:'green',c:'#2e8b57',n:'Green Belt',seq:'Seq 1–7'},
     {k:'blue_stripe',c:'#2060a0',n:'Blue Stripe',seq:'Seq 1–8'},
-    {k:'blue',c:'#2060a0',n:'Blue Belt',seq:'Coach: Kids'}
+    {k:'blue',c:'#2060a0',n:'Blue Belt',seq:'Blue Belt'}
   ];
   strip.innerHTML = belts.map(b => {
     return `<div class="belt-node">
