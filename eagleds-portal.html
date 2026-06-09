@@ -1561,16 +1561,27 @@ auth.onAuthStateChanged(async (user) => {
   if (!user) { showLoginScreen(); return; }
   CURRENT_USER = user;
 
-  const snap = await db.ref(`portal_users/${user.uid}`).once('value');
-  let profile = snap.val();
+  // Force token to be fully attached before any DB operations
+  try { await user.getIdToken(true); } catch(e) { showLoginScreen(); return; }
+
+  let profile = null;
+  try {
+    const snap = await db.ref(`portal_users/${user.uid}`).once('value');
+    profile = snap.val();
+  } catch(e) {
+    // DB read failed — likely rules issue, show error
+    document.getElementById('li-err').textContent = 'Database error. Check Firebase rules.';
+    showLoginScreen(); return;
+  }
 
   if (!profile) {
-    // No portal_users record — check the bootstrap flag
-    const bootstrapSnap = await db.ref('portal_bootstrap/done').once('value');
-    const bootstrapped = bootstrapSnap.val();
+    let bootstrapped = false;
+    try {
+      const bootstrapSnap = await db.ref('portal_bootstrap/done').once('value');
+      bootstrapped = bootstrapSnap.val();
+    } catch(e) {}
 
     if (!bootstrapped) {
-      // First login ever — create admin profile and set bootstrap flag
       profile = {
         name: 'Dafydd Sanders',
         email: user.email,
@@ -1579,18 +1590,24 @@ auth.onAuthStateChanged(async (user) => {
         status: 'active',
         createdAt: new Date().toISOString()
       };
-      await db.ref(`portal_users/${user.uid}`).set(profile);
-      await db.ref('portal_bootstrap').set({ done: true, uid: user.uid, at: new Date().toISOString() });
-      toast('Admin account created — welcome, Dafydd.');
+      try {
+        await db.ref(`portal_users/${user.uid}`).set(profile);
+        await db.ref('portal_bootstrap').set({ done: true, uid: user.uid, at: new Date().toISOString() });
+        toast('Admin account created — welcome, Dafydd.');
+      } catch(e) {
+        document.getElementById('li-err').textContent = 'Could not create profile. Check Firebase rules.';
+        showLoginScreen(); return;
+      }
     } else {
-      // Bootstrap done, admin exists — this is an unknown user
-      await db.ref(`portal_users/${user.uid}`).set({
-        email: user.email,
-        role: 'student',
-        belt: 'white',
-        status: 'pending',
-        registeredAt: new Date().toISOString()
-      });
+      try {
+        await db.ref(`portal_users/${user.uid}`).set({
+          email: user.email,
+          role: 'student',
+          belt: 'white',
+          status: 'pending',
+          registeredAt: new Date().toISOString()
+        });
+      } catch(e) {}
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('pending-screen').classList.add('active');
       return;
