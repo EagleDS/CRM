@@ -309,200 +309,197 @@ const EAGLE_FB_CONFIG = {
 if(!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
 const db = firebase.database();
 
-function getDefaultPoomsaeSteps(num){
-  const forms = {
-    1: [
-      {name:'Step 1', technical:['Turn left — Ap Seogi (Left Walking Stance) facing F','Arae Makki — Low Block with left outer-forearm'], examiner:['Stance width and direction correct','Block chamber and delivery clean']},
-      {name:'Step 2', technical:['Step forward — Ap Seogi (Right Walking Stance) facing F','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Punch aligned to mid-section','Guard hand returns to hip']},
-      {name:'Step 3', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing D','Arae Makki — Low Block with right outer-forearm'], examiner:['Full turn — do not under-rotate','Block executes on landing']},
-      {name:'Step 4', technical:['Step forward — Ap Seogi (Left Walking Stance) facing D','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Punch power generated from hip rotation']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Arae Makki — Low Block with left outer-forearm'], examiner:['Forward stance longer than walking stance','Weight distributed 60/40 front/rear']},
-      {name:'Step 6', technical:['Ap Kubi (Right Forward Stance) — no step','Momtong Jireugi — Middle Punch with right fore-fist','Kihap on this step'], examiner:['Kiai is sharp and from the diaphragm','Stance does not shift — punch only']},
-      {name:'Step 7', technical:['Turn right 90° — Ap Seogi (Right Walking Stance) facing C','An Makki — Inward/Middle Block with left outer-forearm'], examiner:['Block crosses centre line','Elbow finishes at shoulder height']},
-      {name:'Step 8', technical:['Step forward — Ap Seogi (Left Walking Stance) facing C','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Combination flows — no pause between block and punch']},
-      {name:'Step 9', technical:['Turn left 180° — Ap Seogi (Left Walking Stance) facing G','An Makki — Inward/Middle Block with right outer-forearm'], examiner:['Mirror image of Step 7 — same quality required']},
-      {name:'Step 10', technical:['Step forward — Ap Seogi (Right Walking Stance) facing G','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Punch height consistent — middle section']},
-      {name:'Step 11', technical:['Turn right 90° — Ap Kubi (Right Forward Stance) facing A','Arae Makki — Low Block with right outer-forearm'], examiner:['Second forward stance — same depth as Step 5']},
-      {name:'Step 12', technical:['Ap Kubi (Left Forward Stance) — no step','Momtong Jireugi — Middle Punch with left fore-fist','Kihap on this step'], examiner:['Second Kiai — equal power to first']},
-      {name:'Step 13', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing H','Olgul Makki — High Block with left outer-forearm'], examiner:['High block finishes above forehead','Blocking arm at 45° angle']},
-      {name:'Step 14', technical:['Ap Chagi — Front Snap Kick with right foot','Land — Ap Seogi (Right Walking Stance) facing H','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Kick snaps — does not push','Land controlled before punch']},
-      {name:'Step 15', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing B','Olgul Makki — High Block with right outer-forearm'], examiner:['Mirror of Step 13']},
-      {name:'Step 16', technical:['Ap Chagi — Front Snap Kick with left foot','Land — Ap Seogi (Left Walking Stance) facing B','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Mirror of Step 14 — equal height and snap']},
-      {name:'Step 17', technical:['Turn right 90° — Ap Kubi (Left Forward Stance) facing E','Arae Makki — Low Block with left outer-forearm'], examiner:['Third forward stance — return line']},
-      {name:'Step 18', technical:['Step forward — Ap Kubi (Right Forward Stance) facing E','Momtong Jireugi — Middle Punch with right fore-fist','Return to Joon Bi (Ready Stance) after Baro command'], examiner:['Final technique clean','Wait for Baro before returning to ready']}
-    ],
-    2: [
-      {name:'Step 1', technical:['Turn left — Ap Seogi (Left Walking Stance) facing F','Arae Makki — Low Block with left outer-forearm'], examiner:['Movements fluid but firm — Tae quality throughout']},
-      {name:'Step 2', technical:['Step forward — Ap Kubi (Right Forward Stance) facing F','Momtong Jireugi — Middle Punch with right fore-fist','New: Front Stance (Ap Kubi) introduced here'], examiner:['Forward stance longer than walking stance']},
-      {name:'Step 3', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing D','Arae Makki — Low Block with right outer-forearm'], examiner:['Clean 180° turn']},
-      {name:'Step 4', technical:['Step forward — Ap Kubi (Left Forward Stance) facing D','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Mirror of Step 2']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing A','An Makki — Inward Block with right outer-forearm'], examiner:['Double inward blocks — consecutive']},
-      {name:'Step 6', technical:['Step forward — Ap Seogi (Right Walking Stance) facing A','An Makki — Inward Block with left outer-forearm'], examiner:['Both blocks same height — middle section']},
-      {name:'Step 7', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing G','Arae Makki — Low Block with left outer-forearm'], examiner:['Low block crisp — not lazy']},
-      {name:'Step 8', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Kubi (Right Forward Stance) facing G','Olgul Jireugi — High/Head Punch with right fore-fist','New: High Punch introduced here'], examiner:['Kick and high punch combination — no pause','High punch at nose height']},
-      {name:'Step 9', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing C','Arae Makki — Low Block with right outer-forearm'], examiner:['Mirror of Step 7']},
-      {name:'Step 10', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Kubi (Left Forward Stance) facing C','Olgul Jireugi — High Punch with left fore-fist'], examiner:['Mirror of Step 8']},
-      {name:'Step 11', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing A','Olgul Makki — High Block with left outer-forearm'], examiner:['High block — consecutive pair']},
-      {name:'Step 12', technical:['Step forward — Ap Seogi (Right Walking Stance) facing A','Olgul Makki — High Block with right outer-forearm'], examiner:['Even height on both high blocks']},
-      {name:'Step 13', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing B','An Makki — Inward Block with right outer-forearm'], examiner:['Pivot clean — head turns first']},
-      {name:'Step 14', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing H','An Makki — Inward Block with left outer-forearm'], examiner:['Mirror of Step 13']},
-      {name:'Step 15', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing E','Arae Makki — Low Block with left outer-forearm'], examiner:['Return line — three consecutive techniques follow']},
-      {name:'Step 16', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Seogi (Right Walking Stance) facing E','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Kick–land–punch sequence crisp']},
-      {name:'Step 17', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Seogi (Left Walking Stance) facing E','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Flowing triple combination']},
-      {name:'Step 18', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Seogi (Right Walking Stance) facing E','Momtong Jireugi — Middle Punch with right fore-fist','Kihap on this step','Return to Joon Bi after Baro command'], examiner:['Final Kiai strong','Return to starting line']}
-    ],
-    3: [
-      {name:'Step 1a', technical:['Turn left — Ap Seogi (Left Walking Stance) facing F','Ap Chagi — Front Kick with right foot'], examiner:['Front kick snaps — this is a combination step']},
-      {name:'Step 1b', technical:['Land — Ap Seogi (Right Walking Stance) facing F','Momtong Jireugi — Double Punch: left then right fore-fist','New: combination kick + double punch'], examiner:['Double punch delivered with force — not tapped']},
-      {name:'Step 2a', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing D','Ap Chagi — Front Kick with left foot'], examiner:['Mirror of Step 1a']},
-      {name:'Step 2b', technical:['Land — Ap Seogi (Left Walking Stance) facing D','Momtong Jireugi — Double Punch: right then left'], examiner:['Mirror of Step 1b']},
-      {name:'Step 3', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing A','Arae Makki — Low Block with left outer-forearm'], examiner:['Low block — centre line']},
-      {name:'Step 4', technical:['Step forward — Ap Seogi (Right Walking Stance) facing A','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Punch clean']},
-      {name:'Step 5', technical:['Step forward — Ap Seogi (Left Walking Stance) facing A','Sonnal Momtong Makkki — Inward Knifehand Strike to neck height with left hand','New: Knifehand strike (sonnal) introduced'], examiner:['Fingers extended and together','Strike height: neck level','Support hand chambers to hip']},
-      {name:'Step 6', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing G','Arae Makki — Low Block with left outer-forearm'], examiner:['Low block crisp']},
-      {name:'Step 7', technical:['Step forward — Dwit Seogi (Right Back Stance) facing G','Sonnal Olgul Makki — Outward Knifehand Block','New: Back Stance (Dwit Seogi) and Knifehand Block introduced'], examiner:['Back stance: 70% weight on rear foot','Knifehand block — back of hand faces forward']},
-      {name:'Step 8', technical:['Step forward — Ap Seogi (Right Walking Stance) facing G','Momtong Jireugi — Middle Punch with right fore-fist','Kihap on this step'], examiner:['Kiai strong']},
-      {name:'Step 9', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing C','Arae Makki — Low Block with right outer-forearm'], examiner:['Third line — mirror of first line begins']},
-      {name:'Step 10', technical:['Step forward — Ap Seogi (Left Walking Stance) facing C','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Consistent punch height']},
-      {name:'Step 11', technical:['Step forward — Ap Seogi (Right Walking Stance) facing C','Sonnal Momtong Makki — Inward Knifehand Strike with right hand'], examiner:['Mirror of Step 5']},
-      {name:'Step 12', technical:['Turn right 90° — Ap Seogi (Right Walking Stance) facing B','Arae Makki — Low Block with right outer-forearm'], examiner:['90° pivot clean']},
-      {name:'Step 13', technical:['Step forward — Dwit Seogi (Left Back Stance) facing B','Sonnal Olgul Makki — Outward Knifehand Block with left hand'], examiner:['Mirror of Step 7']},
-      {name:'Step 14', technical:['Step forward — Ap Seogi (Left Walking Stance) facing B','Momtong Jireugi — Middle Punch with left fore-fist','Kihap on this step'], examiner:['Final Kiai']},
-      {name:'Step 15', technical:['Turn left 90° — Ap Seogi (Left Walking Stance) facing E','Arae Makki — Low Block with left outer-forearm'], examiner:['Return to finish line']},
-      {name:'Step 16', technical:['Step forward — Ap Seogi (Right Walking Stance) facing E','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Consistent quality to final step']},
-      {name:'Step 17', technical:['Step forward — Ap Seogi (Left Walking Stance) facing E','Sonnal Momtong Makki — Inward Knifehand Strike with left hand'], examiner:['Third knifehand — same quality as first two']},
-      {name:'Step 18', technical:['Return to Joon Bi after Baro command'], examiner:['Finish on original line']}
-    ],
-    4: [
-      {name:'Step 1', technical:['Turn left — Ap Seogi (Left Walking Stance) facing F','Sonnal Momtong Makki — Double Knifehand Outward Block','New: Double Knifehand Block introduced — both hands in knife position'], examiner:['Both hands extended — lead hand blocks, rear hand guards','Intermediate form begins — full-body coordination required']},
-      {name:'Step 2', technical:['Step forward — Ap Kubi (Right Forward Stance) facing F','Pyonson Keut Sewo Chireugi — Vertical Fingertip Thrust (Spearhand Strike)','New: Spearhand strike'], examiner:['Fingers fully extended and together','Strike to solar plexus height']},
-      {name:'Step 3', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing D','Sonnal Momtong Makki — Double Knifehand Outward Block'], examiner:['Mirror of Step 1']},
-      {name:'Step 4', technical:['Step forward — Ap Kubi (Left Forward Stance) facing D','Pyonson Keut Sewo Chireugi — Vertical Fingertip Thrust'], examiner:['Mirror of Step 2']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Sonnal Bitureo Makki — Swallowform Knifehand Strike','New: Swallowform knifehand — circular outward block motion'], examiner:['Circular sweeping motion','Finish with knife edge of both hands']},
-      {name:'Step 6', technical:['Step forward — Ap Kubi (Right Forward Stance) facing A','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Follow-through punch from swallowform']},
-      {name:'Step 7', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing G','Yop Chagi — Side Kick with right foot','New: Side Kick (Yop Chagi) introduced — most powerful linear kick'], examiner:['Hip turns fully for side kick','Foot blade makes contact — not heel','Kick chamber and extension visible']},
-      {name:'Step 8', technical:['Land — Ap Kubi (Right Forward Stance) facing G','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Controlled landing — punch follows immediately']},
-      {name:'Step 9', technical:['Step forward — Ap Kubi (Left Forward Stance) facing G','Momtong Jireugi — Middle Punch with left fore-fist','Kihap on this step'], examiner:['Double punch sequence — both punches powered']},
-      {name:'Step 10', technical:['Turn right 180° — Ap Kubi (Right Forward Stance) facing C','Yop Chagi — Side Kick with left foot'], examiner:['Mirror of Step 7']},
-      {name:'Step 11', technical:['Land — Ap Kubi (Left Forward Stance) facing C','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Mirror of Step 8']},
-      {name:'Step 12', technical:['Step forward — Ap Kubi (Right Forward Stance) facing C','Momtong Jireugi — Middle Punch with right fore-fist','Kihap on this step'], examiner:['Mirror of Step 9']},
-      {name:'Step 13', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Sonnal Momtong Makki — Double Knifehand Outward Block'], examiner:['Return to centre line']},
-      {name:'Step 14a', technical:['Yop Chagi — Side Kick with right foot'], examiner:['Side kick clean before backfist follows']},
-      {name:'Step 14b', technical:['Land — Ap Seogi (Right Walking Stance)','Dungson Ap Chigi — Backfist Strike with right fist','New: Backfist Strike'], examiner:['Backfist snaps — does not push','Wrist snaps on contact']},
-      {name:'Step 15', technical:['Step forward — Ap Kubi (Right Forward Stance) facing A','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Punch follows backfist — continuous attack']},
-      {name:'Step 16', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing B','Sonnal Momtong Makki — Double Knifehand Block'], examiner:[]},
-      {name:'Step 17', technical:['Turn right 180° — Ap Kubi (Right Forward Stance) facing H','Sonnal Momtong Makki — Double Knifehand Block'], examiner:['Mirror of Step 16']},
-      {name:'Step 18', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing E','Arae Makki — Low Block with left outer-forearm'], examiner:['Final line — return direction']},
-      {name:'Step 19', technical:['Yop Chagi — Side Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Side kick + punch combination']},
-      {name:'Step 20', technical:['Step forward — Ap Kubi (Left Forward Stance) facing E','Momtong Jireugi — Middle Punch with left fore-fist','Kihap','Return to Joon Bi after Baro'], examiner:['Final Kiai strong']}
-    ],
-    5: [
-      {name:'Step 1', technical:['Turn left — Dwit Seogi (Left Back Stance) facing F','Arae Makki — Low Block with left outer-forearm'], examiner:['Back stance introduced in this form — 70% weight rear','Seon quality: gentle but unyielding throughout']},
-      {name:'Step 2', technical:['Step forward — Ap Seogi (Right Walking Stance) facing F','Mejumeok Naeryeo Chigi — Hammerfist Strike downward with right fist','New: Hammerfist (Mejumeok)'], examiner:['Hammer fist uses bottom of fist — not knuckles','Downward trajectory to solar plexus level']},
-      {name:'Step 3', technical:['Turn right 180° — Dwit Seogi (Right Back Stance) facing D','Arae Makki — Low Block with right outer-forearm'], examiner:['Mirror of Step 1 — back stance same depth']},
-      {name:'Step 4', technical:['Step forward — Ap Seogi (Left Walking Stance) facing D','Mejumeok Naeryeo Chigi — Hammerfist Strike downward with left fist'], examiner:['Mirror of Step 2']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Bakat Palmok Momtong Makki — Outer Forearm Middle Block'], examiner:['Forearm block — outer edge makes contact']},
-      {name:'Step 6', technical:['Step forward — Ap Kubi (Right Forward Stance) facing A','Dungson Ap Chigi — Backfist Strike with right fist'], examiner:['Backfist snaps at head height']},
-      {name:'Step 7', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing C','Bakat Palmok Momtong Makki — Outer Forearm Middle Block'], examiner:[]},
-      {name:'Step 8', technical:['Step forward — Ap Kubi (Right Forward Stance) facing C','Dungson Ap Chigi — Backfist Strike with right fist'], examiner:['Combination: block → backfist']},
-      {name:'Step 9', technical:['Step forward — Ap Kubi (Left Forward Stance) facing C','Momtong Jireugi — Middle Punch with left fore-fist','Kihap'], examiner:['Kiai on punch — not on backfist']},
-      {name:'Step 10', technical:['Turn right 180° — Ap Seogi (Right Walking Stance) facing G','Palkup Dollyo Chigi — Inward Elbow Strike with right elbow','New: Inward Elbow Strike — supporting hand as target'], examiner:['Left palm is the target — elbow strikes into own palm','Strike at solar plexus height']},
-      {name:'Step 11', technical:['Step forward — Ap Seogi (Left Walking Stance) facing G','Palkup Dollyo Chigi — Inward Elbow Strike with left elbow'], examiner:['Mirror of Step 10 — consecutive elbow strikes']},
-      {name:'Step 12', technical:['Step forward — Ap Seogi (Right Walking Stance) facing G','Momtong Jireugi — Middle Punch with right fore-fist','Kihap'], examiner:['Second Kiai']},
-      {name:'Step 13', technical:['Turn left 90° — Dwit Seogi (Left Back Stance) facing H','Sonnal Momtong Makki — Double Knifehand Outward Block'], examiner:['Back stance — weight check']},
-      {name:'Step 14', technical:['Turn right 180° — Dwit Seogi (Right Back Stance) facing B','Sonnal Momtong Makki — Double Knifehand Outward Block'], examiner:['Mirror of Step 13']},
-      {name:'Step 15', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing E','Yop Chagi — Side Kick with right foot'], examiner:['Side kick full hip rotation']},
-      {name:'Step 16a', technical:['Land — Ap Kubi (Left Forward Stance)','Palkup Pyojeok Chigi — Elbow Target Strike — right elbow strikes into left palm','New: Elbow Target Strike'], examiner:['Twist torso fully — elbow drives through','Left palm presented as target at chest height']},
-      {name:'Step 16b', technical:['Step forward — Ap Kubi (Right Forward Stance) facing E','Momtong Jireugi — Middle Punch with right fore-fist','Kihap'], examiner:['Final technique — full power']},
-      {name:'Step 17', technical:['Return to Joon Bi after Baro command'], examiner:['Finish on starting line']}
-    ],
-    6: [
-      {name:'Step 1', technical:['Turn left — Dwit Seogi (Left Back Stance) facing F','Bakat Palmok Momtong Makki — Outer Forearm Middle Block'], examiner:['Kam quality: fluid like water throughout — persistent attack chains']},
-      {name:'Step 2', technical:['Step forward — Ap Kubi (Right Forward Stance) facing F','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Block–punch combination — fluid']},
-      {name:'Step 3', technical:['Turn right 180° — Dwit Seogi (Right Back Stance) facing D','Bakat Palmok Momtong Makki — Outer Forearm Middle Block'], examiner:['Mirror of Step 1']},
-      {name:'Step 4', technical:['Step forward — Ap Kubi (Left Forward Stance) facing D','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Mirror of Step 2']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Arae Makki — Low Block with left outer-forearm'], examiner:[]},
-      {name:'Step 6', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 7', technical:['Step forward — Ap Kubi (Left Forward Stance)','An Palmok Momtong Makki — Inner Forearm Middle Block with left arm'], examiner:['Inner forearm block — palm faces inward']},
-      {name:'Step 8', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Steps 5–9: persistent attack chain — like water, no interruptions']},
-      {name:'Step 9', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist','Kihap'], examiner:['Kick–punch: uninterrupted']},
-      {name:'Step 10', technical:['Turn right 180° — Ap Kubi (Right Forward Stance) facing C','Arae Makki — Low Block with right outer-forearm'], examiner:[]},
-      {name:'Step 11', technical:['Step forward — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:[]},
-      {name:'Step 12a', technical:['Dollyo Chagi — Roundhouse Kick with left foot'], examiner:['Step 12a to 12b: most complex transition in form — roundhouse kick flows immediately into low block']},
-      {name:'Step 12b', technical:['Land — Ap Seogi (Right Walking Stance)','Arae Makki — Low Block with right outer-forearm'], examiner:['Fluid transition from kick to block — no pause']},
-      {name:'Step 13', technical:['Step forward — Ap Kubi (Left Forward Stance)','An Palmok Momtong Makki — Inner Forearm Middle Block with right arm'], examiner:[]},
-      {name:'Step 14', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 15', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist','Kihap'], examiner:[]},
-      {name:'Step 16', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing H','Bakat Palmok Arae Makki — Outer Forearm Low Block'], examiner:['Low opening block — performed slowly to 8-count','This is the centrepiece of the form']},
-      {name:'Step 17', technical:['Step back — Dwit Seogi (Right Back Stance) facing H','Sonnal Momtong Makki — Knifehand Middle Block','Palm Block — Batang Son Makki','Rearward step into back stance — unique to Yook Jang'], examiner:['Rearward stepping: flowing backward like water returning to source']},
-      {name:'Step 18', technical:['Turn right 180° — Ap Kubi (Right Forward Stance) facing B','Bakat Palmok Arae Makki — Outer Forearm Low Block'], examiner:['Mirror of Step 16 — slow 8-count']},
-      {name:'Step 19', technical:['Step back — Dwit Seogi (Left Back Stance) facing B','Sonnal Momtong Makki + Batang Son Makki'], examiner:['Mirror of Step 17']},
-      {name:'Step 20', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing E','Arae Makki — Low Block with left outer-forearm','Return to Joon Bi — right foot moves to left foot','Note: Yook Jang concludes by moving right foot to left — unique finish'], examiner:['No Kiai at end of this form — unique to Yook Jang and Pal Jang']}
-    ],
-    7: [
-      {name:'Step 1', technical:['Turn left — Beom Seogi (Left Tiger Stance) facing F','Sonnal Arae Makki — Knifehand Low Block','New: Tiger Stance (Beom Seogi) — weight almost entirely on rear foot','Tiger stance reflects mountain motif of Chil Jang'], examiner:['Gan quality: unyielding like a mountain throughout','Tiger stance: 90–100% weight on rear leg','Knifehand low block — knife edge down']},
-      {name:'Step 2', technical:['Step forward — Ap Kubi (Right Forward Stance) facing F','Olgul Jireugi — High Punch with right fore-fist'], examiner:[]},
-      {name:'Step 3', technical:['Turn right 180° — Beom Seogi (Right Tiger Stance) facing D','Sonnal Arae Makki — Knifehand Low Block'], examiner:['Mirror of Step 1']},
-      {name:'Step 4', technical:['Step forward — Ap Kubi (Left Forward Stance) facing D','Olgul Jireugi — High Punch with left fore-fist'], examiner:['Mirror of Step 2']},
-      {name:'Step 5', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Wesanteul Makki — Mountain Block — both arms simultaneously block high and low','New: Mountain Block'], examiner:['Both arms move simultaneously — one blocks high, one blocks low','Block resembles the outline of a mountain']},
-      {name:'Step 6', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 7', technical:['Step forward — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Consecutive double punch — no pause']},
-      {name:'Step 8', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing C','Gawi Makki — Scissor Block — knifehand high block + low block simultaneously'], examiner:['Scissor block: one hand blocks high, one blocks low — simultaneous']},
-      {name:'Step 9', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist','Kihap'], examiner:['Kick–punch clean']},
-      {name:'Step 10', technical:['Turn right 180° — Ap Kubi (Right Forward Stance) facing G','Gawi Makki — Scissor Block'], examiner:['Mirror of Step 8']},
-      {name:'Step 11', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist','Kihap'], examiner:['Mirror of Step 9']},
-      {name:'Step 12', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing A','Arae Makki — Low Block'], examiner:[]},
-      {name:'Step 13', technical:['Step forward — Ap Kubi (Right Forward Stance)','Palkup Dollyo Chigi — Inward Elbow Strike with right elbow — left palm as target'], examiner:['Elbow strike: full rotation into palm target']},
-      {name:'Step 14', technical:['Step forward — Ap Kubi (Left Forward Stance)','Palkup Dollyo Chigi — Inward Elbow Strike with left elbow — right palm as target'], examiner:['Consecutive elbow strikes']},
-      {name:'Step 15', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist','Kihap'], examiner:[]},
-      {name:'Step 16', technical:['Turn left 90° — Beom Seogi (Left Tiger Stance) facing H','Ikeun Sonnal Arae Makki — Low Augmented Knifehand Block — both hands in knifehand, one low, one supporting','New: Low Double Knifehand Block'], examiner:['Supporting arm reinforces blocking arm','Both hands in knifehand position']},
-      {name:'Step 17', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 18', technical:['Turn right 180° — Beom Seogi (Right Tiger Stance) facing B','Ikeun Sonnal Arae Makki — Low Double Knifehand Block'], examiner:['Mirror of Step 16']},
-      {name:'Step 19', technical:['Ap Chagi — Front Kick with left foot','Land — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist'], examiner:['Mirror of Step 17']},
-      {name:'Step 20', technical:['Turn left 90° — Ap Kubi (Left Forward Stance) facing E','Arae Makki — Low Block'], examiner:['Return to finish line']},
-      {name:'Step 21', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist','Kihap','Return to Joon Bi after Baro'], examiner:['Final Kiai']}
-    ],
-    8: [
-      {name:'Step 1', technical:['Ready — step forward into Dwit Seogi (Right Back Stance)','Wesanteul Makki — Augmented Outward Block — left hand augments right forearm outward block','New: Augmented Outward Block','Note: Pal Jang steps to third line first — reverse structure'], examiner:['Gon quality: foundation of earth — most technically demanding form','Augmented block: left fist supports right forearm']},
-      {name:'Step 2', technical:['Slide left foot forward — pivot into Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:['Sliding pivot — fluid']},
-      {name:'Step 3a–b', technical:['Ipdibeon Ap Chagi — Double Jumping Front Kick: jump once, kick twice in the air (right then left)','Land — Ap Kubi (Left Forward Stance)','An Palmok Momtong Makki — Inward Block with left arm','Kihap on the jump kick','New: Double Jumping Front Kick'], examiner:['Both kicks in single jump — not two jumps','Right kick then left kick in the air','Kiai in the air — not on landing']},
-      {name:'Step 4', technical:['Turn left 90° — Ap Kubi (Left Forward Stance)','Arae Makki — Low Block with left outer-forearm'], examiner:[]},
-      {name:'Step 5', technical:['Step forward — Ap Kubi (Right Forward Stance)','Wesanteul Makki — Mountain Block','New: Mountain Block in forward stance'], examiner:['Both arms block simultaneously']},
-      {name:'Step 6', technical:['Turn right 180° — Ap Kubi (Right Forward Stance)','Arae Makki — Low Block with right outer-forearm'], examiner:['Mirror side']},
-      {name:'Step 7', technical:['Step forward — Ap Kubi (Left Forward Stance)','Wesanteul Makki — Mountain Block'], examiner:['Mirror of Step 5']},
-      {name:'Step 8', technical:['Turn left 90° — Ap Kubi (Left Forward Stance)','Sonnal Momtong Makki — Double Knifehand Block'], examiner:[]},
-      {name:'Step 9', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 10', technical:['Step forward — Ap Kubi (Left Forward Stance)','Momtong Jireugi — Middle Punch with left fore-fist','Kihap'], examiner:[]},
-      {name:'Step 11', technical:['Turn right 90° — Beom Seogi (Right Tiger Stance)','Sonnal Arae Makki — Knifehand Low Block — in tiger stance'], examiner:['Tiger stance — weight on rear leg','Knifehand low block — knife edge faces down']},
-      {name:'Step 12', technical:['Turn left 180° — Beom Seogi (Left Tiger Stance)','Sonnal Arae Makki — Knifehand Low Block'], examiner:['Mirror of Step 11']},
-      {name:'Step 13', technical:['Turn right 90° — Ap Kubi (Left Forward Stance)','Arae Makki — Low Block with left outer-forearm'], examiner:[]},
-      {name:'Step 14', technical:['Dollyo Chagi — Roundhouse Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Double Punch: left then right'], examiner:['Roundhouse kick + double punch combination']},
-      {name:'Step 15', technical:['Step forward — Ap Kubi (Left Forward Stance)','Gawi Makki — Scissor Block'], examiner:['Scissor block: simultaneous high and low knifehand']},
-      {name:'Step 16', technical:['Ap Chagi — Front Kick with right foot','Land — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist'], examiner:[]},
-      {name:'Step 17', technical:['Step forward — Ap Kubi (Left Forward Stance)','Wesanteul Makki — Mountain Block'], examiner:[]},
-      {name:'Step 18', technical:['Turn left 90° — Ap Kubi (Left Forward Stance)','An Palmok Momtong Makki — Inner Forearm Middle Block'], examiner:[]},
-      {name:'Step 19a', technical:['Ap Chagi — Front Kick with right foot — kihap'], examiner:['Note: Step 19a–b different from Step 3 — single jump per kick, not double in-air']},
-      {name:'Step 19b', technical:['Ipdibeon Ap Chagi — Jumping Front Kick with left foot — jump off right foot after landing','Land — Ap Kubi (Left Forward Stance)','An Palmok Momtong Makki — Inward Block with left arm'], examiner:['Two separate jump kicks — right then left']},
-      {name:'Step 20', technical:['Turn right 180° — Ap Kubi (Right Forward Stance)','An Palmok Momtong Makki — Inner Forearm Middle Block'], examiner:['Mirror of Step 18']},
-      {name:'Step 21', technical:['Ap Chagi — Front Kick with left foot — kihap'], examiner:[]},
-      {name:'Step 22', technical:['Ipdibeon Ap Chagi — Jumping Front Kick with right foot','Land — Ap Kubi (Right Forward Stance)','An Palmok Momtong Makki — Inward Block with right arm'], examiner:['Mirror of Step 19a–b']},
-      {name:'Step 23', technical:['Turn left 90° — Ap Kubi (Left Forward Stance)','Arae Makki — Low Block'], examiner:['Return to finish line']},
-      {name:'Step 24', technical:['Step forward — Ap Kubi (Right Forward Stance)','Momtong Jireugi — Middle Punch with right fore-fist','Return to Joon Bi after Baro command','Note: No Kiai at end — unique to Yook Jang and Pal Jang'], examiner:['No final Kiai in this form']}
-    ]
-  };
-  return (forms[num]||[]).map(s => ({...s, coaching:[], branches:[]}));
-}
 
+
+const TKD_STEPS = {
+  1:[
+    {n:'Step 1',t:'Turn left — Left Walking Stance (Ap Seogi) facing F. Low Block (Arae Makki) with left outer-forearm.'},
+    {n:'Step 2',t:'Step forward — Right Walking Stance. Middle Punch (Momtong Jireugi) with right fore-fist.'},
+    {n:'Step 3',t:'Turn right 180° — Right Walking Stance facing D. Low Block with right outer-forearm.'},
+    {n:'Step 4',t:'Step forward — Left Walking Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 5',t:'Turn left 90° — Left Forward Stance (Ap Kubi) facing A. Low Block with left outer-forearm.'},
+    {n:'Step 6',t:'Right Forward Stance — no step. Middle Punch with right fore-fist. Kihap.'},
+    {n:'Step 7',t:'Turn right 90° — Right Walking Stance facing C. Inward Block (An Makki) with left outer-forearm.'},
+    {n:'Step 8',t:'Step forward — Left Walking Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 9',t:'Turn left 180° — Left Walking Stance facing G. Inward Block with right outer-forearm.'},
+    {n:'Step 10',t:'Step forward — Right Walking Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 11',t:'Turn right 90° — Right Forward Stance facing A. Low Block with right outer-forearm.'},
+    {n:'Step 12',t:'Left Forward Stance — no step. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 13',t:'Turn left 90° — Left Walking Stance facing H. High Block (Olgul Makki) with left outer-forearm.'},
+    {n:'Step 14',t:'Front Kick (Ap Chagi) with right foot. Land — Right Walking Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 15',t:'Turn right 180° — Right Walking Stance facing B. High Block with right outer-forearm.'},
+    {n:'Step 16',t:'Front Kick with left foot. Land — Left Walking Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 17',t:'Turn right 90° — Left Forward Stance facing E. Low Block with left outer-forearm.'},
+    {n:'Step 18',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist. Return to Joon Bi.'}
+  ],
+  2:[
+    {n:'Step 1',t:'Turn left — Left Walking Stance facing F. Low Block with left outer-forearm.'},
+    {n:'Step 2',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist. (New: Front Stance)'},
+    {n:'Step 3',t:'Turn right 180° — Right Walking Stance facing D. Low Block with right outer-forearm.'},
+    {n:'Step 4',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 5',t:'Turn left 90° — Left Walking Stance facing A. Inward Block with right outer-forearm.'},
+    {n:'Step 6',t:'Step forward — Right Walking Stance. Inward Block with left outer-forearm. (Double inward blocks)'},
+    {n:'Step 7',t:'Turn left 90° — Left Walking Stance facing G. Low Block with left outer-forearm.'},
+    {n:'Step 8',t:'Front Kick with right foot. Land — Right Forward Stance. High Punch (Olgul Jireugi) with right fore-fist. (New: High Punch)'},
+    {n:'Step 9',t:'Turn right 180° — Right Walking Stance facing C. Low Block with right outer-forearm.'},
+    {n:'Step 10',t:'Front Kick with left foot. Land — Left Forward Stance. High Punch with left fore-fist.'},
+    {n:'Step 11',t:'Turn left 90° — Left Walking Stance facing A. High Block with left outer-forearm.'},
+    {n:'Step 12',t:'Step forward — Right Walking Stance. High Block with right outer-forearm.'},
+    {n:'Step 13',t:'Turn left 90° — Left Walking Stance facing B. Inward Block with right outer-forearm.'},
+    {n:'Step 14',t:'Turn right 180° — Right Walking Stance facing H. Inward Block with left outer-forearm.'},
+    {n:'Step 15',t:'Turn left 90° — Left Walking Stance facing E. Low Block with left outer-forearm.'},
+    {n:'Step 16',t:'Front Kick with right foot. Land — Right Walking Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 17',t:'Front Kick with left foot. Land — Left Walking Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 18',t:'Front Kick with right foot. Land — Right Walking Stance. Middle Punch with right fore-fist. Kihap. Return to Joon Bi.'}
+  ],
+  3:[
+    {n:'Step 1a',t:'Turn left — Left Walking Stance facing F. Front Kick (Ap Chagi) with right foot.'},
+    {n:'Step 1b',t:'Land — Right Walking Stance. Double Punch (left then right fore-fist). (New: kick + double punch combination)'},
+    {n:'Step 2a',t:'Turn right 180° — Right Walking Stance facing D. Front Kick with left foot.'},
+    {n:'Step 2b',t:'Land — Left Walking Stance. Double Punch (right then left).'},
+    {n:'Step 3',t:'Turn left 90° — Left Walking Stance facing A. Low Block with left outer-forearm.'},
+    {n:'Step 4',t:'Step forward — Right Walking Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 5',t:'Step forward — Left Walking Stance. Inward Knifehand Strike (Sonnal Momtong Makki) to neck height with left hand. (New: Knifehand)'},
+    {n:'Step 6',t:'Turn left 90° — Left Walking Stance facing G. Low Block with left outer-forearm.'},
+    {n:'Step 7',t:'Step forward — Right Back Stance (Dwit Seogi). Outward Knifehand Block (Sonnal Olgul Makki). (New: Back Stance)'},
+    {n:'Step 8',t:'Step forward — Right Walking Stance. Middle Punch with right fore-fist. Kihap.'},
+    {n:'Step 9',t:'Turn right 180° — Right Walking Stance facing C. Low Block with right outer-forearm.'},
+    {n:'Step 10',t:'Step forward — Left Walking Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 11',t:'Step forward — Right Walking Stance. Inward Knifehand Strike with right hand.'},
+    {n:'Step 12',t:'Turn right 90° — Right Walking Stance facing B. Low Block with right outer-forearm.'},
+    {n:'Step 13',t:'Step forward — Left Back Stance facing B. Outward Knifehand Block with left hand.'},
+    {n:'Step 14',t:'Step forward — Left Walking Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 15',t:'Turn left 90° — Left Walking Stance facing E. Low Block with left outer-forearm.'},
+    {n:'Step 16',t:'Step forward — Right Walking Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 17',t:'Step forward — Left Walking Stance. Inward Knifehand Strike with left hand.'},
+    {n:'Step 18',t:'Return to Joon Bi after Baro command.'}
+  ],
+  4:[
+    {n:'Step 1',t:'Turn left — Left Walking Stance facing F. Double Knifehand Outward Block (Sonnal Momtong Makki). (New: Double Knifehand Block)'},
+    {n:'Step 2',t:'Step forward — Right Forward Stance. Vertical Fingertip Thrust / Spearhand Strike (Pyonson Keut Sewo Chireugi). (New: Spearhand)'},
+    {n:'Step 3',t:'Turn right 180° — Right Walking Stance facing D. Double Knifehand Outward Block.'},
+    {n:'Step 4',t:'Step forward — Left Forward Stance. Vertical Fingertip Thrust.'},
+    {n:'Step 5',t:'Turn left 90° — Left Forward Stance facing A. Swallowform Knifehand Strike (Sonnal Bitureo Makki). (New: Swallowform)'},
+    {n:'Step 6',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 7',t:'Turn left 90° — Left Forward Stance facing G. Side Kick (Yop Chagi) with right foot. (New: Side Kick)'},
+    {n:'Step 8',t:'Land — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 9',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 10',t:'Turn right 180° — Right Forward Stance facing C. Side Kick with left foot.'},
+    {n:'Step 11',t:'Land — Left Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 12',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist. Kihap.'},
+    {n:'Step 13',t:'Turn left 90° — Left Forward Stance facing A. Double Knifehand Outward Block.'},
+    {n:'Step 14a',t:'Side Kick with right foot.'},
+    {n:'Step 14b',t:'Land — Right Walking Stance. Backfist Strike (Dungson Ap Chigi) with right fist. (New: Backfist)'},
+    {n:'Step 15',t:'Step forward — Right Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 16',t:'Turn left 90° — Left Forward Stance facing B. Double Knifehand Block.'},
+    {n:'Step 17',t:'Turn right 180° — Right Forward Stance facing H. Double Knifehand Block.'},
+    {n:'Step 18',t:'Turn left 90° — Left Forward Stance facing E. Low Block with left outer-forearm.'},
+    {n:'Step 19',t:'Side Kick with right foot. Land — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 20',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist. Kihap. Return to Joon Bi.'}
+  ],
+  5:[
+    {n:'Step 1',t:'Turn left — Left Back Stance (Dwit Seogi) facing F. Low Block with left outer-forearm.'},
+    {n:'Step 2',t:'Step forward — Right Walking Stance. Hammerfist Strike downward (Mejumeok Naeryeo Chigi) with right fist. (New: Hammerfist)'},
+    {n:'Step 3',t:'Turn right 180° — Right Back Stance facing D. Low Block with right outer-forearm.'},
+    {n:'Step 4',t:'Step forward — Left Walking Stance. Hammerfist Strike downward with left fist.'},
+    {n:'Step 5',t:'Turn left 90° — Left Forward Stance facing A. Outer Forearm Middle Block (Bakat Palmok Momtong Makki).'},
+    {n:'Step 6',t:'Step forward — Right Forward Stance. Backfist Strike (Dungson Ap Chigi) with right fist.'},
+    {n:'Step 7',t:'Turn left 90° — Left Forward Stance facing C. Outer Forearm Middle Block.'},
+    {n:'Step 8',t:'Step forward — Right Forward Stance. Backfist Strike with right fist.'},
+    {n:'Step 9',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 10',t:'Turn right 180° — Right Walking Stance facing G. Inward Elbow Strike (Palkup Dollyo Chigi) — right elbow into left palm. (New: Elbow Strike)'},
+    {n:'Step 11',t:'Step forward — Left Walking Stance. Inward Elbow Strike — left elbow into right palm.'},
+    {n:'Step 12',t:'Step forward — Right Walking Stance. Middle Punch with right fore-fist. Kihap.'},
+    {n:'Step 13',t:'Turn left 90° — Left Back Stance facing H. Double Knifehand Outward Block.'},
+    {n:'Step 14',t:'Turn right 180° — Right Back Stance facing B. Double Knifehand Outward Block.'},
+    {n:'Step 15',t:'Turn left 90° — Left Forward Stance facing E. Side Kick with right foot.'},
+    {n:'Step 16a',t:'Land — Left Forward Stance. Elbow Target Strike (Palkup Pyojeok Chigi) — right elbow into left palm. (New: Elbow Target Strike)'},
+    {n:'Step 16b',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist. Kihap. Return to Joon Bi.'}
+  ],
+  6:[
+    {n:'Step 1',t:'Turn left — Left Back Stance facing F. Outer Forearm Middle Block (Bakat Palmok Momtong Makki). Perform with water quality — fluid throughout.'},
+    {n:'Step 2',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 3',t:'Turn right 180° — Right Back Stance facing D. Outer Forearm Middle Block.'},
+    {n:'Step 4',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 5',t:'Turn left 90° — Left Forward Stance facing A. Low Block with left outer-forearm.'},
+    {n:'Step 6',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 7',t:'Step forward — Left Forward Stance. Inner Forearm Middle Block (An Palmok Momtong Makki) with left arm.'},
+    {n:'Step 8',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 9',t:'Front Kick with left foot. Land — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 10',t:'Turn right 180° — Right Forward Stance facing C. Low Block with right outer-forearm.'},
+    {n:'Step 11',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 12a',t:'Roundhouse Kick (Dollyo Chagi) with left foot. Flows immediately into Step 12b — no pause.'},
+    {n:'Step 12b',t:'Land — Right Walking Stance. Low Block with right outer-forearm. (Most complex transition in this form)'},
+    {n:'Step 13',t:'Step forward — Left Forward Stance. Inner Forearm Middle Block with right arm.'},
+    {n:'Step 14',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 15',t:'Front Kick with left foot. Land — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 16',t:'Turn left 90° — Left Forward Stance facing H. Outer Forearm Low Block (Bakat Palmok Arae Makki). Performed slowly to 8-count — centrepiece of the form.'},
+    {n:'Step 17',t:'Step back — Right Back Stance facing H. Knifehand Middle Block + Palm Block (Batang Son Makki). Rearward step — unique to Yook Jang.'},
+    {n:'Step 18',t:'Turn right 180° — Right Forward Stance facing B. Outer Forearm Low Block. Slow 8-count.'},
+    {n:'Step 19',t:'Step back — Left Back Stance facing B. Knifehand Middle Block + Palm Block.'},
+    {n:'Step 20',t:'Turn left 90° — Left Forward Stance facing E. Low Block. Return to Joon Bi — right foot moves to left foot. No Kihap at end of this form.'}
+  ],
+  7:[
+    {n:'Step 1',t:'Turn left — Left Tiger Stance (Beom Seogi) facing F. Knifehand Low Block (Sonnal Arae Makki). (New: Tiger Stance — 90–100% weight on rear leg)'},
+    {n:'Step 2',t:'Step forward — Right Forward Stance. High Punch (Olgul Jireugi) with right fore-fist.'},
+    {n:'Step 3',t:'Turn right 180° — Right Tiger Stance facing D. Knifehand Low Block.'},
+    {n:'Step 4',t:'Step forward — Left Forward Stance. High Punch with left fore-fist.'},
+    {n:'Step 5',t:'Turn left 90° — Left Forward Stance facing A. Mountain Block (Wesanteul Makki) — both arms block high and low simultaneously. (New: Mountain Block)'},
+    {n:'Step 6',t:'Step forward — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 7',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist. (Double punch — no pause)'},
+    {n:'Step 8',t:'Turn left 90° — Left Forward Stance facing C. Scissor Block (Gawi Makki) — knifehand high block + low block simultaneously.'},
+    {n:'Step 9',t:'Front Kick with right foot. Land — Right Forward Stance. Middle Punch with right fore-fist. Kihap.'},
+    {n:'Step 10',t:'Turn right 180° — Right Forward Stance facing G. Scissor Block.'},
+    {n:'Step 11',t:'Front Kick with left foot. Land — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 12',t:'Turn left 90° — Left Forward Stance facing A. Low Block.'},
+    {n:'Step 13',t:'Step forward — Right Forward Stance. Inward Elbow Strike — right elbow into left palm.'},
+    {n:'Step 14',t:'Step forward — Left Forward Stance. Inward Elbow Strike — left elbow into right palm.'},
+    {n:'Step 15',t:'Step forward — Right Forward Stance. Middle Punch. Kihap.'},
+    {n:'Step 16',t:'Turn left 90° — Left Tiger Stance facing H. Low Double Knifehand Block (Ikeun Sonnal Arae Makki). (New: both hands in knifehand, one low, one supporting)'},
+    {n:'Step 17',t:'Front Kick with right foot. Land — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 18',t:'Turn right 180° — Right Tiger Stance facing B. Low Double Knifehand Block.'},
+    {n:'Step 19',t:'Front Kick with left foot. Land — Left Forward Stance. Middle Punch with left fore-fist.'},
+    {n:'Step 20',t:'Turn left 90° — Left Forward Stance facing E. Low Block.'},
+    {n:'Step 21',t:'Step forward — Right Forward Stance. Middle Punch. Kihap. Return to Joon Bi.'}
+  ],
+  8:[
+    {n:'Step 1',t:'Step forward — Right Back Stance. Augmented Outward Block (Wesanteul Makki) — left fist supports right forearm. (New: Augmented Block. Note: Pal Jang steps to third line first)'},
+    {n:'Step 2',t:'Slide left foot forward — pivot into Left Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 3a–b',t:'Double Jumping Front Kick: jump once, kick twice in the air (right then left leg). Land — Left Forward Stance. Inward Block with left arm. Kihap in the air. (New: Double Jumping Kick)'},
+    {n:'Step 4',t:'Turn left 90° — Left Forward Stance. Low Block with left outer-forearm.'},
+    {n:'Step 5',t:'Step forward — Right Forward Stance. Mountain Block (Wesanteul Makki) — both arms block simultaneously.'},
+    {n:'Step 6',t:'Turn right 180° — Right Forward Stance. Low Block with right outer-forearm.'},
+    {n:'Step 7',t:'Step forward — Left Forward Stance. Mountain Block.'},
+    {n:'Step 8',t:'Turn left 90° — Left Forward Stance. Double Knifehand Block.'},
+    {n:'Step 9',t:'Front Kick with right foot. Land — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 10',t:'Step forward — Left Forward Stance. Middle Punch with left fore-fist. Kihap.'},
+    {n:'Step 11',t:'Turn right 90° — Right Tiger Stance. Knifehand Low Block — in tiger stance.'},
+    {n:'Step 12',t:'Turn left 180° — Left Tiger Stance. Knifehand Low Block.'},
+    {n:'Step 13',t:'Turn right 90° — Left Forward Stance. Low Block with left outer-forearm.'},
+    {n:'Step 14',t:'Roundhouse Kick with right foot. Land — Right Forward Stance. Double Punch: left then right.'},
+    {n:'Step 15',t:'Step forward — Left Forward Stance. Scissor Block (Gawi Makki) — simultaneous high and low knifehand.'},
+    {n:'Step 16',t:'Front Kick with right foot. Land — Right Forward Stance. Middle Punch with right fore-fist.'},
+    {n:'Step 17',t:'Step forward — Left Forward Stance. Mountain Block.'},
+    {n:'Step 18',t:'Turn left 90° — Left Forward Stance. Inner Forearm Middle Block.'},
+    {n:'Step 19a',t:'Front Kick with right foot. Kihap.'},
+    {n:'Step 19b',t:'Jumping Front Kick with left foot (jump off right foot after landing). Land — Left Forward Stance. Inward Block with left arm. Note: these are two separate jumps, not one double kick.'},
+    {n:'Step 20',t:'Turn right 180° — Right Forward Stance. Inner Forearm Middle Block.'},
+    {n:'Step 21',t:'Front Kick with left foot. Kihap.'},
+    {n:'Step 22',t:'Jumping Front Kick with right foot. Land — Right Forward Stance. Inward Block with right arm.'},
+    {n:'Step 23',t:'Turn left 90° — Left Forward Stance facing E. Low Block.'},
+    {n:'Step 24',t:'Step forward — Right Forward Stance. Middle Punch. Return to Joon Bi. No Kihap at end of this form.'}
+  ]
+};
 
 const TKD_POOMSAE = [
-  {key:'taeguek_1',num:1,name:'Taeguek 1 — Il Jang',belt:'Yellow Belt',color:'#f0c040',meaning:'Keon — Heaven. The beginning of all things.'},
-  {key:'taeguek_2',num:2,name:'Taeguek 2 — I Jang',belt:'Green Stripe',color:'#2e8b57',meaning:'Tae — Lake. Inner firmness, outer softness.'},
-  {key:'taeguek_3',num:3,name:'Taeguek 3 — Sam Jang',belt:'Green Belt',color:'#2e8b57',meaning:'Ree — Fire. Crackling energy, bursts of power.'},
-  {key:'taeguek_4',num:4,name:'Taeguek 4 — Sa Jang',belt:'Blue Stripe',color:'#2060a0',meaning:'Jin — Thunder. Great power and dignity.'},
-  {key:'taeguek_5',num:5,name:'Taeguek 5 — Oh Jang',belt:'Blue Belt',color:'#2060a0',meaning:'Seon — Wind. Powerful and gentle simultaneously.'},
-  {key:'taeguek_6',num:6,name:'Taeguek 6 — Yook Jang',belt:'Red Stripe',color:'#b02020',meaning:'Kam — Water. Flowing, persistent, uninterrupted.'},
-  {key:'taeguek_7',num:7,name:'Taeguek 7 — Chil Jang',belt:'Red Belt',color:'#b02020',meaning:'Gan — Mountain. Unyielding and immovable.'},
-  {key:'taeguek_8',num:8,name:'Taeguek 8 — Pal Jang',belt:'Black Tab',color:'#888',meaning:'Gon — Earth. Foundation of all things.'}
+  {key:'taeguek_1',num:1,name:'Taeguek 1 — Il Jang',belt:'Yellow Belt',color:'#f0c040',meaning:'Keon — Heaven. The beginning of all things. 18 movements.'},
+  {key:'taeguek_2',num:2,name:'Taeguek 2 — I Jang',belt:'Green Stripe',color:'#2e8b57',meaning:'Tae — Lake. Inner firmness, outer softness. 18 movements.'},
+  {key:'taeguek_3',num:3,name:'Taeguek 3 — Sam Jang',belt:'Green Belt',color:'#2e8b57',meaning:'Ree — Fire. Crackling energy, bursts of power. 18 movements.'},
+  {key:'taeguek_4',num:4,name:'Taeguek 4 — Sa Jang',belt:'Blue Stripe',color:'#2060a0',meaning:'Jin — Thunder. Great power and dignity. 20 movements.'},
+  {key:'taeguek_5',num:5,name:'Taeguek 5 — Oh Jang',belt:'Blue Belt',color:'#2060a0',meaning:'Seon — Wind. Powerful and gentle simultaneously. 17 movements.'},
+  {key:'taeguek_6',num:6,name:'Taeguek 6 — Yook Jang',belt:'Red Stripe',color:'#b02020',meaning:'Kam — Water. Flowing, persistent, uninterrupted. 20 movements.'},
+  {key:'taeguek_7',num:7,name:'Taeguek 7 — Chil Jang',belt:'Red Belt',color:'#b02020',meaning:'Gan — Mountain. Unyielding and immovable. 21 movements.'},
+  {key:'taeguek_8',num:8,name:'Taeguek 8 — Pal Jang',belt:'Black Tab',color:'#888',meaning:'Gon — Earth. Foundation of all things. 24 movements.'}
 ];
 
 const TKD_PREARRANGED = [
@@ -526,13 +523,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const snap = await db.ref('portal_taekwondo').once('value');
     TKD_DATA = snap.val() || {};
   } catch(e){}
-  // If Firebase returned nothing, fall back to default steps baked into TKD_POOMSAE
-  if(!TKD_DATA.poomsae){
-    TKD_DATA.poomsae = {};
-    TKD_POOMSAE.forEach((p, idx) => {
-      TKD_DATA.poomsae[p.key] = { steps: getDefaultPoomsaeSteps(idx+1), video: '' };
-    });
-  }
+  // Steps are baked into TKD_POOMSAE directly
   renderPoomsae();
   renderPrearranged();
 });
@@ -554,16 +545,16 @@ function renderPoomsae(){
   if(!container) return;
 
   container.innerHTML = TKD_POOMSAE.map(p => {
-    const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || '';
-    const steps = window.TKD_STEPS_CACHE[p.key];
+    const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || p.video || '';
+    const steps = (TKD_DATA.poomsae?.[p.key]?.steps?.length ? TKD_DATA.poomsae[p.key].steps : TKD_STEPS[p.num]) || [];
     const blockId = `poomsae-${p.key}`;
     const stepsHtml = steps.length
       ? steps.map((step,si) => {
-          const tech = (step.technical||[]).map(t=>`<li>${t}</li>`).join('');
+          const tech = step.t || (step.technical||[]).join(' · ');
           const exam = (step.examiner||[]).map(e=>`<li>${e}</li>`).join('');
           return `<div class="step-item">
-            <div class="step-num-label">${step.name||`Step ${si+1}`}</div>
-            ${tech ? `<ul class="step-tech">${tech}</ul>` : ''}
+            <div class="step-num-label">${step.n||step.name||`Step ${si+1}`}</div>
+            ${tech ? `<ul class="step-tech"><li>${tech}</li></ul>` : ''}
             ${exam ? `<div class="step-exam"><div class="step-exam-label">Examiner looks for</div><ul>${exam}</ul></div>` : ''}
           </div>`;
         }).join('')
@@ -634,4 +625,3 @@ function showPanel(id){
 </script>
 </body>
 </html>
-
