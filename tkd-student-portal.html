@@ -521,8 +521,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const snap = await db.ref('portal_taekwondo').once('value');
     TKD_DATA = snap.val() || {};
-  } catch(e){}
-  // Steps are baked into TKD_POOMSAE directly
+  } catch(e){ TKD_DATA = {}; }
+  // Always apply fallback for any missing poomsae steps
+  if(!TKD_DATA.poomsae) TKD_DATA.poomsae = {};
+  TKD_POOMSAE.forEach((p, idx) => {
+    if(!TKD_DATA.poomsae[p.key]?.steps?.length){
+      TKD_DATA.poomsae[p.key] = { ...(TKD_DATA.poomsae[p.key]||{}), steps: TKD_STEPS[idx+1]||[] };
+    }
+  });
   renderPoomsae();
   renderPrearranged();
 });
@@ -620,6 +626,15 @@ function showPanel(id){
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
   });
+  // If poomsae panel is still showing Loading, force a render
+  if(id==='poomsae'){
+    const c=document.getElementById('poomsae-container');
+    if(c&&c.innerHTML.includes('Loading'))renderPoomsae();
+  }
+  if(id==='prearranged'){
+    const c=document.getElementById('prearranged-container');
+    if(c&&c.innerHTML.includes('Loading'))renderPrearranged();
+  }
 }
 </script>
 </body>
