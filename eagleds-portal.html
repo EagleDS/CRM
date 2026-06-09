@@ -1161,7 +1161,7 @@ body {
         <div class="section-title">Pathway <span>Overview</span></div>
         <div style="background:var(--surface2);border:1px solid var(--border);padding:20px 24px;">
           <div style="font-size:13px;color:var(--muted);line-height:1.9;">
-            Every student follows the same pathway. Every grading is assessed against the same criteria. Sequences 1–4 take a student to Orange Belt. Sequences 5–8 take a student to Blue Belt. Blue Belt qualifies a coach to teach kids. Black Belt qualifies a coach to take adults — content in development.
+            Every student follows the same pathway. Every grading is assessed against the same criteria. Sequences 1–4 take a student to Orange Belt. Sequences 5–8 take a student to Blue Belt. Blue Belt + coaching course completion qualifies you to teach kids. The coaching course is open to anyone aged 13+ — no belt required to enrol, and completing it fast-tracks you to Blue Belt. Black Belt + coaching course qualifies you to take adults — content in development.
           </div>
           <div style="margin-top:14px;display:flex;gap:24px;flex-wrap:wrap;">
             <div>
@@ -1174,7 +1174,7 @@ body {
             </div>
             <div>
               <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Blue Belt</div>
-              <div style="font-size:13px;color:var(--white);">Qualified to teach kids</div>
+              <div style="font-size:13px;color:var(--white);">Blue Belt + course = teach kids</div>
             </div>
             <div>
               <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Black Belt</div>
@@ -1358,7 +1358,8 @@ body {
             Weeks 15–24: Technical delivery — Boxing, Kickboxing, MMA syllabus teaching<br>
             Weeks 25–32: Sambo &amp; Taekwondo delivery<br>
             Weeks 33–36: Competition coaching — CGS, cornering, athlete preparation<br>
-            Weeks 37–40: Running a gym — systems, communication, grading events
+            Weeks 37–40: Running a gym — systems, communication, grading events<br>
+            <br><strong style="color:var(--white);">Enrolment:</strong> Open to anyone aged 13+. No belt required to start. Completing the course fast-tracks you to Blue Belt. Blue Belt + course completion = qualified to teach kids. Black Belt + course completion = qualified to take adults.
           </div>
         </div>
 
@@ -1744,7 +1745,7 @@ async function buildDashboard(profile){
     {k:'green_stripe',c:'#2e8b57',n:'Green Stripe',seq:'Seq 1–6'},
     {k:'green',c:'#2e8b57',n:'Green Belt',seq:'Seq 1–7'},
     {k:'blue_stripe',c:'#2060a0',n:'Blue Stripe',seq:'Seq 1–8'},
-    {k:'blue',c:'#2060a0',n:'Blue Belt',seq:'Coach: Kids'}
+    {k:'blue',c:'#2060a0',n:'Blue Belt',seq:'Blue Belt'}
   ];
   strip.innerHTML = belts.map(b => {
     const isCurrent = b.k===USER_BELT;
@@ -1771,39 +1772,50 @@ async function loadSequences(){
   renderSequences();
 }
 
-// ── Convert legacy lines/moves format to flat chain on load ──
-function normaliseFlatChain(s){
-  // If already flat chain format, return as-is
-  if(s.chain && Array.isArray(s.chain)) return s.chain;
-  // Convert from old lines/moves format
-  const chain = [];
-  if(s.lines && Array.isArray(s.lines)){
-    s.lines.forEach(line => {
-      (line.moves||[]).forEach(m => {
-        chain.push({
-          actor: line.actor||'A',
-          name: m.name||'',
-          technical: m.technical||[],
-          coaching: m.coaching||[],
-          examiner: m.examiner||[],
-          branches: []  // future: variation branches live here
-        });
-      });
+// ═══════════════════════════════════════════
+// SEQUENCE ENGINE — SECTIONS + MOVES
+// ═══════════════════════════════════════════
+// Data model:
+// sequence.sections = [
+//   { actor: 'A', moves: [ { name, technical, coaching, examiner, branches } ] },
+//   { actor: 'B', moves: [ ... ] },
+//   ...
+// ]
+
+function normaliseSections(s){
+  // Already in sections format
+  if(s.sections && Array.isArray(s.sections)) return s.sections;
+  // Convert from flat chain format
+  if(s.chain && Array.isArray(s.chain)){
+    const sections = [];
+    s.chain.forEach(move => {
+      const last = sections[sections.length-1];
+      if(last && last.actor === move.actor){
+        last.moves.push({name:move.name,technical:move.technical||[],coaching:move.coaching||[],examiner:move.examiner||[],branches:[]});
+      } else {
+        sections.push({actor:move.actor, moves:[{name:move.name,technical:move.technical||[],coaching:move.coaching||[],examiner:move.examiner||[],branches:[]}]});
+      }
     });
+    return sections;
   }
-  return chain;
+  // Convert from legacy lines/moves format
+  if(s.lines && Array.isArray(s.lines)){
+    return s.lines.map(line => ({
+      actor: line.actor||'A',
+      moves: (line.moves||[]).map(m => ({name:m.name||'',technical:m.technical||[],coaching:m.coaching||[],examiner:m.examiner||[],branches:[]}))
+    }));
+  }
+  return [];
 }
 
 function renderSequences(){
   const container = document.getElementById('sequences-container');
   if(!SEQUENCES_DATA){ container.innerHTML='<div style="color:var(--muted);padding:20px;">No sequence data.</div>'; return; }
-
   const order = Object.keys(SEQUENCES_DATA).sort((a,b)=>SEQUENCES_DATA[a].num-SEQUENCES_DATA[b].num);
   container.innerHTML = order.map(key => {
     const s = SEQUENCES_DATA[key];
     const unlocked = canSeeSeq(s.num);
     const beltColor = getBeltColor(s.belt);
-
     return `<div class="sequence-block${!unlocked?' locked':''}" id="seqblock-${key}">
       <div class="sequence-header" onclick="${unlocked?`toggleSeq('${key}')`:'showLockedMsg()'}">
         <div class="sequence-num">SEQ ${String(s.num).padStart(2,'0')}</div>
@@ -1813,203 +1825,237 @@ function renderSequences(){
         </div>
         ${!unlocked?'<span class="lock-icon">🔒</span>':'<div class="chevron">▼</div>'}
       </div>
-      ${unlocked ? `<div class="sequence-body" id="seqbody-${key}">
-        ${ADMIN_MODE ? renderSeqMeta(key, s) : ''}
-        <div id="chain-${key}">${renderChain(key, s)}</div>
+      ${unlocked?`<div class="sequence-body" id="seqbody-${key}">
+        ${ADMIN_MODE?renderSeqMeta(key,s):''}
+        <div id="sections-${key}">${renderSections(key,s)}</div>
         ${s.video
-          ? `<div class="video-slot"><iframe src="${getEmbedUrl(s.video)}" allowfullscreen></iframe></div>`
-          : `<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
-        ${s.integration ? `<div class="integration-note">⚡ ${s.integration}</div>` : ''}
-      </div>` : ''}
+          ?`<div class="video-slot"><iframe src="${getEmbedUrl(s.video)}" allowfullscreen></iframe></div>`
+          :`<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
+        ${s.integration?`<div class="integration-note">⚡ ${s.integration}</div>`:''}
+      </div>`:''}
     </div>`;
   }).join('');
 }
 
-function renderChain(key, s){
-  const chain = normaliseFlatChain(s);
-  if(!chain.length) return ADMIN_MODE
-    ? renderInsertBtn(key, 0) + '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No moves yet — add the first one.</div>'
-    : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Flow not yet constructed.</div>';
-
-  // Group consecutive same-actor moves into visual lines
-  // Each group: { actor, indices: [i, i+1, ...] }
-  const groups = [];
-  chain.forEach((move, i) => {
-    const last = groups[groups.length - 1];
-    if(last && last.actor === move.actor){
-      last.indices.push(i);
-    } else {
-      groups.push({ actor: move.actor, indices: [i] });
-    }
-  });
-
+function renderSections(key, s){
+  const sections = normaliseSections(s);
   let html = '';
-  if(ADMIN_MODE) html += renderInsertBtn(key, 0);
 
-  groups.forEach((group, gi) => {
-    const isA = group.actor === 'A';
+  if(!sections.length){
+    html += ADMIN_MODE
+      ? `<div style="color:var(--muted);font-size:12px;padding:8px 0;">No sections yet.</div>${renderAddSectionBtn(key,0)}`
+      : `<div style="color:var(--muted);font-size:12px;padding:8px 0;">Flow not yet constructed.</div>`;
+    return html;
+  }
+
+  if(ADMIN_MODE) html += renderAddSectionBtn(key, 0);
+
+  sections.forEach((section, si) => {
+    const isA = section.actor === 'A';
     const actorColor = isA ? '#5b9bd5' : '#e07060';
-    const actorBorder = isA ? 'rgba(91,155,213,0.15)' : 'rgba(224,112,96,0.15)';
+    const actorBg = isA ? 'rgba(91,155,213,0.08)' : 'rgba(224,112,96,0.08)';
+    const actorBorder = isA ? 'rgba(91,155,213,0.3)' : 'rgba(224,112,96,0.3)';
 
-    // Build pills for this group
-    const pills = group.indices.map((i, pos) => {
-      const move = chain[i];
-      const pillId = `pill-${key}-${i}`;
-      const editControls = ADMIN_MODE
-        ? `<button class="chain-btn" onclick="event.stopPropagation();editMoveInline('${key}',${i})" title="Edit">✎</button>
-           <button class="chain-btn danger" onclick="event.stopPropagation();removeMove('${key}',${i})" title="Remove">✕</button>`
+    // Move pills
+    const moves = section.moves || [];
+    const movePills = moves.map((move, mi) => {
+      const pillId = `pill-${key}-${si}-${mi}`;
+      const editBtns = ADMIN_MODE
+        ? `<button class="chain-btn" onclick="event.stopPropagation();editMove('${key}',${si},${mi})" title="Edit">✎</button>
+           <button class="chain-btn danger" onclick="event.stopPropagation();removeMove('${key}',${si},${mi})" title="Remove move">✕</button>`
         : '';
-      const arrow = pos < group.indices.length - 1 ? '<span class="move-arrow">→</span>' : '';
-      return `<span class="move-pill" id="${pillId}" onclick="toggleBreakdown('${key}',${i})">${move.name||'Unnamed'}</span>${editControls}${arrow}`;
+      const arrow = mi < moves.length-1 ? '<span class="move-arrow">→</span>' : '';
+      return `<span class="move-pill" id="${pillId}" onclick="toggleBreakdown('${key}',${si},${mi})">${move.name||'Unnamed'}</span>${editBtns}${arrow}`;
     }).join('');
 
-    // Breakdown panels for each move in this group (rendered below the line)
-    const breakdowns = group.indices.map(i =>
-      `<div class="move-breakdown" id="bd-${key}-${i}"></div>`
+    // Breakdown panels
+    const breakdowns = moves.map((_, mi) =>
+      `<div class="move-breakdown" id="bd-${key}-${si}-${mi}"></div>`
     ).join('');
 
-    html += `<div class="chain-group" style="border-left:2px solid ${actorColor};padding-left:10px;margin-bottom:6px;background:${actorBorder};padding:8px 10px 8px 12px;">
-      <div class="chain-row">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.1em;color:${actorColor};flex-shrink:0;width:22px;">${group.actor}</span>
-        <div class="flow-moves">${pills}</div>
+    // Add move button inside section
+    const addMoveBtn = ADMIN_MODE
+      ? `<div style="margin-top:8px;">${renderAddMoveBtn(key, si)}</div>`
+      : '';
+
+    // Section controls
+    const sectionControls = ADMIN_MODE
+      ? `<button class="chain-btn" onclick="flipSectionActor('${key}',${si})" title="Flip A/B" style="margin-left:8px;font-size:9px;letter-spacing:0.1em;">FLIP</button>
+         <button class="chain-btn danger" onclick="removeSection('${key}',${si})" title="Remove section" style="font-size:9px;">✕ SECTION</button>`
+      : '';
+
+    html += `<div class="chain-group" style="border-left:2px solid ${actorBorder};padding:10px 10px 10px 14px;margin-bottom:4px;background:${actorBg};" id="section-${key}-${si}">
+      <div class="chain-row" style="margin-bottom:${moves.length?'6px':'0'};">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:${actorColor};flex-shrink:0;width:28px;">${section.actor}</span>
+        <div class="flow-moves" style="flex:1;">${movePills}</div>
+        ${sectionControls}
       </div>
       ${breakdowns}
+      ${addMoveBtn}
     </div>`;
 
-    // Insert button after this group (between groups, and after the last)
-    const insertAt = group.indices[group.indices.length - 1] + 1;
-    if(ADMIN_MODE) html += renderInsertBtn(key, insertAt);
+    if(ADMIN_MODE) html += renderAddSectionBtn(key, si+1);
   });
 
   return html;
 }
 
-function renderInsertBtn(key, insertAt){
-  return `<div class="insert-row" id="insertrow-${key}-${insertAt}">
-    <button class="insert-btn" onclick="showInsertForm('${key}',${insertAt})">+ Add Move</button>
-    <div class="insert-form" id="insertform-${key}-${insertAt}" style="display:none;">
-      <select id="ins-actor-${key}-${insertAt}" style="background:var(--surface3);border:1px solid var(--gold-dim);color:var(--white);padding:6px 10px;font-size:12px;">
+// ── ADD SECTION ──
+function renderAddSectionBtn(key, insertAt){
+  return `<div class="insert-row" id="addsec-row-${key}-${insertAt}">
+    <button class="insert-btn" style="color:#888;" onclick="showAddSection('${key}',${insertAt})">+ Add Section</button>
+    <div id="addsec-form-${key}-${insertAt}" style="display:none;margin-top:6px;align-items:center;gap:8px;flex-wrap:wrap;">
+      <select id="addsec-actor-${key}-${insertAt}" style="background:var(--surface3);border:1px solid var(--gold-dim);color:var(--white);padding:6px 10px;font-size:13px;font-family:'Bebas Neue',sans-serif;letter-spacing:0.1em;">
         <option value="A">A</option>
         <option value="B">B</option>
       </select>
-      <input class="edit-input" style="display:inline-block;width:200px;margin:0 8px;" id="ins-name-${key}-${insertAt}" placeholder="Move name…">
-      <button class="edit-btn save" onclick="confirmInsert('${key}',${insertAt})">Add</button>
-      <button class="edit-btn" onclick="cancelInsert('${key}',${insertAt})">Cancel</button>
+      <button class="edit-btn save" onclick="confirmAddSection('${key}',${insertAt})">Add Section</button>
+      <button class="edit-btn" onclick="cancelAddSection('${key}',${insertAt})">Cancel</button>
     </div>
   </div>`;
 }
 
-function showInsertForm(key, insertAt){
-  const form = document.getElementById(`insertform-${key}-${insertAt}`);
+function showAddSection(key, insertAt){
+  const form = document.getElementById(`addsec-form-${key}-${insertAt}`);
   if(!form) return;
-  form.style.display='flex';
-  form.style.alignItems='center';
-  form.style.gap='6px';
-  form.style.flexWrap='wrap';
-  form.style.marginTop='6px';
-  document.getElementById(`ins-name-${key}-${insertAt}`)?.focus();
-  // Default actor: opposite of move above if exists
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  if(insertAt > 0 && chain[insertAt-1]){
-    const prevActor = chain[insertAt-1].actor;
-    document.getElementById(`ins-actor-${key}-${insertAt}`).value = prevActor === 'A' ? 'B' : 'A';
+  form.style.display = 'flex';
+  // Smart default: opposite of section above
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  if(insertAt > 0 && sections[insertAt-1]){
+    document.getElementById(`addsec-actor-${key}-${insertAt}`).value = sections[insertAt-1].actor==='A'?'B':'A';
   }
 }
 
-function cancelInsert(key, insertAt){
-  document.getElementById(`insertform-${key}-${insertAt}`).style.display='none';
+function cancelAddSection(key, insertAt){
+  document.getElementById(`addsec-form-${key}-${insertAt}`).style.display='none';
 }
 
-async function confirmInsert(key, insertAt){
-  const actor = document.getElementById(`ins-actor-${key}-${insertAt}`)?.value || 'A';
-  const name = document.getElementById(`ins-name-${key}-${insertAt}`)?.value.trim();
-  if(!name){ toast('Enter a move name', true); return; }
+async function confirmAddSection(key, insertAt){
+  const actor = document.getElementById(`addsec-actor-${key}-${insertAt}`)?.value||'A';
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  sections.splice(insertAt, 0, {actor, moves:[]});
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections`).set(sections);
+  toast('Section added ✓');
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
+}
 
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  const newMove = { actor, name, technical:[], coaching:[], examiner:[], branches:[] };
-  chain.splice(insertAt, 0, newMove);
-  SEQUENCES_DATA[key].chain = chain;
+async function removeSection(key, si){
+  if(!confirm('Remove this entire section and all its moves?')) return;
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  sections.splice(si, 1);
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections`).set(sections);
+  toast('Section removed');
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
+}
 
-  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+async function flipSectionActor(key, si){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  sections[si].actor = sections[si].actor==='A' ? 'B' : 'A';
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections/${si}/actor`).set(sections[si].actor);
+  toast('Actor flipped ✓');
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
+}
+
+// ── ADD MOVE WITHIN SECTION ──
+function renderAddMoveBtn(key, si){
+  return `<div id="addmove-row-${key}-${si}">
+    <button class="insert-btn" onclick="showAddMove('${key}',${si})">+ Add Move</button>
+    <div id="addmove-form-${key}-${si}" style="display:none;margin-top:6px;align-items:center;gap:6px;flex-wrap:wrap;">
+      <input class="edit-input" style="display:inline-block;width:200px;margin:0;" id="addmove-name-${key}-${si}" placeholder="Move name…">
+      <button class="edit-btn save" onclick="confirmAddMove('${key}',${si})">Add</button>
+      <button class="edit-btn" onclick="cancelAddMove('${key}',${si})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function showAddMove(key, si){
+  const form = document.getElementById(`addmove-form-${key}-${si}`);
+  if(!form) return;
+  form.style.display='flex';
+  document.getElementById(`addmove-name-${key}-${si}`)?.focus();
+}
+
+function cancelAddMove(key, si){
+  document.getElementById(`addmove-form-${key}-${si}`).style.display='none';
+}
+
+async function confirmAddMove(key, si){
+  const name = document.getElementById(`addmove-name-${key}-${si}`)?.value.trim();
+  if(!name){ toast('Enter a move name',true); return; }
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  if(!sections[si].moves) sections[si].moves=[];
+  sections[si].moves.push({name, technical:[], coaching:[], examiner:[], branches:[]});
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections`).set(sections);
   toast('Move added ✓');
-  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
 }
 
-async function removeMove(key, i){
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  chain.splice(i, 1);
-  SEQUENCES_DATA[key].chain = chain;
-  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+async function removeMove(key, si, mi){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  sections[si].moves.splice(mi,1);
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections`).set(sections);
   toast('Move removed');
-  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
 }
 
-function editMoveInline(key, i){
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  const move = chain[i];
+// ── EDIT MOVE BREAKDOWN ──
+function editMove(key, si, mi){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  const move = sections[si]?.moves?.[mi];
   if(!move) return;
-  const bdId = `bd-${key}-${i}`;
+  const bdId = `bd-${key}-${si}-${mi}`;
   const bdEl = document.getElementById(bdId);
   if(!bdEl) return;
 
-  // Close all others
-  document.querySelectorAll('.move-breakdown').forEach(el => { el.classList.remove('active'); el.innerHTML=''; });
+  document.querySelectorAll('.move-breakdown').forEach(el=>{ el.classList.remove('active'); el.innerHTML=''; });
 
-  bdEl.innerHTML = `
-    <div class="edit-section" style="margin-top:8px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div class="edit-section-title" style="margin:0;">Editing: ${move.name}</div>
-        <select id="eact-${key}-${i}" style="background:var(--surface3);border:1px solid var(--gold-dim);color:var(--white);padding:5px 8px;font-size:11px;">
-          <option value="A"${move.actor==='A'?' selected':''}>Actor A</option>
-          <option value="B"${move.actor==='B'?' selected':''}>Actor B</option>
-        </select>
-      </div>
-      <label class="edit-label">Move Name</label>
-      <input class="edit-input" id="ename-${key}-${i}" value="${move.name}">
-      <label class="edit-label">Technical Requirements (one per line)</label>
-      <textarea class="edit-textarea" id="etech-${key}-${i}">${(move.technical||[]).join('\n')}</textarea>
-      <label class="edit-label">Coaching Cues — your eyes only (one per line)</label>
-      <textarea class="edit-textarea" id="ecoach-${key}-${i}">${(move.coaching||[]).join('\n')}</textarea>
-      <label class="edit-label">Examiner Points (one per line)</label>
-      <textarea class="edit-textarea" id="eexam-${key}-${i}">${(move.examiner||[]).join('\n')}</textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="edit-btn save" onclick="saveMoveEdit('${key}',${i})">Save Move</button>
-        <button class="edit-btn" onclick="closeMoveEdit('${key}',${i})">Cancel</button>
-      </div>
-    </div>`;
+  bdEl.innerHTML = `<div class="edit-section" style="margin-top:8px;">
+    <div class="edit-section-title" style="margin-bottom:10px;">Editing: ${move.name}</div>
+    <label class="edit-label">Move Name</label>
+    <input class="edit-input" id="em-name-${key}-${si}-${mi}" value="${move.name}">
+    <label class="edit-label">Technical Requirements (one per line)</label>
+    <textarea class="edit-textarea" id="em-tech-${key}-${si}-${mi}">${(move.technical||[]).join('\n')}</textarea>
+    <label class="edit-label">Coaching Cues — your eyes only (one per line)</label>
+    <textarea class="edit-textarea" id="em-coach-${key}-${si}-${mi}">${(move.coaching||[]).join('\n')}</textarea>
+    <label class="edit-label">Examiner Points (one per line)</label>
+    <textarea class="edit-textarea" id="em-exam-${key}-${si}-${mi}">${(move.examiner||[]).join('\n')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="edit-btn save" onclick="saveMove('${key}',${si},${mi})">Save Move</button>
+      <button class="edit-btn" onclick="this.closest('.move-breakdown').classList.remove('active');this.closest('.move-breakdown').innerHTML='';">Cancel</button>
+    </div>
+  </div>`;
   bdEl.classList.add('active');
 }
 
-function closeMoveEdit(key, i){
-  const bdEl = document.getElementById(`bd-${key}-${i}`);
-  if(bdEl){ bdEl.classList.remove('active'); bdEl.innerHTML=''; }
-}
-
-async function saveMoveEdit(key, i){
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  chain[i].actor = document.getElementById(`eact-${key}-${i}`)?.value || chain[i].actor;
-  chain[i].name = document.getElementById(`ename-${key}-${i}`)?.value.trim() || chain[i].name;
-  chain[i].technical = document.getElementById(`etech-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
-  chain[i].coaching = document.getElementById(`ecoach-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
-  chain[i].examiner = document.getElementById(`eexam-${key}-${i}`)?.value.split('\n').filter(Boolean)||[];
-  SEQUENCES_DATA[key].chain = chain;
-  await db.ref(`portal_sequences/${key}/chain`).set(chain);
+async function saveMove(key, si, mi){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  sections[si].moves[mi].name = document.getElementById(`em-name-${key}-${si}-${mi}`)?.value.trim()||sections[si].moves[mi].name;
+  sections[si].moves[mi].technical = document.getElementById(`em-tech-${key}-${si}-${mi}`)?.value.split('\n').filter(Boolean)||[];
+  sections[si].moves[mi].coaching = document.getElementById(`em-coach-${key}-${si}-${mi}`)?.value.split('\n').filter(Boolean)||[];
+  sections[si].moves[mi].examiner = document.getElementById(`em-exam-${key}-${si}-${mi}`)?.value.split('\n').filter(Boolean)||[];
+  SEQUENCES_DATA[key].sections = sections;
+  await db.ref(`portal_sequences/${key}/sections`).set(sections);
   toast('Move saved ✓');
-  document.getElementById(`chain-${key}`).innerHTML = renderChain(key, SEQUENCES_DATA[key]);
+  document.getElementById(`sections-${key}`).innerHTML = renderSections(key, SEQUENCES_DATA[key]);
 }
 
-function toggleBreakdown(key, i){
-  const chain = normaliseFlatChain(SEQUENCES_DATA[key]);
-  const move = chain[i];
+// ── BREAKDOWN VIEW ──
+function toggleBreakdown(key, si, mi){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  const move = sections[si]?.moves?.[mi];
   if(!move) return;
-  const bdId = `bd-${key}-${i}`;
-  const pillId = `pill-${key}-${i}`;
+  const bdId = `bd-${key}-${si}-${mi}`;
+  const pillId = `pill-${key}-${si}-${mi}`;
   const bdEl = document.getElementById(bdId);
   if(!bdEl) return;
 
-  // Close all breakdowns
-  document.querySelectorAll('.move-breakdown').forEach(el => { if(el.id!==bdId){ el.classList.remove('active'); el.innerHTML=''; }});
-  document.querySelectorAll('.move-pill').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.move-breakdown').forEach(el=>{ if(el.id!==bdId){ el.classList.remove('active'); el.innerHTML=''; }});
+  document.querySelectorAll('.move-pill').forEach(el=>el.classList.remove('active'));
 
   if(bdEl.classList.contains('active')){ bdEl.classList.remove('active'); bdEl.innerHTML=''; return; }
 
@@ -2018,7 +2064,7 @@ function toggleBreakdown(key, i){
   const techPoints = (move.technical||[]).map(p=>`<li>${p}</li>`).join('');
   const coachPoints = (move.coaching||[]).map(p=>`<li>${p}</li>`).join('');
   const examPoints = (move.examiner||[]).map(p=>`<li>${p}</li>`).join('');
-  const hasContent = techPoints || coachPoints || examPoints;
+  const hasContent = techPoints||coachPoints||examPoints;
 
   const coachSection = (USER_ROLE==='admin'||USER_ROLE==='coach') && coachPoints
     ? `<div class="breakdown-section"><div class="breakdown-section-label" style="color:#5b9bd5;">Coaching Cues</div><ul class="breakdown-points">${coachPoints}</ul></div>` : '';
@@ -2028,14 +2074,15 @@ function toggleBreakdown(key, i){
       <div class="breakdown-title">${move.name}</div>
       <div class="breakdown-close" onclick="document.getElementById('${bdId}').classList.remove('active');document.getElementById('${bdId}').innerHTML='';document.getElementById('${pillId}')?.classList.remove('active');">✕</div>
     </div>
-    ${techPoints ? `<div class="breakdown-section"><div class="breakdown-section-label">Technical Requirements</div><ul class="breakdown-points">${techPoints}</ul></div>` : ''}
+    ${techPoints?`<div class="breakdown-section"><div class="breakdown-section-label">Technical Requirements</div><ul class="breakdown-points">${techPoints}</ul></div>`:''}
     ${coachSection}
-    ${examPoints ? `<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${examPoints}</ul></div>` : ''}
-    ${!hasContent ? `<div style="color:var(--muted2);font-size:12px;font-style:italic;">No breakdown added yet.${ADMIN_MODE?' Tap ✎ to edit.':''}</div>` : ''}
+    ${examPoints?`<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${examPoints}</ul></div>`:''}
+    ${!hasContent?`<div style="color:var(--muted2);font-size:12px;font-style:italic;">No breakdown added yet.${ADMIN_MODE?' Tap ✎ to edit.':''}</div>`:''}
   `;
   bdEl.classList.add('active');
 }
 
+// ── SEQ META ──
 function renderSeqMeta(key, s){
   return `<div class="edit-section" style="margin-bottom:14px;">
     <div class="edit-section-title">Sequence Settings</div>
@@ -2060,6 +2107,7 @@ async function saveSeqMeta(key){
   toast('Settings saved ✓');
   renderSequences();
 }
+
 
 function getEmbedUrl(url){
   if(!url) return '';
@@ -2714,4 +2762,3 @@ document.getElementById('li-email')?.addEventListener('keydown', e => { if(e.key
 </script>
 </body>
 </html>
-
