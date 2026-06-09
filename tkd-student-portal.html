@@ -318,9 +318,16 @@ async function loadGradingDate(){
 function renderPoomsae(){
   const container = document.getElementById('poomsae-container');
   if(!container) return;
+
+  // Store steps globally so onclick can reference by key/index
+  window.TKD_STEPS_CACHE = {};
+  TKD_POOMSAE.forEach(p => {
+    window.TKD_STEPS_CACHE[p.key] = TKD_DATA.poomsae?.[p.key]?.steps || [];
+  });
+
   container.innerHTML = TKD_POOMSAE.map(p => {
     const videoUrl = TKD_DATA.poomsae?.[p.key]?.video || '';
-    const steps = TKD_DATA.poomsae?.[p.key]?.steps || [];
+    const steps = window.TKD_STEPS_CACHE[p.key];
     const blockId = `poomsae-${p.key}`;
     const stepsHtml = steps.length
       ? steps.map((step,si) => {
@@ -328,7 +335,7 @@ function renderPoomsae(){
           const bdId = `tkd-bd-${p.key}-${si}`;
           return `<div style="display:flex;align-items:flex-start;gap:6px;padding:3px 0;flex-wrap:wrap;">
             <span style="font-size:12px;color:var(--muted2);flex-shrink:0;min-width:18px;">${si+1}</span>
-            <span class="move-pill" id="${pillId}" onclick="toggleTkdBreakdown('${p.key}',${si},${JSON.stringify(steps).replace(/\/g,'\\').replace(/"/g,'\"').replace(/'/g,"\'")})">${step.name||`Step ${si+1}`}</span>
+            <span class="move-pill" id="${pillId}" onclick="toggleTkdBreakdown('${p.key}',${si})">${step.name||`Step ${si+1}`}</span>
           </div><div class="move-breakdown" id="${bdId}"></div>`;
         }).join('')
       : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Steps coming soon.</div>';
@@ -349,9 +356,8 @@ function renderPoomsae(){
     </div>`;
   }).join('');
 }
-
-function toggleTkdBreakdown(pKey, si, stepsJson){
-  const steps = typeof stepsJson === 'string' ? JSON.parse(stepsJson) : stepsJson;
+function toggleTkdBreakdown(pKey, si){
+  const steps = window.TKD_STEPS_CACHE?.[pKey] || [];
   const step = steps[si];
   if(!step) return;
   const bdId=`tkd-bd-${pKey}-${si}`, pillId=`tkd-pill-${pKey}-${si}`;
