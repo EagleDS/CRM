@@ -1561,68 +1561,52 @@ auth.onAuthStateChanged(async (user) => {
   if (!user) { showLoginScreen(); return; }
   CURRENT_USER = user;
 
-  // Force token to be fully attached before any DB operations
-  try { await user.getIdToken(true); } catch(e) { showLoginScreen(); return; }
-
-  let profile = null;
-  try {
-    const snap = await db.ref(`portal_users/${user.uid}`).once('value');
-    profile = snap.val();
-  } catch(e) {
-    // DB read failed — likely rules issue, show error
-    document.getElementById('li-err').textContent = 'Database error. Check Firebase rules.';
-    showLoginScreen(); return;
+  // Simple check — if this is the admin email, go straight in as admin
+  if (user.email === 'info@eagleds.co.nz') {
+    USER_ROLE = 'admin';
+    USER_BELT = 'black';
+    const profile = { name: 'Dafydd Sanders', email: user.email, role: 'admin', belt: 'black', status: 'active' };
+    // Write profile to DB in background — don't wait for it
+    db.ref(`portal_users/${user.uid}`).set(profile).catch(()=>{});
+    db.ref('portal_bootstrap').set({ done: true, uid: user.uid }).catch(()=>{});
+    bootApp(profile);
+    return;
   }
 
-  if (!profile) {
-    let bootstrapped = false;
-    try {
-      const bootstrapSnap = await db.ref('portal_bootstrap/done').once('value');
-      bootstrapped = bootstrapSnap.val();
-    } catch(e) {}
+  // Everyone else — look up their portal_users record
+  try {
+    await user.getIdToken(true);
+    const snap = await db.ref(`portal_users/${user.uid}`).once('value');
+    const profile = snap.val();
 
-    if (!bootstrapped) {
-      profile = {
-        name: 'Dafydd Sanders',
+    if (!profile) {
+      // Unknown user — send to pending
+      await db.ref(`portal_users/${user.uid}`).set({
         email: user.email,
-        role: 'admin',
-        belt: 'black',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      };
-      try {
-        await db.ref(`portal_users/${user.uid}`).set(profile);
-        await db.ref('portal_bootstrap').set({ done: true, uid: user.uid, at: new Date().toISOString() });
-        toast('Admin account created — welcome, Dafydd.');
-      } catch(e) {
-        document.getElementById('li-err').textContent = 'Could not create profile. Check Firebase rules.';
-        showLoginScreen(); return;
-      }
-    } else {
-      try {
-        await db.ref(`portal_users/${user.uid}`).set({
-          email: user.email,
-          role: 'student',
-          belt: 'white',
-          status: 'pending',
-          registeredAt: new Date().toISOString()
-        });
-      } catch(e) {}
+        role: 'student',
+        belt: 'white',
+        status: 'pending',
+        registeredAt: new Date().toISOString()
+      }).catch(()=>{});
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('pending-screen').classList.add('active');
       return;
     }
-  }
 
-  if (profile.status === 'pending') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('pending-screen').classList.add('active');
-    return;
-  }
+    if (profile.status === 'pending') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('pending-screen').classList.add('active');
+      return;
+    }
 
-  USER_ROLE = profile.role || 'student';
-  USER_BELT = profile.belt || 'white';
-  bootApp(profile);
+    USER_ROLE = profile.role || 'student';
+    USER_BELT = profile.belt || 'white';
+    bootApp(profile);
+
+  } catch(e) {
+    document.getElementById('li-err').textContent = 'Login error: ' + e.message;
+    showLoginScreen();
+  }
 });
 
 function showLoginScreen(){
