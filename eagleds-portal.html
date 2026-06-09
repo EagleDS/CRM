@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eagle DS — Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 :root {
   --black: #090909;
@@ -1664,11 +1664,14 @@ function bootApp(profile){
 async function doLogin(){
   const email = document.getElementById('li-email').value.trim();
   const pass = document.getElementById('li-pass').value;
-  document.getElementById('li-err').textContent = '';
+  const errEl = document.getElementById('li-err');
+  errEl.textContent = 'Signing in…';
+  if(!email || !pass){ errEl.textContent = 'Enter email and password.'; return; }
   try {
     await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged will fire and handle the rest
   } catch(e){
-    document.getElementById('li-err').textContent = friendlyError(e.code);
+    errEl.textContent = friendlyError(e.code) + ' (' + e.code + ')';
   }
 }
 
@@ -3074,4 +3077,3 @@ document.getElementById('li-email')?.addEventListener('keydown', e => { if(e.key
 </script>
 </body>
 </html>
-
