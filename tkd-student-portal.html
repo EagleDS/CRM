@@ -98,11 +98,24 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 
 @media(max-width:600px){
   .layout { flex-direction:column; }
-  .sidebar { width:100%; height:auto; position:static; display:flex; flex-wrap:wrap; padding:6px 8px; gap:2px; }
+  .sidebar {
+    width:100%; height:auto; position:sticky; top:56px;
+    display:flex; flex-direction:row; flex-wrap:nowrap;
+    padding:0; gap:0; border-right:none;
+    border-bottom:1px solid var(--border);
+    overflow-x:auto; z-index:50; background:var(--surface);
+  }
   .nav-label { display:none; }
-  .nav-item { padding:6px 10px; font-size:11px; border-left:none; border-bottom:2px solid transparent; }
-  .nav-item.active { border-bottom-color:var(--red); border-left:none; }
-  .main { padding:18px 16px; }
+  .nav-item {
+    flex:1; min-width:72px; padding:10px 4px;
+    font-size:10px; letter-spacing:0.05em;
+    border-left:none; border-bottom:3px solid transparent;
+    justify-content:center; text-align:center;
+    gap:4px; white-space:nowrap;
+  }
+  .nav-item.active { border-bottom-color:var(--red); border-left:none; background:var(--surface2); }
+  .nav-dot { display:none; }
+  .main { padding:16px 14px; }
   .power-test-grid { grid-template-columns:1fr; }
 }
 ::-webkit-scrollbar { width:4px; }
