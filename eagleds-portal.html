@@ -1324,6 +1324,30 @@ body {
         </div>
 
         <div class="section-title">Pre-Arranged <span>Sequences</span></div>
+                <div style="background:var(--surface2);border:1px solid var(--border);padding:20px 24px;margin-bottom:20px;">
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Purpose</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:16px;">Pre-arranged sparring are sparring drills built on the principle to never let your opponent land their strike while exploiting their movements so you can land clear, point scoring technique.</div>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Three Primary Principles</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;"></div>
+              <div style="font-size:13px;color:var(--white);">Always start and finish in a stance.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;"></div>
+              <div style="font-size:13px;color:var(--white);">Always keep your distance one stance width away.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;"></div>
+              <div style="font-size:13px;color:var(--white);">Always move out of the way with just enough space.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;"></div>
+              <div style="font-size:13px;color:var(--white);">Always bouncing in your stance to build stance stamina.</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">These four principles hold for all pre-arranged sequences — ensuring the student develops the ability to judge distance, throw clear and effective technical form mid-technique of a moving opponent.</div>
+        </div>
         <div id="prearranged-container">
           <div style="color:var(--muted);font-size:13px;">Loading…</div>
         </div>
@@ -2541,14 +2565,21 @@ function renderPoomsaeSteps(pKey, steps){
   if(!steps||!steps.length) return '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Steps loading…</div>';
   let html = '';
   steps.forEach((step, si) => {
-    const pillId = `tkd-pill-${pKey}-${si}`;
     const bdId = `tkd-bd-${pKey}-${si}`;
-    const editBtns = ADMIN_MODE ? `<button class="chain-btn" onclick="event.stopPropagation();editTkdStep('${pKey}',${si})" title="Edit">✎</button>` : '';
-    html += `<div style="display:flex;align-items:flex-start;gap:6px;padding:3px 0;flex-wrap:wrap;">
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted2);flex-shrink:0;min-width:18px;">${si+1}</span>
-      <span class="move-pill" id="${pillId}" onclick="toggleTkdBreakdown('${pKey}',${si})">${step.name||`Step ${si+1}`}</span>
-      ${editBtns}
-    </div><div class="move-breakdown" id="${bdId}"></div>`;
+    const tech = step.t || (step.technical||[]).join(' · ');
+    const exam = (step.examiner||[]).map(e=>`<li style="font-size:12px;color:var(--white);padding:2px 0 2px 12px;position:relative;list-style:none;">${e}</li>`).join('');
+    const editBtn = ADMIN_MODE ? `<button class="chain-btn" onclick="editTkdStep('${pKey}',${si})" style="margin-left:auto;flex-shrink:0;" title="Edit">✎</button>` : '';
+    html += `<div style="background:var(--surface3);border:1px solid var(--border);padding:12px 14px;margin-bottom:6px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.08em;color:var(--gold);margin-bottom:5px;">${step.n||step.name||`Step ${si+1}`}</div>
+          ${tech ? `<div style="font-size:12px;color:var(--muted);line-height:1.6;">${tech}</div>` : ''}
+          ${exam ? `<div style="background:rgba(201,168,76,0.05);border:1px solid var(--gold-dim);padding:8px 12px;margin-top:8px;"><div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Examiner looks for</div><ul>${exam}</ul></div>` : ''}
+        </div>
+        ${editBtn}
+      </div>
+      <div class="move-breakdown" id="${bdId}"></div>
+    </div>`;
   });
   if(ADMIN_MODE){
     html += `<div style="margin-top:10px;">
@@ -2562,6 +2593,7 @@ function renderPoomsaeSteps(pKey, steps){
   }
   return html;
 }
+
 
 function toggleTkdBreakdown(pKey, si){
   const steps = TKD_DATA.poomsae?.[pKey]?.steps || TKD_POOMSAE.find(p=>p.key===pKey)?.steps || [];
@@ -3077,4 +3109,3 @@ document.getElementById('li-email')?.addEventListener('keydown', e => { if(e.key
 </script>
 </body>
 </html>
-
