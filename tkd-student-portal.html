@@ -103,15 +103,17 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
     display:flex; flex-direction:row; flex-wrap:nowrap;
     padding:0; gap:0; border-right:none;
     border-bottom:1px solid var(--border);
-    overflow-x:auto; z-index:50; background:var(--surface);
+    background:var(--surface);
+    z-index:50;
   }
   .nav-label { display:none; }
   .nav-item {
-    flex:1; min-width:72px; padding:10px 4px;
+    flex:1; min-width:0; padding:10px 4px;
     font-size:10px; letter-spacing:0.05em;
     border-left:none; border-bottom:3px solid transparent;
     justify-content:center; text-align:center;
-    gap:4px; white-space:nowrap;
+    gap:4px; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis;
   }
   .nav-item.active { border-bottom-color:var(--red); border-left:none; background:var(--surface2); }
   .nav-dot { display:none; }
