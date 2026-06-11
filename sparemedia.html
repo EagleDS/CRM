@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Media Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #080808;
+  --surface: #101010;
+  --surface2: #161616;
+  --surface3: #1c1c1c;
+  --border: #222;
+  --border-light: #2a2a2a;
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.15);
+  --gold-glow: rgba(201,168,76,0.08);
+  --white: #f0ece4;
+  --muted: #777;
+  --muted2: #444;
+  --red: #c0392b;
+  --green: #27ae60;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-serif; font-size:14px; min-height:100vh; }
+
+/* HEADER */
+.header {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-badge { width:36px; height:36px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:12px; color:var(--black); letter-spacing:0.05em; }
+.logo-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.12em; }
+.logo-sub { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-top:-2px; }
+.header-right { display:flex; align-items:center; gap:12px; }
+.storage-pill { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; color:var(--muted); border:1px solid var(--border); padding:4px 10px; }
+.storage-pill span { color:var(--gold); }
+
+/* MAIN */
+.main { max-width:1100px; margin:0 auto; padding:32px 28px; }
+
+/* UPLOAD ZONE */
+.upload-zone {
+  border:2px dashed var(--border-light);
+  background:var(--surface);
+  padding:40px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.2s;
+  margin-bottom:32px;
+  position:relative;
+}
+.upload-zone:hover, .upload-zone.dragover { border-color:var(--gold); background:var(--gold-glow); }
+.upload-icon { font-size:32px; color:var(--muted2); margin-bottom:12px; }
+.upload-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.12em; color:var(--white); margin-bottom:6px; }
+.upload-sub { font-size:12px; color:var(--muted); }
+.upload-sub span { color:var(--gold); }
+#file-input { display:none; }
+
+/* UPLOAD PROGRESS */
+.upload-progress {
+  display:none;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  padding:16px 20px;
+  margin-bottom:24px;
+}
+.upload-progress.show { display:block; }
+.progress-label { font-size:12px; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; }
+.progress-bar-track { background:var(--surface3); height:3px; }
+.progress-bar-fill { background:var(--gold); height:3px; transition:width 0.3s; width:0%; }
+.progress-filename { font-family:'DM Mono',monospace; font-size:11px; color:var(--gold); margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* SECTION HEADER */
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.1em; color:var(--white); }
+.section-title span { color:var(--gold); }
+.section-count { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; }
+
+/* FILTER BAR */
+.filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.filter-input {
+  flex:1; min-width:160px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--white);
+  padding:8px 12px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; outline:none;
+}
+.filter-input:focus { border-color:var(--gold); }
+.filter-input::placeholder { color:var(--muted2); }
+.view-toggle { display:flex; gap:4px; }
+.view-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:8px 12px; cursor:pointer; font-size:14px; transition:all 0.15s; }
+.view-btn.active { background:var(--gold-glow); border-color:var(--gold); color:var(--gold); }
+
+/* MEDIA GRID */
+.media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.media-grid.list-view { grid-template-columns:1fr; }
+
+/* MEDIA CARD */
+.media-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  overflow:hidden;
+  transition:border-color 0.15s;
+  position:relative;
+}
+.media-card:hover { border-color:var(--border-light); }
+
+/* VIDEO PREVIEW */
+.video-thumb {
+  aspect-ratio:16/9;
+  background:var(--black);
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+}
+.video-thumb video { width:100%; height:100%; object-fit:cover; }
+.video-thumb .play-overlay {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.4);
+  opacity:0; transition:opacity 0.2s;
+}
+.video-thumb:hover .play-overlay { opacity:1; }
+.play-btn { width:44px; height:44px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--black); }
+.video-duration {
+  position:absolute; bottom:6px; right:8px;
+  font-family:'DM Mono',monospace; font-size:10px;
+  background:rgba(0,0,0,0.7); color:var(--white);
+  padding:2px 6px; letter-spacing:0.05em;
+}
+
+/* LIST VIEW THUMB */
+.media-grid.list-view .video-thumb { aspect-ratio:unset; width:120px; height:68px; flex-shrink:0; }
+.media-grid.list-view .media-card { display:flex; align-items:stretch; }
+.media-grid.list-view .media-info { flex:1; }
+
+/* MEDIA INFO */
+.media-info { padding:12px 14px; }
+.media-filename {
+  font-size:12px; font-weight:500;
+  color:var(--white); margin-bottom:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.media-meta {
+  font-family:'DM Mono',monospace; font-size:10px;
+  color:var(--muted); letter-spacing:0.05em;
+  margin-bottom:10px;
+}
+.media-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.action-btn {
+  font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:0.1em; text-transform:uppercase;
+  padding:5px 10px; cursor:pointer; border:1px solid var(--border);
+  background:transparent; color:var(--muted);
+  transition:all 0.15s; white-space:nowrap;
+}
+.action-btn:hover { border-color:var(--gold); color:var(--gold); }
+.action-btn.copy { border-color:var(--border-light); }
+.action-btn.copy.copied { border-color:var(--green); color:var(--green); }
+.action-btn.delete:hover { border-color:var(--red); color:var(--red); }
+.action-btn.preview-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:60px 20px; }
+.empty-icon { font-size:36px; color:var(--muted2); margin-bottom:14px; }
+.empty-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
+.empty-sub { font-size:12px; color:var(--muted2); }
+
+/* VIDEO MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.92); z-index:200;
+  align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-overlay.show { display:flex; }
+.modal-inner { width:100%; max-width:800px; position:relative; }
+.modal-close {
+  position:absolute; top:-40px; right:0;
+  background:transparent; border:1px solid var(--border);
+  color:var(--muted); font-size:16px; cursor:pointer;
+  padding:4px 12px; transition:all 0.15s;
+}
+.modal-close:hover { border-color:var(--red); color:var(--red); }
+.modal-video { width:100%; aspect-ratio:16/9; background:var(--black); }
+.modal-video video { width:100%; height:100%; }
+.modal-info { padding:14px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.modal-filename { font-size:13px; font-weight:500; color:var(--white); }
+.modal-meta { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+.modal-copy-url {
+  font-family:'DM Mono',monospace; font-size:10px;
+  letter-spacing:0.1em; text-transform:uppercase;
+  padding:8px 16px; cursor:pointer;
+  border:1px solid var(--gold); background:transparent;
+  color:var(--gold); transition:all 0.15s;
+}
+.modal-copy-url:hover { background:var(--gold); color:var(--black); }
+.modal-copy-url.copied { background:var(--green); border-color:var(--green); color:var(--white); }
+.modal-url-display {
+  font-family:'DM Mono',monospace; font-size:10px;
+  color:var(--muted); background:var(--surface2);
+  border:1px solid var(--border); padding:8px 12px;
+  width:100%; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; margin-top:8px;
+}
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--surface); border:1px solid var(--gold-dim);
+  color:var(--gold); padding:10px 18px;
+  font-family:'DM Mono',monospace; font-size:11px;
+  letter-spacing:0.1em; text-transform:uppercase;
+  z-index:999; opacity:0; transition:opacity 0.25s;
+  pointer-events:none;
+}
+#toast.show { opacity:1; }
+#toast.err { border-color:var(--red); color:var(--red); }
+
+/* CONFIG NOTICE */
+.config-notice {
+  background:rgba(201,168,76,0.06);
+  border:1px solid var(--gold-dim);
+  padding:16px 20px; margin-bottom:24px;
+  display:flex; align-items:flex-start; gap:12px;
+}
+.config-notice-icon { font-size:16px; color:var(--gold); flex-shrink:0; margin-top:1px; }
+.config-notice-text { font-size:12px; color:var(--muted); line-height:1.7; }
+.config-notice-text strong { color:var(--white); }
+.config-input {
+  background:var(--surface3); border:1px solid var(--border-light);
+  color:var(--white); padding:6px 10px;
+  font-family:'DM Mono',monospace; font-size:11px;
+  outline:none; width:100%; margin-top:6px;
+}
+.config-input:focus { border-color:var(--gold); }
+
+@media(max-width:600px){
+  .main { padding:20px 16px; }
+  .header { padding:0 16px; }
+  .media-grid { grid-template-columns:1fr; }
+  .filter-bar { flex-direction:column; }
+  .filter-input { width:100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-badge">DS</div>
+    <div>
+      <div class="logo-name">EAGLE DS</div>
+      <div class="logo-sub">Media Manager</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="storage-pill">R2 · <span id="storage-used">—</span></div>
+    <div class="storage-pill" id="file-count">— files</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="config-notice" id="config-notice">
+    <div class="config-notice-icon">⚙</div>
+    <div class="config-notice-text" style="flex:1;">
+      <strong>R2 S3-Compatible Configuration Credentials Required.</strong>
+      <input class="config-input" id="cfg-account-id" type="text" placeholder="Paste Account ID here…">
+      <input class="config-input" id="cfg-access-key" type="text" placeholder="Paste Access Key ID here…">
+      <input class="config-input" id="cfg-secret-key" type="password" placeholder="Paste Secret Access Key here…">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="action-btn" onclick="saveCredentials()" style="border-color:var(--gold);color:var(--gold);">Save Setup</button>
+        <button class="action-btn" onclick="document.getElementById('config-notice').style.display='none'">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">⬆</div>
+    <div class="upload-title">Drop Video Here</div>
+    <div class="upload-sub">or tap to browse · <span>MP4, MOV, WebM</span> · Max 500MB</div>
+    <input type="file" id="file-input" accept="video/*" multiple>
+  </div>
+
+  <div class="upload-progress" id="upload-progress">
+    <div class="progress-label">
+      <span id="progress-label-text">Uploading…</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div class="progress-filename" id="progress-filename"></div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Video <span>Library</span></div>
+    <div class="section-count" id="file-count-label">Loading…</div>
+  </div>
+
+  <div class="filter-bar">
+    <input class="filter-input" type="text" id="search-input" placeholder="Search videos…" oninput="filterVideos()">
+    <div class="view-toggle">
+      <button class="view-btn active" id="grid-btn" onclick="setView('grid')" title="Grid view">⊞</button>
+      <button class="view-btn" id="list-btn" onclick="setView('list')" title="List view">☰</button>
+    </div>
+  </div>
+
+  <div class="media-grid" id="media-grid">
+    <div style="grid-column:1/-1;">
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-title">Loading Library</div>
+        <div class="empty-sub">Connecting to R2…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-inner" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕ Close</button>
+    <div class="modal-video"><video id="modal-video" controls playsinline></video></div>
+    <div class="modal-info">
+      <div>
+        <div class="modal-filename" id="modal-filename">—</div>
+        <div class="modal-meta" id="modal-meta">—</div>
+      </div>
+      <button class="modal-copy-url" id="modal-copy-btn" onclick="copyModalUrl()">Copy Portal URL</button>
+    </div>
+    <div class="modal-url-display" id="modal-url-display">—</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const R2_PUBLIC_URL = 'https://pub-7ff93a96101448c39f374948a984f1fa.r2.dev';
+const BUCKET_NAME = 'eagleds-media';
+
+let ACCOUNT_ID = localStorage.getItem('eagle_s3_account_id') || '95e7928c345765ce11607318c0761c4b';
+let ACCESS_KEY = localStorage.getItem('eagle_s3_access_key') || '';
+let SECRET_KEY = localStorage.getItem('eagle_s3_secret_key') || '';
+
+let ALL_FILES = [];
+let CURRENT_VIEW = 'grid';
+let MODAL_URL = '';
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (ACCESS_KEY && SECRET_KEY && ACCOUNT_ID) {
+    document.getElementById('config-notice').style.display = 'none';
+  } else {
+    document.getElementById('cfg-account-id').value = ACCOUNT_ID;
+    document.getElementById('cfg-access-key').value = ACCESS_KEY;
+    document.getElementById('cfg-secret-key').value = SECRET_KEY;
+  }
+  loadLibrary();
+  setupUpload();
+});
+
+function saveCredentials() {
+  const acc = document.getElementById('cfg-account-id').value.trim();
+  const accKey = document.getElementById('cfg-access-key').value.trim();
+  const secKey = document.getElementById('cfg-secret-key').value.trim();
+  
+  if (acc && accKey && secKey) {
+    ACCOUNT_ID = acc;
+    ACCESS_KEY = accKey;
+    SECRET_KEY = secKey;
+    localStorage.setItem('eagle_s3_account_id', ACCOUNT_ID);
+    localStorage.setItem('eagle_s3_access_key', ACCESS_KEY);
+    localStorage.setItem('eagle_s3_secret_key', SECRET_KEY);
+    document.getElementById('config-notice').style.display = 'none';
+    toast('Credentials saved ✓');
+    loadLibrary();
+  } else {
+    toast('Please fill out all 3 boxes', true);
+  }
+}
+
+// ═══════════════════════════════════════
+// S3 CRYPTO GENERATOR METHODS
+// ═══════════════════════════════════════
+async function hmacSha256(key, data) {
+  const cKey = typeof key === 'string' ? new TextEncoder().encode(key) : key;
+  const cryptoKey = await crypto.subtle.importKey('raw', cKey, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, typeof data === 'string' ? new TextEncoder().encode(data) : data);
+  return new Uint8Array(signature);
+}
+
+async function sha256Hex(data) {
+  const msgUint8 = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getSignatureKey(key, dateStamp, regionName, serviceName) {
+  const kDate = await hmacSha256("AWS4" + key, dateStamp);
+  const kRegion = await hmacSha256(kDate, regionName);
+  const kService = await hmacSha256(kRegion, serviceName);
+  return await hmacSha256(kService, "aws4_request");
+}
+
+// ═══════════════════════════════════════
+// LOAD LIBRARY (S3 XML Parsing)
+// ═══════════════════════════════════════
+async function loadLibrary() {
+  if (!ACCESS_KEY || !SECRET_KEY) { showManualLibrary(); return; }
+  try {
+    const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const url = `https://${host}/`;
+    const method = 'GET';
+    
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+    const dateStamp = amzDate.substr(0, 8);
+    
+    const canonicalUri = '/';
+    const canonicalQuery = '';
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+    
+    const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+    const signatureArray = await hmacSha256(signingKey, stringToSign);
+    const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+    
+    const resp = await fetch(url, {
+      headers: {
+        'Authorization': authHeader,
+        'X-Amz-Date': amzDate,
+        'X-Amz-Content-SHA256': payloadHash
+      }
+    });
+    
+    if (!resp.ok) throw new Error(`Status ${resp.status}`);
+    const xmlText = await resp.text();
+    
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const contents = xmlDoc.getElementsByTagName("Contents");
+    
+    ALL_FILES = [];
+    for (let item of contents) {
+      const key = item.getElementsByTagName("Key")[0]?.textContent;
+      const size = parseInt(item.getElementsByTagName("Size")[0]?.textContent || '0');
+      const uploaded = item.getElementsByTagName("LastModified")[0]?.textContent;
+      if (key && isVideo(key)) {
+        ALL_FILES.push({ key, size, uploaded });
+      }
+    }
+    renderLibrary(ALL_FILES);
+  } catch(e) {
+    console.error(e);
+    showManualLibrary();
+  }
+}
+
+function showManualLibrary() {
+  const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
+  ALL_FILES = manifest;
+  renderLibrary(ALL_FILES);
+}
+
+function isVideo(name) {
+  return /\.(mp4|mov|webm|avi|mkv)$/i.test(name);
+}
+
+// ═══════════════════════════════════════
+// RENDER LIBRARY
+// ═══════════════════════════════════════
+function renderLibrary(files) {
+  const grid = document.getElementById('media-grid');
+  const label = document.getElementById('file-count-label');
+  const counter = document.getElementById('file-count');
+
+  label.textContent = `${files.length} video${files.length!==1?'s':''}`;
+  counter.textContent = `${files.length} files`;
+
+  if (!files.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;">
+      <div class="empty-state">
+        <div class="empty-icon">🎬</div>
+        <div class="empty-title">No Videos Yet</div>
+        <div class="empty-sub">Upload your first sequence or poomsae video above</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  grid.className = `media-grid${CURRENT_VIEW==='list'?' list-view':''}`;
+  grid.innerHTML = files.map(f => renderCard(f)).join('');
+}
+
+function renderCard(f) {
+  const name = f.key || f.name || 'unknown';
+  const url = `${R2_PUBLIC_URL}/${encodeURIComponent(name)}`;
+  const size = f.size ? formatSize(f.size) : '—';
+  const date = f.uploaded ? new Date(f.uploaded).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}) : '—';
+
+  return `<div class="media-card">
+    <div class="video-thumb" onclick="openModal('${url.replace(/'/g,'%27')}','${name.replace(/'/g,"\'")}','${size} · ${date}')">
+      <video src="${url}" preload="metadata" muted playsinline></video>
+      <div class="play-overlay"><div class="play-btn">▶</div></div>
+    </div>
+    <div class="media-info">
+      <div class="media-filename" title="${name}">${name}</div>
+      <div class="media-meta">${size} · ${date}</div>
+      <div class="media-actions">
+        <button class="action-btn preview-btn" onclick="openModal('${url.replace(/'/g,'%27')}','${name.replace(/'/g,"\'")}','${size} · ${date}')">Preview</button>
+        <button class="action-btn copy" onclick="copyUrl('${url.replace(/'/g,'%27')}',this)">Copy URL</button>
+        <a href="${url}" download="${name}" style="text-decoration:none;"><button class="action-btn">Download</button></a>
+        <button class="action-btn delete" onclick="deleteFile('${name.replace(/'/g,"\'")}',this)">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1)+'MB';
+  return (bytes/1024/1024/1024).toFixed(2)+'GB';
+}
+
+function filterVideos() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = ALL_FILES.filter(f => (f.key||f.name||'').toLowerCase().includes(q));
+  renderLibrary(filtered);
+}
+
+function setView(v) {
+  CURRENT_VIEW = v;
+  document.getElementById('grid-btn').classList.toggle('active', v==='grid');
+  document.getElementById('list-btn').classList.toggle('active', v==='list');
+  renderLibrary(ALL_FILES);
+}
+
+// ═══════════════════════════════════════
+// S3 NATIVE UPLOADER ENGINE
+// ═══════════════════════════════════════
+function setupUpload() {
+  const zone = document.getElementById('upload-zone');
+  const input = document.getElementById('file-input');
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('video/'));
+    if (files.length) uploadFiles(files);
+  });
+
+  input.addEventListener('change', e => {
+    if (e.target.files.length) uploadFiles([...e.target.files]);
+    input.value = '';
+  });
+}
+
+async function uploadFiles(files) {
+  for (const file of files) { await uploadFile(file); }
+}
+
+async function uploadFile(file) {
+  const progress = document.getElementById('upload-progress');
+  const fill = document.getElementById('progress-fill');
+  const pct = document.getElementById('progress-pct');
+  const label = document.getElementById('progress-label-text');
+  const fname = document.getElementById('progress-filename');
+
+  progress.classList.add('show');
+  fill.style.width = '0%';
+  fill.style.background = 'var(--gold)';
+  pct.textContent = '0%';
+  label.textContent = `Uploading ${file.name}…`;
+  fname.textContent = file.name;
+
+  try {
+    const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const uploadUrl = `https://${host}/${encodeURIComponent(file.name)}`;
+    const method = 'PUT';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const fileUint8 = new Uint8Array(arrayBuffer);
+    const payloadHash = await sha256Hex(fileUint8);
+
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+    const dateStamp = amzDate.substr(0, 8);
+
+    const canonicalUri = '/' + encodeURIComponent(file.name);
+    const canonicalQuery = '';
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+
+    const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+    const signatureArray = await hmacSha256(signingKey, stringToSign);
+    const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Authorization', authHeader);
+      xhr.setRequestHeader('X-Amz-Date', amzDate);
+      xhr.setRequestHeader('X-Amz-Content-SHA256', payloadHash);
+      xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const p = Math.round(e.loaded / e.total * 100);
+          fill.style.width = p + '%';
+          pct.textContent = p + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200 || xhr.status === 201) resolve();
+        else reject(new Error(`Server error: ${xhr.status}`));
+      };
+      xhr.onerror = () => reject(new Error('Network structure failure'));
+      xhr.send(file);
+    });
+
+    const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
+    const existing = manifest.findIndex(f => f.name === file.name);
+    const entry = { name: file.name, key: file.name, size: file.size, uploaded: new Date().toISOString() };
+    if (existing >= 0) manifest[existing] = entry;
+    else manifest.unshift(entry);
+    localStorage.setItem('eagle_r2_manifest', JSON.stringify(manifest));
+
+    fill.style.width = '100%';
+    pct.textContent = '100%';
+    label.textContent = '✓ Uploaded';
+    toast(`${file.name} uploaded ✓`);
+
+    setTimeout(() => {
+      progress.classList.remove('show');
+      loadLibrary();
+    }, 1200);
+
+  } catch(e) {
+    label.textContent = '✗ ' + e.message;
+    pct.textContent = 'Error';
+    fill.style.background = 'var(--red)';
+    toast('Upload missing components: ' + e.message, true);
+    setTimeout(() => {
+      progress.classList.remove('show');
+      fill.style.background = 'var(--gold)';
+    }, 3000);
+  }
+}
+
+function copyUrl(url, btn) {
+  navigator.clipboard.writeText(decodeURIComponent(url)).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    toast('URL copied ✓');
+  });
+}
+
+// ═══════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════
+async function deleteFile(name, btn) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+
+  const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
+  const updated = manifest.filter(f => f.name !== name && f.key !== name);
+  localStorage.setItem('eagle_r2_manifest', JSON.stringify(updated));
+  ALL_FILES = updated;
+  renderLibrary(ALL_FILES);
+  toast('File deleted');
+
+  if (ACCESS_KEY && SECRET_KEY) {
+    try {
+      const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+      const url = `https://` + host + `/` + encodeURIComponent(name);
+      const method = 'DELETE';
+      
+      const now = new Date();
+      const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+      const dateStamp = amzDate.substr(0, 8);
+      
+      const canonicalUri = '/' + encodeURIComponent(name);
+      const canonicalQuery = '';
+      const canonicalHeaders = `host:${host}\nx-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nx-amz-date:${amzDate}\n`;
+      const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+      const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+      
+      const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+      const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+      const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+      
+      const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+      const signatureArray = await hmacSha256(signingKey, stringToSign);
+      const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+      
+      await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': authHeader,
+          'X-Amz-Date': amzDate,
+          'X-Amz-Content-SHA256': payloadHash
+        }
+      });
+      loadLibrary();
+    } catch(e){}
+  }
+}
+
+function openModal(url, name, meta) {
+  MODAL_URL = decodeURIComponent(url);
+  document.getElementById('modal-video').src = MODAL_URL;
+  document.getElementById('modal-filename').textContent = name;
+  document.getElementById('modal-meta').textContent = meta;
+  document.getElementById('modal-url-display').textContent = MODAL_URL;
+  document.getElementById('modal-copy-btn').textContent = 'Copy Portal URL';
+  document.getElementById('modal-copy-btn').classList.remove('copied');
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('show');
+  document.getElementById('modal-video').pause();
+  document.getElementById('modal-video').src = '';
+}
+
+function copyModalUrl() {
+  navigator.clipboard.writeText(MODAL_URL).then(() => {
+    const btn = document.getElementById('modal-copy-btn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Portal URL'; btn.classList.remove('copied'); }, 2000);
+    toast('URL copied — paste into portal edit mode ✓');
+  });
+}
+
+function toast(msg, err=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (err?' err':'');
+  setTimeout(() => el.className = '', 2800);
+}
+</script>
+</body>
+</html>
