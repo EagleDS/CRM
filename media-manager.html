@@ -199,6 +199,14 @@ body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif
     </div>
     <div class="filter-bar">
       <input class="filter-input" type="text" id="search-input" placeholder="Search videos&hellip;" oninput="filterVideos()">
+      <select id="sort-select" onchange="sortVideos()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);padding:8px 10px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;outline:none;text-transform:uppercase;">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="name-asc">Name A–Z</option>
+        <option value="name-desc">Name Z–A</option>
+        <option value="size-desc">Largest First</option>
+        <option value="size-asc">Smallest First</option>
+      </select>
       <div class="view-toggle">
         <button class="view-btn active" id="grid-btn" onclick="setView('grid')">&#x229E;</button>
         <button class="view-btn" id="list-btn" onclick="setView('list')">&#x2630;</button>
@@ -346,10 +354,28 @@ function renderCard(f){
   const size=f.size?formatSize(f.size):'&#8212;';
   const date=f.uploaded?new Date(f.uploaded).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}):'&#8212;';
   const eu=url.replace(/'/g,'%27');const en=name.replace(/'/g,"\\'");
-  return `<div class="media-card"><div class="video-thumb" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')"><video src="${url}" preload="metadata" muted playsinline></video><div class="play-overlay"><div class="play-btn">&#x25B6;</div></div></div><div class="media-info"><div class="media-filename" title="${name}">${name}</div><div class="media-meta">${size} &middot; ${date}</div><div class="media-actions"><button class="action-btn" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')">Preview</button><button class="action-btn copy" onclick="copyUrl('${eu}',this)">Copy URL</button><a href="${url}" download="${name}" style="text-decoration:none"><button class="action-btn">Download</button></a><button class="action-btn" onclick="renameFile('${en}',this)">Rename</button><button class="action-btn delete" onclick="deleteFile('${en}',this,false)">Delete</button></div></div></div>`;
+  return `<div class="media-card"><div class="video-thumb" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')"><video src="${url}" preload="metadata" muted playsinline onloadedmetadata="setDuration(this,'dur-${encodeURIComponent(name)}')"></video><div class="video-duration" id="dur-${encodeURIComponent(name)}"></div><div class="play-overlay"><div class="play-btn">&#x25B6;</div></div></div><div class="media-info"><div class="media-filename" title="${name}">${name}</div><div class="media-meta">${size} &middot; ${date}</div><div class="media-actions"><button class="action-btn" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')">Preview</button><button class="action-btn copy" onclick="copyUrl('${eu}',this)">Copy URL</button><a href="${url}" download="${name}" style="text-decoration:none"><button class="action-btn">Download</button></a><button class="action-btn" onclick="renameFile('${en}',this)">Rename</button><button class="action-btn delete" onclick="deleteFile('${en}',this,false)">Delete</button></div></div></div>`;
 }
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(1)+'KB';if(b<1073741824)return(b/1048576).toFixed(1)+'MB';return(b/1073741824).toFixed(2)+'GB';}
-function filterVideos(){const q=document.getElementById('search-input').value.toLowerCase();renderLibrary(ALL_FILES.filter(f=>(f.key||f.name||'').toLowerCase().includes(q)));}
+function sortVideos(){
+  const val=document.getElementById('sort-select').value;
+  const q=document.getElementById('search-input').value.toLowerCase();
+  let files=[...ALL_FILES].filter(f=>(f.key||f.name||'').toLowerCase().includes(q));
+  if(val==='date-desc') files.sort((a,b)=>new Date(b.uploaded||0)-new Date(a.uploaded||0));
+  else if(val==='date-asc') files.sort((a,b)=>new Date(a.uploaded||0)-new Date(b.uploaded||0));
+  else if(val==='name-asc') files.sort((a,b)=>(a.key||a.name||'').localeCompare(b.key||b.name||''));
+  else if(val==='name-desc') files.sort((a,b)=>(b.key||b.name||'').localeCompare(a.key||a.name||''));
+  else if(val==='size-desc') files.sort((a,b)=>(b.size||0)-(a.size||0));
+  else if(val==='size-asc') files.sort((a,b)=>(a.size||0)-(b.size||0));
+  renderLibrary(files);
+}
+function setDuration(video,id){
+  const d=video.duration;if(!d||isNaN(d))return;
+  const m=Math.floor(d/60),s=Math.floor(d%60);
+  const el=document.getElementById(id);
+  if(el)el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+}
+function filterVideos(){sortVideos();}
 function setView(v){CURRENT_VIEW=v;document.getElementById('grid-btn').classList.toggle('active',v==='grid');document.getElementById('list-btn').classList.toggle('active',v==='list');renderLibrary(ALL_FILES);}
 
 // UPLOAD
