@@ -169,8 +169,15 @@ body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif
       </div>
     </div>
     <div class="header-right">
-      <div class="storage-pill">R2 <span>eagleds-media</span></div>
-      <div class="storage-pill" id="file-count">&#8212; files</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="storage-pill" id="file-count">&#8212; files</div>
+        <div id="storage-meter" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;"><span id="storage-used-text">&#8212;</span> <span style="color:var(--muted2);">/ 10 GB</span></div>
+          <div style="width:120px;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;">
+            <div id="storage-bar" style="height:100%;width:0%;background:var(--gold);transition:width 0.4s;border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -320,6 +327,15 @@ function renderLibrary(files){
   const grid=document.getElementById('media-grid');
   document.getElementById('file-count-label').textContent=`${files.length} video${files.length!==1?'s':''}`;
   document.getElementById('file-count').textContent=`${files.length} files`;
+  // Storage meter
+  const totalBytes=files.reduce((sum,f)=>sum+(f.size||0),0);
+  const totalGB=totalBytes/1073741824;
+  const pct=Math.min(totalGB/10*100,100);
+  const usedText=totalBytes<1048576?(totalBytes/1024).toFixed(1)+' KB':totalBytes<1073741824?(totalBytes/1048576).toFixed(1)+' MB':totalGB.toFixed(2)+' GB';
+  const bar=document.getElementById('storage-bar');
+  const txt=document.getElementById('storage-used-text');
+  if(bar){bar.style.width=pct+'%';bar.style.background=pct>85?'var(--red)':pct>60?'#c9a000':'var(--gold)';}
+  if(txt)txt.textContent=usedText;
   if(!files.length){grid.innerHTML='<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">&#x1F3AC;</div><div class="empty-title">No Videos Yet</div><div class="empty-sub">Upload your first sequence or poomsae video above</div></div></div>';return;}
   grid.className=`media-grid${CURRENT_VIEW==='list'?' list-view':''}`;
   grid.innerHTML=files.map(f=>renderCard(f)).join('');
