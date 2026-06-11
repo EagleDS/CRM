@@ -274,20 +274,20 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 
 <div class="main">
 
-  <!-- CONFIG -->
   <div class="config-notice" id="config-notice">
     <div class="config-notice-icon">⚙</div>
     <div class="config-notice-text" style="flex:1;">
-      <strong>R2 API Token required for uploads.</strong> Reading and previewing videos works via the public URL. To enable uploads you need an R2 API token with write access. <a href="https://dash.cloudflare.com" target="_blank" style="color:var(--gold);">Get it from Cloudflare dashboard → R2 → Manage API Tokens</a>
-      <input class="config-input" id="api-token-input" type="password" placeholder="Paste R2 API token here to enable uploads…">
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <button class="action-btn" onclick="saveToken()" style="border-color:var(--gold);color:var(--gold);">Save Token</button>
+      <strong>R2 S3-Compatible Configuration Credentials Required.</strong>
+      <input class="config-input" id="cfg-account-id" type="text" placeholder="Paste Account ID here…">
+      <input class="config-input" id="cfg-access-key" type="text" placeholder="Paste Access Key ID here…">
+      <input class="config-input" id="cfg-secret-key" type="password" placeholder="Paste Secret Access Key here…">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="action-btn" onclick="saveCredentials()" style="border-color:var(--gold);color:var(--gold);">Save Setup</button>
         <button class="action-btn" onclick="document.getElementById('config-notice').style.display='none'">Dismiss</button>
       </div>
     </div>
   </div>
 
-  <!-- UPLOAD ZONE -->
   <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
     <div class="upload-icon">⬆</div>
     <div class="upload-title">Drop Video Here</div>
@@ -295,7 +295,6 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
     <input type="file" id="file-input" accept="video/*" multiple>
   </div>
 
-  <!-- PROGRESS -->
   <div class="upload-progress" id="upload-progress">
     <div class="progress-label">
       <span id="progress-label-text">Uploading…</span>
@@ -305,7 +304,6 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
     <div class="progress-filename" id="progress-filename"></div>
   </div>
 
-  <!-- LIBRARY -->
   <div class="section-header">
     <div class="section-title">Video <span>Library</span></div>
     <div class="section-count" id="file-count-label">Loading…</div>
@@ -331,7 +329,6 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 
 </div>
 
-<!-- VIDEO MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal-inner" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()">✕ Close</button>
@@ -354,66 +351,146 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 // CONFIG
 // ═══════════════════════════════════════
 const R2_PUBLIC_URL = 'https://pub-7ff93a96101448c39f374948a984f1fa.r2.dev';
-const ACCOUNT_ID = '95e7928c345765ce11607318c0761c4b';
 const BUCKET_NAME = 'eagleds-media';
 
-let API_TOKEN = localStorage.getItem('eagle_r2_token') || '';
+let ACCOUNT_ID = localStorage.getItem('eagle_s3_account_id') || '95e7928c345765ce11607318c0761c4b';
+let ACCESS_KEY = localStorage.getItem('eagle_s3_access_key') || '';
+let SECRET_KEY = localStorage.getItem('eagle_s3_secret_key') || '';
+
 let ALL_FILES = [];
 let CURRENT_VIEW = 'grid';
 let MODAL_URL = '';
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  if(API_TOKEN) document.getElementById('config-notice').style.display = 'none';
+  if (ACCESS_KEY && SECRET_KEY && ACCOUNT_ID) {
+    document.getElementById('config-notice').style.display = 'none';
+  } else {
+    document.getElementById('cfg-account-id').value = ACCOUNT_ID;
+    document.getElementById('cfg-access-key').value = ACCESS_KEY;
+    document.getElementById('cfg-secret-key').value = SECRET_KEY;
+  }
   loadLibrary();
   setupUpload();
 });
 
-function saveToken(){
-  API_TOKEN = document.getElementById('api-token-input').value.trim();
-  if(API_TOKEN){
-    localStorage.setItem('eagle_r2_token', API_TOKEN);
+function saveCredentials() {
+  const acc = document.getElementById('cfg-account-id').value.trim();
+  const accKey = document.getElementById('cfg-access-key').value.trim();
+  const secKey = document.getElementById('cfg-secret-key').value.trim();
+  
+  if (acc && accKey && secKey) {
+    ACCOUNT_ID = acc;
+    ACCESS_KEY = accKey;
+    SECRET_KEY = secKey;
+    localStorage.setItem('eagle_s3_account_id', ACCOUNT_ID);
+    localStorage.setItem('eagle_s3_access_key', ACCESS_KEY);
+    localStorage.setItem('eagle_s3_secret_key', SECRET_KEY);
     document.getElementById('config-notice').style.display = 'none';
-    toast('Token saved ✓');
+    toast('Credentials saved ✓');
     loadLibrary();
+  } else {
+    toast('Please fill out all 3 boxes', true);
   }
 }
 
 // ═══════════════════════════════════════
-// LOAD LIBRARY — GET list from R2
+// S3 CRYPTO GENERATOR METHODS
 // ═══════════════════════════════════════
-async function loadLibrary(){
-  if(!API_TOKEN){ showManualLibrary(); return; }
+async function hmacSha256(key, data) {
+  const cKey = typeof key === 'string' ? new TextEncoder().encode(key) : key;
+  const cryptoKey = await crypto.subtle.importKey('raw', cKey, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, typeof data === 'string' ? new TextEncoder().encode(data) : data);
+  return new Uint8Array(signature);
+}
+
+async function sha256Hex(data) {
+  const msgUint8 = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getSignatureKey(key, dateStamp, regionName, serviceName) {
+  const kDate = await hmacSha256("AWS4" + key, dateStamp);
+  const kRegion = await hmacSha256(kDate, regionName);
+  const kService = await hmacSha256(kRegion, serviceName);
+  return await hmacSha256(kService, "aws4_request");
+}
+
+// ═══════════════════════════════════════
+// LOAD LIBRARY (S3 XML Parsing)
+// ═══════════════════════════════════════
+async function loadLibrary() {
+  if (!ACCESS_KEY || !SECRET_KEY) { showManualLibrary(); return; }
   try {
-    const resp = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects`,
-      { headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
-    );
-    if(!resp.ok) throw new Error(`List failed: ${resp.status}`);
-    const data = await resp.json();
-    ALL_FILES = (data.result?.objects || []).filter(f => isVideo(f.key));
+    const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const url = `https://${host}/`;
+    const method = 'GET';
+    
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+    const dateStamp = amzDate.substr(0, 8);
+    
+    const canonicalUri = '/';
+    const canonicalQuery = '';
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+    
+    const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+    const signatureArray = await hmacSha256(signingKey, stringToSign);
+    const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+    
+    const resp = await fetch(url, {
+      headers: {
+        'Authorization': authHeader,
+        'X-Amz-Date': amzDate,
+        'X-Amz-Content-SHA256': payloadHash
+      }
+    });
+    
+    if (!resp.ok) throw new Error(`Status ${resp.status}`);
+    const xmlText = await resp.text();
+    
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const contents = xmlDoc.getElementsByTagName("Contents");
+    
+    ALL_FILES = [];
+    for (let item of contents) {
+      const key = item.getElementsByTagName("Key")[0]?.textContent;
+      const size = parseInt(item.getElementsByTagName("Size")[0]?.textContent || '0');
+      const uploaded = item.getElementsByTagName("LastModified")[0]?.textContent;
+      if (key && isVideo(key)) {
+        ALL_FILES.push({ key, size, uploaded });
+      }
+    }
     renderLibrary(ALL_FILES);
   } catch(e) {
+    console.error(e);
     showManualLibrary();
   }
 }
 
-function showManualLibrary(){
+function showManualLibrary() {
   const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
   ALL_FILES = manifest;
   renderLibrary(ALL_FILES);
 }
 
-function isVideo(name){
+function isVideo(name) {
   return /\.(mp4|mov|webm|avi|mkv)$/i.test(name);
 }
 
 // ═══════════════════════════════════════
 // RENDER LIBRARY
 // ═══════════════════════════════════════
-function renderLibrary(files){
+function renderLibrary(files) {
   const grid = document.getElementById('media-grid');
   const label = document.getElementById('file-count-label');
   const counter = document.getElementById('file-count');
@@ -421,7 +498,7 @@ function renderLibrary(files){
   label.textContent = `${files.length} video${files.length!==1?'s':''}`;
   counter.textContent = `${files.length} files`;
 
-  if(!files.length){
+  if (!files.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;">
       <div class="empty-state">
         <div class="empty-icon">🎬</div>
@@ -436,7 +513,7 @@ function renderLibrary(files){
   grid.innerHTML = files.map(f => renderCard(f)).join('');
 }
 
-function renderCard(f){
+function renderCard(f) {
   const name = f.key || f.name || 'unknown';
   const url = `${R2_PUBLIC_URL}/${encodeURIComponent(name)}`;
   const size = f.size ? formatSize(f.size) : '—';
@@ -460,22 +537,19 @@ function renderCard(f){
   </div>`;
 }
 
-function formatSize(bytes){
-  if(bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
-  if(bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1)+'MB';
+function formatSize(bytes) {
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1)+'MB';
   return (bytes/1024/1024/1024).toFixed(2)+'GB';
 }
 
-// ═══════════════════════════════════════
-// FILTER
-// ═══════════════════════════════════════
-function filterVideos(){
+function filterVideos() {
   const q = document.getElementById('search-input').value.toLowerCase();
   const filtered = ALL_FILES.filter(f => (f.key||f.name||'').toLowerCase().includes(q));
   renderLibrary(filtered);
 }
 
-function setView(v){
+function setView(v) {
   CURRENT_VIEW = v;
   document.getElementById('grid-btn').classList.toggle('active', v==='grid');
   document.getElementById('list-btn').classList.toggle('active', v==='list');
@@ -483,9 +557,9 @@ function setView(v){
 }
 
 // ═══════════════════════════════════════
-// UPLOAD — PUT object via Cloudflare Client API
+// S3 NATIVE UPLOADER ENGINE
 // ═══════════════════════════════════════
-function setupUpload(){
+function setupUpload() {
   const zone = document.getElementById('upload-zone');
   const input = document.getElementById('file-input');
 
@@ -495,20 +569,20 @@ function setupUpload(){
     e.preventDefault();
     zone.classList.remove('dragover');
     const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('video/'));
-    if(files.length) uploadFiles(files);
+    if (files.length) uploadFiles(files);
   });
 
   input.addEventListener('change', e => {
-    if(e.target.files.length) uploadFiles([...e.target.files]);
+    if (e.target.files.length) uploadFiles([...e.target.files]);
     input.value = '';
   });
 }
 
-async function uploadFiles(files){
-  for(const file of files){ await uploadFile(file); }
+async function uploadFiles(files) {
+  for (const file of files) { await uploadFile(file); }
 }
 
-async function uploadFile(file){
+async function uploadFile(file) {
   const progress = document.getElementById('upload-progress');
   const fill = document.getElementById('progress-fill');
   const pct = document.getElementById('progress-pct');
@@ -523,36 +597,61 @@ async function uploadFile(file){
   fname.textContent = file.name;
 
   try {
-    // PUT to Cloudflare Client API — accepts standard Bearer tokens
-    const uploadUrl = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(file.name)}`;
+    const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const uploadUrl = `https://${host}/${encodeURIComponent(file.name)}`;
+    const method = 'PUT';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const fileUint8 = new Uint8Array(arrayBuffer);
+    const payloadHash = await sha256Hex(fileUint8);
+
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+    const dateStamp = amzDate.substr(0, 8);
+
+    const canonicalUri = '/' + encodeURIComponent(file.name);
+    const canonicalQuery = '';
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+
+    const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+    const signatureArray = await hmacSha256(signingKey, stringToSign);
+    const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
     await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
+      xhr.setRequestHeader('Authorization', authHeader);
+      xhr.setRequestHeader('X-Amz-Date', amzDate);
+      xhr.setRequestHeader('X-Amz-Content-SHA256', payloadHash);
       xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
 
       xhr.upload.onprogress = e => {
-        if(e.lengthComputable){
-          const p = Math.round(e.loaded/e.total*100);
-          fill.style.width = p+'%';
-          pct.textContent = p+'%';
+        if (e.lengthComputable) {
+          const p = Math.round(e.loaded / e.total * 100);
+          fill.style.width = p + '%';
+          pct.textContent = p + '%';
         }
       };
 
       xhr.onload = () => {
-        if(xhr.status === 200){ resolve(); }
-        else { reject(new Error(`Upload failed: ${xhr.status}`)); }
+        if (xhr.status === 200 || xhr.status === 201) resolve();
+        else reject(new Error(`Server error: ${xhr.status}`));
       };
-      xhr.onerror = () => reject(new Error('Network or CORS error'));
+      xhr.onerror = () => reject(new Error('Network structure failure'));
       xhr.send(file);
     });
 
-    // Add to local manifest
     const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
     const existing = manifest.findIndex(f => f.name === file.name);
     const entry = { name: file.name, key: file.name, size: file.size, uploaded: new Date().toISOString() };
-    if(existing >= 0) manifest[existing] = entry;
+    if (existing >= 0) manifest[existing] = entry;
     else manifest.unshift(entry);
     localStorage.setItem('eagle_r2_manifest', JSON.stringify(manifest));
 
@@ -567,10 +666,10 @@ async function uploadFile(file){
     }, 1200);
 
   } catch(e) {
-    label.textContent = '✗ Upload failed — ' + e.message;
+    label.textContent = '✗ ' + e.message;
     pct.textContent = 'Error';
     fill.style.background = 'var(--red)';
-    toast('Upload failed: ' + e.message, true);
+    toast('Upload missing components: ' + e.message, true);
     setTimeout(() => {
       progress.classList.remove('show');
       fill.style.background = 'var(--gold)';
@@ -578,10 +677,7 @@ async function uploadFile(file){
   }
 }
 
-// ═══════════════════════════════════════
-// COPY URL
-// ═══════════════════════════════════════
-function copyUrl(url, btn){
+function copyUrl(url, btn) {
   navigator.clipboard.writeText(decodeURIComponent(url)).then(() => {
     const orig = btn.textContent;
     btn.textContent = '✓ Copied';
@@ -592,12 +688,11 @@ function copyUrl(url, btn){
 }
 
 // ═══════════════════════════════════════
-// DELETE — DELETE object via Cloudflare Client API
+// DELETE
 // ═══════════════════════════════════════
-async function deleteFile(name, btn){
-  if(!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+async function deleteFile(name, btn) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
 
-  // Remove from local manifest
   const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
   const updated = manifest.filter(f => f.name !== name && f.key !== name);
   localStorage.setItem('eagle_r2_manifest', JSON.stringify(updated));
@@ -605,21 +700,46 @@ async function deleteFile(name, btn){
   renderLibrary(ALL_FILES);
   toast('File deleted');
 
-  // DELETE via Cloudflare Client API
-  if(API_TOKEN){
+  if (ACCESS_KEY && SECRET_KEY) {
     try {
-      await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(name)}`,
-        { method: 'DELETE', headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
-      );
+      const host = `${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+      const url = `https://` + host + `/` + encodeURIComponent(name);
+      const method = 'DELETE';
+      
+      const now = new Date();
+      const amzDate = now.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+      const dateStamp = amzDate.substr(0, 8);
+      
+      const canonicalUri = '/' + encodeURIComponent(name);
+      const canonicalQuery = '';
+      const canonicalHeaders = `host:${host}\nx-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nx-amz-date:${amzDate}\n`;
+      const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+      const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+      
+      const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+      const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+      const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+      
+      const signingKey = await getSignatureKey(SECRET_KEY, dateStamp, 'auto', 's3');
+      const signatureArray = await hmacSha256(signingKey, stringToSign);
+      const signature = Array.from(signatureArray).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const authHeader = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+      
+      await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': authHeader,
+          'X-Amz-Date': amzDate,
+          'X-Amz-Content-SHA256': payloadHash
+        }
+      });
+      loadLibrary();
     } catch(e){}
   }
 }
 
-// ═══════════════════════════════════════
-// MODAL
-// ═══════════════════════════════════════
-function openModal(url, name, meta){
+function openModal(url, name, meta) {
   MODAL_URL = decodeURIComponent(url);
   document.getElementById('modal-video').src = MODAL_URL;
   document.getElementById('modal-filename').textContent = name;
@@ -630,14 +750,14 @@ function openModal(url, name, meta){
   document.getElementById('modal').classList.add('show');
 }
 
-function closeModal(e){
-  if(e && e.target !== document.getElementById('modal')) return;
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
   document.getElementById('modal').classList.remove('show');
   document.getElementById('modal-video').pause();
   document.getElementById('modal-video').src = '';
 }
 
-function copyModalUrl(){
+function copyModalUrl() {
   navigator.clipboard.writeText(MODAL_URL).then(() => {
     const btn = document.getElementById('modal-copy-btn');
     btn.textContent = '✓ Copied';
@@ -647,10 +767,7 @@ function copyModalUrl(){
   });
 }
 
-// ═══════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════
-function toast(msg, err=false){
+function toast(msg, err=false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'show' + (err?' err':'');
