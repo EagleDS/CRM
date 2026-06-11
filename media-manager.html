@@ -331,7 +331,7 @@ function renderCard(f){
   const size=f.size?formatSize(f.size):'&#8212;';
   const date=f.uploaded?new Date(f.uploaded).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}):'&#8212;';
   const eu=url.replace(/'/g,'%27');const en=name.replace(/'/g,"\\'");
-  return `<div class="media-card"><div class="video-thumb" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')"><video src="${url}" preload="metadata" muted playsinline></video><div class="play-overlay"><div class="play-btn">&#x25B6;</div></div></div><div class="media-info"><div class="media-filename" title="${name}">${name}</div><div class="media-meta">${size} &middot; ${date}</div><div class="media-actions"><button class="action-btn" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')">Preview</button><button class="action-btn copy" onclick="copyUrl('${eu}',this)">Copy URL</button><a href="${url}" download="${name}" style="text-decoration:none"><button class="action-btn">Download</button></a><button class="action-btn delete" onclick="deleteFile('${en}',this)">Delete</button></div></div></div>`;
+  return `<div class="media-card"><div class="video-thumb" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')"><video src="${url}" preload="metadata" muted playsinline></video><div class="play-overlay"><div class="play-btn">&#x25B6;</div></div></div><div class="media-info"><div class="media-filename" title="${name}">${name}</div><div class="media-meta">${size} &middot; ${date}</div><div class="media-actions"><button class="action-btn" onclick="openModal('${eu}','${en}','${size} &middot; ${date}')">Preview</button><button class="action-btn copy" onclick="copyUrl('${eu}',this)">Copy URL</button><a href="${url}" download="${name}" style="text-decoration:none"><button class="action-btn">Download</button></a><button class="action-btn" onclick="renameFile('${en}',this)">Rename</button><button class="action-btn delete" onclick="deleteFile('${en}',this,false)">Delete</button></div></div></div>`;
 }
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(1)+'KB';if(b<1073741824)return(b/1048576).toFixed(1)+'MB';return(b/1073741824).toFixed(2)+'GB';}
 function filterVideos(){const q=document.getElementById('search-input').value.toLowerCase();renderLibrary(ALL_FILES.filter(f=>(f.key||f.name||'').toLowerCase().includes(q)));}
@@ -389,8 +389,8 @@ async function uploadFile(file){
 
 function copyUrl(url,btn){navigator.clipboard.writeText(decodeURIComponent(url)).then(()=>{const o=btn.textContent;btn.textContent='\u2713 Copied';btn.classList.add('copied');setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied');},2000);toast('URL copied \u2713');});}
 
-async function deleteFile(name){
-  if(!confirm(`Delete "${name}"? This cannot be undone.`))return;
+async function deleteFile(name,btn,silent=false){
+  if(!silent&&!confirm(`Delete "${name}"? This cannot be undone.`))return;
   const manifest=JSON.parse(localStorage.getItem('eagle_r2_manifest')||'[]');
   localStorage.setItem('eagle_r2_manifest',JSON.stringify(manifest.filter(f=>f.name!==name&&f.key!==name)));
   ALL_FILES=ALL_FILES.filter(f=>(f.key||f.name)!==name);renderLibrary(ALL_FILES);toast('File deleted');
@@ -415,11 +415,62 @@ async function deleteFile(name){
   }
 }
 
-function openModal(url,name,meta){MODAL_URL=decodeURIComponent(url);document.getElementById('modal-video').src=MODAL_URL;document.getElementById('modal-filename').textContent=name;document.getElementById('modal-meta').textContent=meta;document.getElementById('modal-url-display').textContent=MODAL_URL;document.getElementById('modal-copy-btn').textContent='Copy Portal URL';document.getElementById('modal-copy-btn').classList.remove('copied');document.getElementById('modal').classList.add('show');}
+async function renameFile(oldName){
+  const ext=oldName.includes('.')?'.'+oldName.split('.').pop():'';
+  const baseName=oldName.includes('.')?oldName.slice(0,oldName.lastIndexOf('.')):oldName;
+  const newBase=prompt('Rename file:',baseName);
+  if(!newBase||newBase.trim()===baseName)return;
+  const newName=newBase.trim()+ext;
+  toast('Renaming\u2026');
+  try{
+    // R2 has no native rename — copy then delete
+    const host=`${BUCKET_NAME}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const srcUrl=`${R2_PUBLIC_URL}/${encodeURIComponent(oldName)}`;
+    
+    // Fetch original file
+    const resp=await fetch(srcUrl);
+    if(!resp.ok)throw new Error('Could not fetch original file');
+    const blob=await resp.blob();
+    const file=new File([blob],newName,{type:blob.type});
+
+    // Upload with new name (reuse uploadFile logic inline)
+    const ab=await file.arrayBuffer();const ph=await sha256Hex(new Uint8Array(ab));
+    const now=new Date();const amzDate=now.toISOString().replace(/[:-]/g,'').split('.')[0]+'Z';const ds=amzDate.substr(0,8);
+    const cu='/'+encodeURIComponent(newName);
+    const ch=`host:${host}\nx-amz-content-sha256:${ph}\nx-amz-date:${amzDate}\n`;
+    const sh='host;x-amz-content-sha256;x-amz-date';
+    const cr=`PUT\n${cu}\n\n${ch}\n${sh}\n${ph}`;
+    const scope=`${ds}/auto/s3/aws4_request`;
+    const sts=`AWS4-HMAC-SHA256\n${amzDate}\n${scope}\n${await sha256Hex(cr)}`;
+    const sk=await getSignatureKey(SECRET_KEY,ds,'auto','s3');
+    const sa=await hmacSha256(sk,sts);
+    const sig=Array.from(sa).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const auth=`AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${scope}, SignedHeaders=${sh}, Signature=${sig}`;
+    
+    await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();xhr.open('PUT',`https://${host}/${encodeURIComponent(newName)}`);
+      xhr.setRequestHeader('Authorization',auth);xhr.setRequestHeader('X-Amz-Date',amzDate);xhr.setRequestHeader('X-Amz-Content-SHA256',ph);xhr.setRequestHeader('Content-Type',file.type||'video/mp4');
+      xhr.onload=()=>{if(xhr.status===200||xhr.status===201)resolve();else reject(new Error(`Upload failed: ${xhr.status}`));};
+      xhr.onerror=()=>reject(new Error('Network error'));
+      xhr.send(file);
+    });
+
+    // Delete old file
+    await deleteFile(oldName,null,true);
+
+    // Update manifest
+    const manifest=JSON.parse(localStorage.getItem('eagle_r2_manifest')||'[]');
+    const ei=manifest.findIndex(f=>f.name===oldName||f.key===oldName);
+    if(ei>=0){manifest[ei].name=newName;manifest[ei].key=newName;}
+    localStorage.setItem('eagle_r2_manifest',JSON.stringify(manifest));
+
+    toast(`Renamed to ${newName} \u2713`);
+    loadLibrary();
+  }catch(e){toast('Rename failed: '+e.message,true);}
+}MODAL_URL=decodeURIComponent(url);document.getElementById('modal-video').src=MODAL_URL;document.getElementById('modal-filename').textContent=name;document.getElementById('modal-meta').textContent=meta;document.getElementById('modal-url-display').textContent=MODAL_URL;document.getElementById('modal-copy-btn').textContent='Copy Portal URL';document.getElementById('modal-copy-btn').classList.remove('copied');document.getElementById('modal').classList.add('show');}
 function closeModal(e){if(e&&e.target!==document.getElementById('modal'))return;document.getElementById('modal').classList.remove('show');document.getElementById('modal-video').pause();document.getElementById('modal-video').src='';}
 function copyModalUrl(){navigator.clipboard.writeText(MODAL_URL).then(()=>{const btn=document.getElementById('modal-copy-btn');btn.textContent='\u2713 Copied';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy Portal URL';btn.classList.remove('copied');},2000);toast('URL copied \u2014 paste into portal edit mode \u2713');});}
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='show'+(err?' err':'');setTimeout(()=>el.className='',2800);}
 </script>
 </body>
 </html>
-
