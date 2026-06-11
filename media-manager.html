@@ -389,23 +389,34 @@ function saveToken(){
 // ═══════════════════════════════════════
 async function loadLibrary(){
   try {
-    // R2 S3-compatible list endpoint
-    const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects`;
-    
-    // If no account ID yet, try loading a known manifest or show empty
-    // Account ID is baked in, proceed with API call
+    // Correct Endpoint: Cloudflare Client API — accepts standard Bearer tokens
+    const uploadUrl = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(file.name)}`;
 
-    const resp = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
+      xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+      xhr.upload.onprogress = e => {
+        if(e.lengthComputable){
+          const p = Math.round(e.loaded/e.total*100);
+          fill.style.width = p+'%';
+          pct.textContent = p+'%';
+        }
+      };
+
+      xhr.onload = () => {
+        if(xhr.status === 200){
+          resolve();
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network or CORS error'));
+      xhr.send(file);
     });
 
-    if(!resp.ok) throw new Error('API error');
-    const data = await resp.json();
-    ALL_FILES = (data.result?.objects || []).filter(f => isVideo(f.key));
-    renderLibrary(ALL_FILES);
   } catch(e) {
     showManualLibrary();
   }
