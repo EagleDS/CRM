@@ -354,7 +354,7 @@ body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-s
 // CONFIG
 // ═══════════════════════════════════════
 const R2_PUBLIC_URL = 'https://pub-7ff93a96101448c39f374948a984f1fa.r2.dev';
-const ACCOUNT_ID = ''; // Your Cloudflare Account ID — needed for uploads via API
+const ACCOUNT_ID = '95e7928c345765ce11607318c0761c4b';
 const BUCKET_NAME = 'eagleds-media';
 
 // R2 S3-compatible API endpoint
@@ -393,10 +393,7 @@ async function loadLibrary(){
     const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects`;
     
     // If no account ID yet, try loading a known manifest or show empty
-    if(!ACCOUNT_ID){
-      showManualLibrary();
-      return;
-    }
+    // Account ID is baked in, proceed with API call
 
     const resp = await fetch(url, {
       headers: {
@@ -543,16 +540,16 @@ async function uploadFile(file){
 
   try {
     // Upload via XMLHttpRequest for progress tracking
-    const url = `${R2_PUBLIC_URL.replace('pub-','').replace('.r2.dev','')}`;
-    
-    // Use Cloudflare R2 S3-compatible API
     const uploadUrl = `https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}/${encodeURIComponent(file.name)}`;
 
+    // R2 API token format — Cloudflare uses Bearer token for R2 API
+    // Token needs Object:Write permission on eagleds-media bucket
     await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', uploadUrl);
       xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
       xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+      xhr.setRequestHeader('x-amz-content-sha256', 'UNSIGNED-PAYLOAD');
 
       xhr.upload.onprogress = e => {
         if(e.lengthComputable){
@@ -566,10 +563,10 @@ async function uploadFile(file){
         if(xhr.status === 200 || xhr.status === 201 || xhr.status === 204){
           resolve();
         } else {
-          reject(new Error(`Upload failed: ${xhr.status}`));
+          reject(new Error(`Upload failed: ${xhr.status} — ${xhr.responseText}`));
         }
       };
-      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.onerror = () => reject(new Error('Network error — check CORS policy'));
       xhr.send(file);
     });
 
