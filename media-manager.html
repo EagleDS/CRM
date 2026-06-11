@@ -357,10 +357,6 @@ const R2_PUBLIC_URL = 'https://pub-7ff93a96101448c39f374948a984f1fa.r2.dev';
 const ACCOUNT_ID = '95e7928c345765ce11607318c0761c4b';
 const BUCKET_NAME = 'eagleds-media';
 
-// R2 S3-compatible API endpoint
-// Uploads go via Cloudflare Workers proxy (see note below)
-// Reading/listing uses the public URL
-
 let API_TOKEN = localStorage.getItem('eagle_r2_token') || '';
 let ALL_FILES = [];
 let CURRENT_VIEW = 'grid';
@@ -381,49 +377,30 @@ function saveToken(){
     localStorage.setItem('eagle_r2_token', API_TOKEN);
     document.getElementById('config-notice').style.display = 'none';
     toast('Token saved ✓');
+    loadLibrary();
   }
 }
 
 // ═══════════════════════════════════════
-// LOAD LIBRARY — list files from R2
+// LOAD LIBRARY — GET list from R2
 // ═══════════════════════════════════════
 async function loadLibrary(){
+  if(!API_TOKEN){ showManualLibrary(); return; }
   try {
-    // Correct Endpoint: Cloudflare Client API — accepts standard Bearer tokens
-    const uploadUrl = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(file.name)}`;
-
-    await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
-      xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
-
-      xhr.upload.onprogress = e => {
-        if(e.lengthComputable){
-          const p = Math.round(e.loaded/e.total*100);
-          fill.style.width = p+'%';
-          pct.textContent = p+'%';
-        }
-      };
-
-      xhr.onload = () => {
-        if(xhr.status === 200){
-          resolve();
-        } else {
-          reject(new Error(`Upload failed: ${xhr.status}`));
-        }
-      };
-      xhr.onerror = () => reject(new Error('Network or CORS error'));
-      xhr.send(file);
-    });
-
+    const resp = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects`,
+      { headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
+    );
+    if(!resp.ok) throw new Error(`List failed: ${resp.status}`);
+    const data = await resp.json();
+    ALL_FILES = (data.result?.objects || []).filter(f => isVideo(f.key));
+    renderLibrary(ALL_FILES);
   } catch(e) {
     showManualLibrary();
   }
 }
 
 function showManualLibrary(){
-  // Load from localStorage manifest (files uploaded via this tool)
   const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
   ALL_FILES = manifest;
   renderLibrary(ALL_FILES);
@@ -465,8 +442,8 @@ function renderCard(f){
   const size = f.size ? formatSize(f.size) : '—';
   const date = f.uploaded ? new Date(f.uploaded).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}) : '—';
 
-  return `<div class="media-card" id="card-${btoa(name).replace(/[^a-z0-9]/gi,'').slice(0,10)}">
-    <div class="video-thumb" onclick="openModal('${escUrl(url)}','${escStr(name)}','${size} · ${date}')">
+  return `<div class="media-card">
+    <div class="video-thumb" onclick="openModal('${url.replace(/'/g,'%27')}','${name.replace(/'/g,"\'")}','${size} · ${date}')">
       <video src="${url}" preload="metadata" muted playsinline></video>
       <div class="play-overlay"><div class="play-btn">▶</div></div>
     </div>
@@ -474,17 +451,14 @@ function renderCard(f){
       <div class="media-filename" title="${name}">${name}</div>
       <div class="media-meta">${size} · ${date}</div>
       <div class="media-actions">
-        <button class="action-btn preview-btn" onclick="openModal('${escUrl(url)}','${escStr(name)}','${size} · ${date}')">Preview</button>
-        <button class="action-btn copy" onclick="copyUrl('${escUrl(url)}',this)">Copy URL</button>
+        <button class="action-btn preview-btn" onclick="openModal('${url.replace(/'/g,'%27')}','${name.replace(/'/g,"\'")}','${size} · ${date}')">Preview</button>
+        <button class="action-btn copy" onclick="copyUrl('${url.replace(/'/g,'%27')}',this)">Copy URL</button>
         <a href="${url}" download="${name}" style="text-decoration:none;"><button class="action-btn">Download</button></a>
-        <button class="action-btn delete" onclick="deleteFile('${escStr(name)}',this)">Delete</button>
+        <button class="action-btn delete" onclick="deleteFile('${name.replace(/'/g,"\'")}',this)">Delete</button>
       </div>
     </div>
   </div>`;
 }
-
-function escUrl(url){ return url.replace(/'/g,'%27'); }
-function escStr(str){ return str.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 function formatSize(bytes){
   if(bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
@@ -509,7 +483,7 @@ function setView(v){
 }
 
 // ═══════════════════════════════════════
-// UPLOAD
+// UPLOAD — PUT object via Cloudflare Client API
 // ═══════════════════════════════════════
 function setupUpload(){
   const zone = document.getElementById('upload-zone');
@@ -531,9 +505,7 @@ function setupUpload(){
 }
 
 async function uploadFiles(files){
-  for(const file of files){
-    await uploadFile(file);
-  }
+  for(const file of files){ await uploadFile(file); }
 }
 
 async function uploadFile(file){
@@ -545,22 +517,20 @@ async function uploadFile(file){
 
   progress.classList.add('show');
   fill.style.width = '0%';
+  fill.style.background = 'var(--gold)';
   pct.textContent = '0%';
   label.textContent = `Uploading ${file.name}…`;
   fname.textContent = file.name;
 
   try {
-    // Upload via XMLHttpRequest for progress tracking
-    const uploadUrl = `https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}/${encodeURIComponent(file.name)}`;
+    // PUT to Cloudflare Client API — accepts standard Bearer tokens
+    const uploadUrl = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(file.name)}`;
 
-    // R2 API token format — Cloudflare uses Bearer token for R2 API
-    // Token needs Object:Write permission on eagleds-media bucket
     await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', uploadUrl);
       xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
       xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
-      xhr.setRequestHeader('x-amz-content-sha256', 'UNSIGNED-PAYLOAD');
 
       xhr.upload.onprogress = e => {
         if(e.lengthComputable){
@@ -571,13 +541,10 @@ async function uploadFile(file){
       };
 
       xhr.onload = () => {
-        if(xhr.status === 200 || xhr.status === 201 || xhr.status === 204){
-          resolve();
-        } else {
-          reject(new Error(`Upload failed: ${xhr.status} — ${xhr.responseText}`));
-        }
+        if(xhr.status === 200){ resolve(); }
+        else { reject(new Error(`Upload failed: ${xhr.status}`)); }
       };
-      xhr.onerror = () => reject(new Error('Network error — check CORS policy'));
+      xhr.onerror = () => reject(new Error('Network or CORS error'));
       xhr.send(file);
     });
 
@@ -596,15 +563,14 @@ async function uploadFile(file){
 
     setTimeout(() => {
       progress.classList.remove('show');
-      ALL_FILES = manifest;
-      renderLibrary(ALL_FILES);
+      loadLibrary();
     }, 1200);
 
   } catch(e) {
-    label.textContent = '✗ Upload failed — check API token';
+    label.textContent = '✗ Upload failed — ' + e.message;
     pct.textContent = 'Error';
     fill.style.background = 'var(--red)';
-    toast('Upload failed — check token', true);
+    toast('Upload failed: ' + e.message, true);
     setTimeout(() => {
       progress.classList.remove('show');
       fill.style.background = 'var(--gold)';
@@ -616,7 +582,7 @@ async function uploadFile(file){
 // COPY URL
 // ═══════════════════════════════════════
 function copyUrl(url, btn){
-  navigator.clipboard.writeText(url).then(() => {
+  navigator.clipboard.writeText(decodeURIComponent(url)).then(() => {
     const orig = btn.textContent;
     btn.textContent = '✓ Copied';
     btn.classList.add('copied');
@@ -626,26 +592,26 @@ function copyUrl(url, btn){
 }
 
 // ═══════════════════════════════════════
-// DELETE
+// DELETE — DELETE object via Cloudflare Client API
 // ═══════════════════════════════════════
 async function deleteFile(name, btn){
   if(!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-  
+
   // Remove from local manifest
   const manifest = JSON.parse(localStorage.getItem('eagle_r2_manifest') || '[]');
   const updated = manifest.filter(f => f.name !== name && f.key !== name);
   localStorage.setItem('eagle_r2_manifest', JSON.stringify(updated));
   ALL_FILES = updated;
   renderLibrary(ALL_FILES);
-  toast('File removed from library');
+  toast('File deleted');
 
-  // Also try to delete from R2 via API if token available
-  if(API_TOKEN && ACCOUNT_ID){
+  // DELETE via Cloudflare Client API
+  if(API_TOKEN){
     try {
-      await fetch(`https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}/${encodeURIComponent(name)}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${API_TOKEN}` }
-      });
+      await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET_NAME}/objects/${encodeURIComponent(name)}`,
+        { method: 'DELETE', headers: { 'Authorization': `Bearer ${API_TOKEN}` } }
+      );
     } catch(e){}
   }
 }
