@@ -157,6 +157,24 @@ exports.engine = onValueCreated(
 
       default:
         await log("unknown event type — logged only");
+
+      case "broadcast": {
+        if (e.to && e.subject && e.body) {
+          const html = shell(
+            (e.name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${e.name},</p>` : "") +
+            e.body.split("\n").map(p => {
+              if (!p.trim()) return "";
+              if (p.trim().startsWith("<")) return p;
+              return `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>`;
+            }).join("")
+          );
+          await send(resend, e.to, e.subject, html);
+          await log("broadcast email sent to " + e.to);
+        } else {
+          await log("broadcast event missing to/subject/body — skipped");
+        }
+        break;
+      }
     }
   }
 );
@@ -341,4 +359,3 @@ exports.broadcastEmail = onRequest(
     res.status(200).json({ ok: true, sent, failed });
   }
 );
-
