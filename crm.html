@@ -759,7 +759,7 @@ if (window.self !== window.top) {
       <a href="crm.html" class="here">CRM</a>
       <a href="events.html">Events</a>
       <a href="scheduler.html">Automation</a>
-      <a href="blog-admin.html">Blog</a>
+      <a href="blog.html">Blog</a>
     </div>
     <div style="display:flex;align-items:center;gap:10px;"><div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">connecting</span></div><button onclick="eagleLogout()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-radius:2px;" title="Sign out">Logout</button></div>
   </div>
@@ -984,13 +984,21 @@ if (window.self !== window.top) {
           </div>
         </div>
       </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">System Config</div></div>
+        <div class="pb">
+          <label>Resend API Key</label>
+          <input id="resend-key-input" type="password" placeholder="re_xxxxxxxxxxxx" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:10px;font-family:var(--mono);font-size:11px;border-radius:var(--r);margin-bottom:10px;">
+          <div class="btn-row"><button class="btn" onclick="saveResendKey()"><span>Save Key to Firebase</span></button></div>
+          <div id="resend-key-status" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+      </div>
     </div>
   </div>
-  <footer class="site-footer">
     <span class="sf-brand">EAGLE DS</span>
     <div class="sf-links">
       <a href="crm.html">CRM</a><a href="events.html">Events</a>
-      <a href="scheduler.html">Automation</a><a href="blog-admin.html">Blog</a>
+      <a href="scheduler.html">Automation</a><a href="blog.html">Blog</a>
       <a href="https://eagleds.co.nz" target="_blank">Website ↗</a>
     </div>
     <span class="sf-copy">Eagle DS · East Tāmaki · Internal Operations</span>
@@ -1084,6 +1092,7 @@ function eagleInitAuth() {
       if (gate) gate.style.display = "none";
       if (app)  app.style.display  = "block";
       if (typeof onAuthReady === "function") onAuthReady();
+      loadResendKey();
     } else {
       EAGLE_USER = null; EAGLE_TOKEN = null;
       const gate = document.getElementById("gate");
@@ -1122,8 +1131,31 @@ async function eagleFetch(path, options = {}) {
 <script>
 
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
-const TRACK_BASE="https://eagleds.github.io/CRM/track.html";
+const TRACK_BASE="https://eagleds.github.io/track.html";
 let db={},pendingRows=[],pendingHeaders=[],emailAnalytics={};
+let RESEND_KEY_MEM = null;
+
+async function loadResendKey() {
+  try {
+    const r = await eagleFetch(FB + "/portal_config/resend_key.json");
+    const val = await r.json();
+    if (val) { RESEND_KEY_MEM = val; log("Resend key loaded.", "ok"); }
+    else { log("No Resend key found in Firebase — set one in Tools → System Config.", "info"); }
+  } catch(e) { log("Could not load Resend key.", "info"); }
+}
+
+async function saveResendKey() {
+  const k = document.getElementById("resend-key-input").value.trim();
+  if (!k) { alert("Paste your Resend API key first."); return; }
+  try {
+    await eagleFetch(FB + "/portal_config/resend_key.json", { method: "PUT", body: JSON.stringify(k) });
+    RESEND_KEY_MEM = k;
+    document.getElementById("resend-key-input").value = "";
+    document.getElementById("resend-key-status").textContent = "✓ Saved — key is active";
+    document.getElementById("resend-key-status").style.color = "var(--green)";
+    log("Resend key saved to Firebase.", "ok");
+  } catch(e) { alert("Save failed: " + e.message); }
+}
 
 // ─── HELPERS ───
 function getTier(r){const s=r.lastActivity||r.added||null;if(!s)return"new";const d=(Date.now()-new Date(s))/86400000;if(d<=30)return"hot";if(d<=180)return"warm";if(d<=730)return"cold";return"dormant";}
@@ -1156,7 +1188,7 @@ function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,
 
 // ─── AUTOMATION ───
 async function checkAutomationQueue(){try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
-async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
+async function runAutomation(){let k=RESEND_KEY_MEM;if(!k){alert("No Resend key found. Go to Tools → System Config to save your key.");return;}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
 function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
 
 // ─── IMPORT ───
@@ -1185,8 +1217,8 @@ function updateBroadcastCount(){const sector=document.getElementById("b-sector")
 
 // ─── BROADCAST (with tracking) ───
 async function sendBroadcast(){
-  let k=localStorage.getItem("RESEND_KEY");
-  if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
+  let k=RESEND_KEY_MEM;
+  if(!k){alert("No Resend key found. Go to Tools → System Config to save your key.");return;}
   const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();
   if(!subject||!body){alert("Subject and message required.");return;}
   const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr);
