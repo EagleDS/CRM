@@ -1245,6 +1245,19 @@ function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierSt
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
 // ─── BROADCAST (with tracking) ───
+async function sendPreview(){
+  if(!EAGLE_TOKEN){alert("Not logged in.");return;}
+  const subject=document.getElementById("b-subject").value.trim();
+  const body=document.getElementById("b-body").value.trim();
+  if(!subject||!body){alert("Subject and message required.");return;}
+  log("Sending preview to info@eagleds.co.nz…","info");
+  const payload={type:"broadcast",to:"info@eagleds.co.nz",name:"Dafydd",subject:"[PREVIEW] "+subject,body,ts:new Date().toISOString()};
+  try{
+    await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
+    log("✓ Preview queued — check your inbox shortly","ok");
+  }catch(e){log("Preview error: "+e.message,"err");}
+}
+
 async function sendBroadcast(){
   if(!EAGLE_TOKEN){alert("Not logged in.");return;}
   const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();
@@ -1253,28 +1266,30 @@ async function sendBroadcast(){
   if(!targets.length){alert("No contacts match.");return;}
   if(!confirm("Send to "+targets.length+" contacts?"))return;
   const bid=generateBid();
-  log("Sending to "+targets.length+"... (tracking ID: "+bid+")");
+  log("Queueing "+targets.length+" emails…");
 
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
   await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
-  try {
-    const res = await fetch("https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/broadcastEmail", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + EAGLE_TOKEN, "Content-Type": "application/json" },
-      body: JSON.stringify({ contacts: targets, subject, body, bid })
-    });
-    const data = await res.json();
-    if (res.ok && data.ok) {
-      log("✓ Broadcast sent to "+data.sent+" contacts."+(data.failed?" ("+data.failed+" failed)":""),"ok");
-      document.getElementById("b-subject").value="";
-      document.getElementById("b-body").value="";
-    } else {
-      log("Broadcast failed: "+(data.error||res.status),"err");
-    }
-  } catch(e) {
-    log("Broadcast error: "+e.message,"err");
+  let sent=0,failed=0;
+  for(const c of targets){
+    const payload={
+      type:"broadcast",
+      to:c.email,
+      name:c.name||"",
+      subject:replaceVars(subject,c,""),
+      body:replaceVars(body,c,""),
+      bid,
+      ts:new Date().toISOString()
+    };
+    try{
+      await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
+      sent++;
+    }catch(e){failed++;}
   }
+  log("✓ "+sent+" emails queued"+(failed?" ("+failed+" failed)":""),"ok");
+  document.getElementById("b-subject").value="";
+  document.getElementById("b-body").value="";
 }
 
 // ─── EMAIL ANALYTICS ───
