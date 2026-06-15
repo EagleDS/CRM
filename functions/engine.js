@@ -230,7 +230,11 @@ exports.sendSingleEmail = onRequest(
     if (!to || !subject || !body) { res.status(400).json({ error: "to, subject and body required" }); return; }
 
     const greeting = name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${name},</p>` : "";
-    const paragraphs = body.split("\n").map(p => p.trim() ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>` : "").join("");
+    const paragraphs = body.split("\n").map(p => {
+      if (!p.trim()) return "";
+      if (p.trim().startsWith("<")) return p; // raw HTML passes through
+      return `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>`;
+    }).join("");
 
     const html = `<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td>
@@ -295,7 +299,11 @@ exports.broadcastEmail = onRequest(
       const name = c.name || "";
       const greeting = name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${name},</p>` : "";
       const personalBody = body.replace(/\[FirstName\]/g, name).replace(/\[ChildName\]/g, c.childName || "");
-      const paragraphs = personalBody.split("\n").map(p => p.trim() ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>` : "").join("");
+      const paragraphs = personalBody.split("\n").map(p => {
+        if (!p.trim()) return "";
+        if (p.trim().startsWith("<")) return p; // raw HTML passes through
+        return `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>`;
+      }).join("");
       const personalSubject = subject.replace(/\[FirstName\]/g, name);
 
       // Tracking pixel
@@ -333,3 +341,4 @@ exports.broadcastEmail = onRequest(
     res.status(200).json({ ok: true, sent, failed });
   }
 );
+
