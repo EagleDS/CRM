@@ -36,79 +36,13 @@ const emailKey = (e) => e.trim().toLowerCase().replace(/\./g,"%2E").replace(/@/g
 const send = async (resend, to, subject, html) =>
   resend.emails.send({ from: FROM, to, subject, html });
 
-// ── Email shells ─────────────────────────────────────────────
-// Standard transactional shell — enquiries, payments, confirmations
+// Brand email shell — everything the engine sends looks like Eagle DS
 const shell = (body) => `
-<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-    <tr>
-      <td>
-        <div style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
-        <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Combat &amp; Wellness · East Tāmaki, Auckland</div>
-      </td>
-    </tr>
-  </table>
-  <div style="border-top:1px solid #1a1a1a;padding-top:20px;">
-    ${body}
-  </div>
-  <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1a1a1a;">
-    <div style="font-family:monospace;font-size:9px;color:#444;line-height:1.8;letter-spacing:0.5px;">
-      <strong style="color:#666;">Dafydd Sanders</strong> — Founder &amp; Head Coach, Eagle DS<br>
-      NZ Representative · Four Combat Disciplines · 27 Years Coaching<br>
-      17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
-      <a href="tel:+64210902471" style="color:#555;text-decoration:none;">021 902 471</a> ·
-      <a href="mailto:info@eagleds.co.nz" style="color:#555;text-decoration:none;">info@eagleds.co.nz</a> ·
-      <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a>
-    </div>
-  </div>
-</div>`;
-
-// Blog series shell — full branded treatment for editorial content
-const blogShell = (title, body, postNum, postUrl, recipientEmail) => `
-<div style="background:#0a0a0a;color:#f8f4ee;margin:0 auto;max-width:600px;font-family:Arial,sans-serif;">
-
-  <!-- Header -->
-  <div style="padding:32px 40px 24px;border-bottom:1px solid #1a1a1a;">
-    <div style="font-family:Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
-    <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">The Journal · eagleds.co.nz</div>
-  </div>
-
-  <!-- Post label -->
-  <div style="padding:24px 40px 0;">
-    <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Post ${postNum} of 12</div>
-    <!-- Title -->
-    <div style="font-family:Georgia,serif;font-size:32px;font-weight:600;color:#f8f4ee;line-height:1.2;margin-bottom:24px;">${title}</div>
-  </div>
-
-  <!-- Body -->
-  <div style="padding:0 40px;font-family:Georgia,serif;font-size:15px;color:#ccc;line-height:1.9;">
-    ${body}
-  </div>
-
-  <!-- Read more -->
-  <div style="padding:32px 40px;">
-    <a href="${postUrl}" style="display:inline-block;background:#C8960C;color:#000;font-family:monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 28px;text-decoration:none;">Read on the blog →</a>
-  </div>
-
-  <!-- About -->
-  <div style="margin:0 40px;padding:24px;background:#0f0f0f;border:1px solid #1a1a1a;">
-    <div style="font-family:monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:10px;">About the author</div>
-    <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#f8f4ee;margin-bottom:6px;">Dafydd Sanders</div>
-    <div style="font-family:Arial,sans-serif;font-size:12px;color:#888;line-height:1.7;">Founder &amp; Head Coach of Eagle DS. NZ Representative across four combat disciplines — Taekwondo (World #10, two Olympic campaigns), Kickboxing, K1, and MMA. 27 years coaching. Builder of the Combat Games Series — 50+ clubs, 450+ matches, zero concussions. Eagle DS is a Ngāi Tahu family business in East Tāmaki, Auckland.</div>
-  </div>
-
-  <!-- Footer -->
-  <div style="padding:24px 40px 32px;">
-    <div style="font-family:monospace;font-size:9px;color:#444;line-height:2;letter-spacing:0.5px;">
-      <strong style="color:#555;">Eagle DS Combat &amp; Wellness</strong><br>
-      17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
-      <a href="tel:+64210902471" style="color:#444;text-decoration:none;">021 902 471</a> ·
-      <a href="mailto:info@eagleds.co.nz" style="color:#444;text-decoration:none;">info@eagleds.co.nz</a> ·
-      <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a><br>
-      <a href="https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/unsubscribe?e=${encodeURIComponent(recipientEmail)}" style="color:#333;text-decoration:underline;font-size:9px;">Unsubscribe</a>
-    </div>
-  </div>
-
+<div style="background:#0a0a0a;color:#f8f4ee;padding:36px;font-family:'DM Sans',Arial,sans-serif;max-width:560px;margin:0 auto;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:#C8960C;">EAGLE DS</div>
+  <div style="font-family:monospace;font-size:9px;color:#666;letter-spacing:2px;border-bottom:1px solid #222;padding-bottom:12px;margin-bottom:18px;">COMBAT &amp; WELLNESS · EAST TĀMAKI</div>
+  ${body}
+  <div style="margin-top:26px;font-family:monospace;font-size:9px;color:#444;border-top:1px solid #1a1a1a;padding-top:14px;">Eagle DS · 17 Nandina Ave, East Tāmaki, Auckland · 021 902 471</div>
 </div>`;
 
 // ═══════════════════════════════════════════════════════════════
@@ -119,8 +53,8 @@ const blogShell = (title, body, postNum, postUrl, recipientEmail) => `
 //
 // Event shape: { type, email, name, arm, data:{...}, ts }
 // ═══════════════════════════════════════════════════════════════
-exports.trialAutomationEngine = onValueCreated(
-  { ref: "/events/{id}", instance: "taekwondo-scoreboard-e58ec-default-rtdb", secrets: [resendKey] },
+exports.engine = onValueCreated(
+  { ref: "/events/{id}", secrets: [resendKey] },
   async (event) => {
     const e = event.data.val();
     const resend = new Resend(resendKey.value());
@@ -268,128 +202,134 @@ exports.advanceSequences = onSchedule(
 );
 
 // ═══════════════════════════════════════════════════════════════
-// THE SERIES ENGINE — runs every Wednesday 9am NZ.
-// Sends the next blog post in sequence to every enrolled subscriber.
-// Each subscriber has their own position — latecomers start at post 1.
-// Never sends the same post twice. Stops automatically when done.
-//
-// Subscriber record at /sequences/blog_series/{emailKey}:
-// { email, name, stage, startedAt, lastSent, done }
-//
-// Post order is fixed: 01→12. Release schedule: one per week Wednesday.
+// SEND SINGLE EMAIL — called by CRM for individual replies
+// POST { to, name, subject, body }
+// Auth: Firebase ID token in Authorization header
 // ═══════════════════════════════════════════════════════════════
-exports.advanceBlogSeries = onSchedule(
-  { schedule: "0 9 * * 3", timeZone: "Pacific/Auckland", secrets: [resendKey] },
-  async () => {
-    const resend = new Resend(resendKey.value());
+exports.sendSingleEmail = onRequest(
+  { secrets: [resendKey], cors: ["https://eagleds.github.io", "https://crm-4si.pages.dev"] },
+  async (req, res) => {
+    if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
-    // Load blog posts from Firebase
-    const posts = await fbGet("eagle_blog").catch(() => ({})) || {};
-
-    // Build ordered sequence of published posts by postNumber
-    const orderedPosts = Object.values(posts)
-      .filter(p => p.status === "published" && p.postNumber)
-      .sort((a, b) => a.postNumber - b.postNumber);
-
-    if (!orderedPosts.length) return;
-
-    // Load subscribers
-    const subs = await fbGet("sequences/blog_series").catch(() => ({})) || {};
-    let sent = 0, finished = 0;
-
-    for (const key in subs) {
-      const s = subs[key];
-      if (!s || !s.email || s.done) { if (s && s.done) finished++; continue; }
-
-      const stage = s.stage || 0;
-      const post = orderedPosts[stage];
-      if (!post) {
-        // Subscriber has received all posts
-        await fbSet(`sequences/blog_series/${key}`, { ...s, done: true, finishedAt: new Date().toISOString() });
-        finished++;
-        continue;
+    // Verify Firebase Auth token
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) { res.status(401).json({ error: "Unauthorised" }); return; }
+    try {
+      const admin = require("firebase-admin");
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          projectId: "taekwondo-scoreboard-e58ec",
+          databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com"
+        });
       }
+      await admin.auth().verifyIdToken(token);
+    } catch(e) { res.status(401).json({ error: "Invalid token" }); return; }
 
-      // Build email — Cormorant title, DM Sans body, gold Eagle DS branding
-      const postUrl = `https://eagleds.co.nz/blog.html`;
-      const postExcerpt = `<p style="border-left:3px solid #C8960C;padding-left:16px;color:#999;font-style:italic;">${post.excerpt}</p>`;
-      const html = blogShell(post.title, postExcerpt, String(post.postNumber).padStart(2,'0'), postUrl, s.email);
+    const { to, name, subject, body } = req.body;
+    if (!to || !subject || !body) { res.status(400).json({ error: "to, subject and body required" }); return; }
 
-      await send(resend, s.email, post.title, html);
-      const newStage = stage + 1;
-      const done = newStage >= orderedPosts.length;
-      await fbSet(`sequences/blog_series/${key}`, {
-        ...s,
-        stage: newStage,
-        done,
-        lastSent: new Date().toISOString(),
-        lastPost: post.title,
-        ...(done ? { finishedAt: new Date().toISOString() } : {})
-      });
-      sent++;
+    const greeting = name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${name},</p>` : "";
+    const paragraphs = body.split("\n").map(p => p.trim() ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>` : "").join("");
+
+    const html = `<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td>
+        <div style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
+        <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Combat &amp; Wellness · East Tāmaki, Auckland</div>
+      </td></tr></table>
+      <div style="border-top:1px solid #1a1a1a;padding-top:20px;">
+        ${greeting}${paragraphs}
+      </div>
+      <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1a1a1a;">
+        <div style="font-family:monospace;font-size:9px;color:#444;line-height:1.8;letter-spacing:0.5px;">
+          <strong style="color:#666;">Dafydd Sanders</strong> — Founder &amp; Head Coach, Eagle DS<br>
+          17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
+          <a href="tel:+64210902471" style="color:#555;text-decoration:none;">021 902 471</a> ·
+          <a href="mailto:info@eagleds.co.nz" style="color:#555;text-decoration:none;">info@eagleds.co.nz</a> ·
+          <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a>
+        </div>
+      </div>
+    </div>`;
+
+    try {
+      const resend = new Resend(resendKey.value());
+      await resend.emails.send({ from: "Eagle DS <info@eagleds.co.nz>", to, subject, html });
+      res.status(200).json({ ok: true });
+    } catch(e) {
+      res.status(500).json({ error: e.message });
     }
-
-    await fbPush("engine_log", {
-      type: "blog_series_advance",
-      action: `Sent post to ${sent} subscribers. ${finished} completed the series.`,
-      ts: new Date().toISOString()
-    });
   }
 );
 
 // ═══════════════════════════════════════════════════════════════
-// UNSUBSCRIBE — one-click removal from the blog series.
-// Linked from every blog series email footer.
-// GET /unsubscribe?e=email@address.com
-// Sets done:true on the subscriber record and shows a confirmation page.
+// BROADCAST EMAIL — called by CRM for bulk sends
+// POST { contacts: [{email, name}], subject, body, bid }
+// Auth: Firebase ID token in Authorization header
 // ═══════════════════════════════════════════════════════════════
-exports.unsubscribe = onRequest(async (req, res) => {
-  const email = req.query.e;
-  if (!email || !email.includes("@")) {
-    res.status(400).send(unsubPage("Invalid request.", false));
-    return;
-  }
-  const key = emailKey(email);
-  try {
-    const sub = await fbGet(`sequences/blog_series/${key}`).catch(() => null);
-    if (!sub) {
-      res.status(200).send(unsubPage(email, false));
-      return;
-    }
-    await fbSet(`sequences/blog_series/${key}`, {
-      ...sub,
-      done: true,
-      unsubscribedAt: new Date().toISOString()
-    });
-    await fbPush("engine_log", {
-      type: "unsubscribe",
-      email,
-      action: "Removed from blog series via one-click unsubscribe.",
-      ts: new Date().toISOString()
-    });
-    res.status(200).send(unsubPage(email, true));
-  } catch(e) {
-    res.status(500).send(unsubPage(email, false));
-  }
-});
+exports.broadcastEmail = onRequest(
+  { secrets: [resendKey], cors: ["https://eagleds.github.io", "https://crm-4si.pages.dev"], timeoutSeconds: 540 },
+  async (req, res) => {
+    if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
-const unsubPage = (email, success) => `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eagle DS — Unsubscribe</title>
-</head>
-<body style="background:#0a0a0a;color:#f8f4ee;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;">
-  <div style="max-width:480px;text-align:center;">
-    <div style="font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;margin-bottom:4px;">EAGLE DS</div>
-    <div style="font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;">Combat &amp; Wellness</div>
-    ${success
-      ? `<div style="font-size:22px;font-weight:600;color:#f8f4ee;margin-bottom:12px;">You've been unsubscribed.</div>
-         <div style="font-size:13px;color:#888;line-height:1.8;">${email} has been removed from the Eagle DS Journal series. You won't receive any further posts.<br><br>The door stays open. <a href="https://eagleds.co.nz" style="color:#C8960C;">eagleds.co.nz</a></div>`
-      : `<div style="font-size:22px;font-weight:600;color:#f8f4ee;margin-bottom:12px;">That address wasn't found.</div>
-         <div style="font-size:13px;color:#888;line-height:1.8;">We couldn't find an active subscription for ${email}. You may have already been removed, or the link may have expired.<br><br><a href="https://eagleds.co.nz" style="color:#C8960C;">eagleds.co.nz</a></div>`
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) { res.status(401).json({ error: "Unauthorised" }); return; }
+    try {
+      const admin = require("firebase-admin");
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          projectId: "taekwondo-scoreboard-e58ec",
+          databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com"
+        });
+      }
+      await admin.auth().verifyIdToken(token);
+    } catch(e) { res.status(401).json({ error: "Invalid token" }); return; }
+
+    const { contacts, subject, body, bid } = req.body;
+    if (!contacts || !subject || !body) { res.status(400).json({ error: "contacts, subject and body required" }); return; }
+
+    const resend = new Resend(resendKey.value());
+    let sent = 0, failed = 0;
+
+    for (const c of contacts) {
+      const name = c.name || "";
+      const greeting = name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${name},</p>` : "";
+      const personalBody = body.replace(/\[FirstName\]/g, name).replace(/\[ChildName\]/g, c.childName || "");
+      const paragraphs = personalBody.split("\n").map(p => p.trim() ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>` : "").join("");
+      const personalSubject = subject.replace(/\[FirstName\]/g, name);
+
+      // Tracking pixel
+      const pixel = bid ? `<img src="https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/track?bid=${bid}&e=${encodeURIComponent(c.email)}&t=o" width="1" height="1" style="display:none;">` : "";
+
+      const html = `<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td>
+          <div style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
+          <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Combat &amp; Wellness · East Tāmaki, Auckland</div>
+        </td></tr></table>
+        <div style="border-top:1px solid #1a1a1a;padding-top:20px;">
+          ${greeting}${paragraphs}
+        </div>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1a1a1a;">
+          <div style="font-family:monospace;font-size:9px;color:#444;line-height:1.8;letter-spacing:0.5px;">
+            <strong style="color:#666;">Dafydd Sanders</strong> — Founder &amp; Head Coach, Eagle DS<br>
+            17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
+            <a href="tel:+64210902471" style="color:#555;text-decoration:none;">021 902 471</a> ·
+            <a href="mailto:info@eagleds.co.nz" style="color:#555;text-decoration:none;">info@eagleds.co.nz</a> ·
+            <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a><br>
+            <a href="https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/unsubscribe?e=${encodeURIComponent(c.email)}" style="color:#333;text-decoration:underline;font-size:9px;">Unsubscribe</a>
+          </div>
+        </div>
+        ${pixel}
+      </div>`;
+
+      try {
+        await resend.emails.send({ from: "Eagle DS <info@eagleds.co.nz>", to: c.email, subject: personalSubject, html });
+        sent++;
+      } catch(e) {
+        failed++;
+      }
     }
-  </div>
-</body>
-</html>`;
+
+    res.status(200).json({ ok: true, sent, failed });
+  }
+);
