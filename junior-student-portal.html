@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle DS — Junior Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+:root {
+  --black: #090909;
+  --surface: #111;
+  --surface2: #171717;
+  --surface3: #1e1e1e;
+  --border: #242424;
+  --border-light: #2e2e2e;
+  --gold: #c9a84c;
+  --gold-dim: #6b5520;
+  --gold-glow: rgba(201,168,76,0.10);
+  --white: #f0ece4;
+  --muted: #888;
+  --muted2: #555;
+  --red: #c0392b;
+  --green: #27ae60;
+  --blue-a: #5b9bd5;
+  --red-b: #e07060;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.6; min-height:100vh; }
+
+/* PIN SCREEN */
+#pin-screen { position:fixed; inset:0; background:var(--black); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.pin-wrap { width:100%; max-width:340px; padding:20px; text-align:center; }
+.pin-logo-badge { width:52px; height:52px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--black); margin:0 auto 14px; }
+.pin-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:0.15em; margin-bottom:4px; }
+.pin-sub { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:36px; }
+.pin-dots { display:flex; gap:12px; justify-content:center; margin-bottom:28px; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:1px solid var(--border); background:transparent; transition:all 0.15s; }
+.pin-dot.filled { background:var(--gold); border-color:var(--gold); box-shadow:0 0 8px rgba(201,168,76,0.4); }
+.pin-dot.error { background:var(--red); border-color:var(--red); animation:shake 0.3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pin-key { height:60px; background:var(--surface); border:1px solid var(--border); color:var(--white); font-family:'Bebas Neue',sans-serif; font-size:22px; cursor:pointer; transition:all 0.1s; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.pin-key:active { background:var(--gold-glow); border-color:var(--gold); transform:scale(0.96); }
+.pin-key.zero { grid-column:2; }
+.pin-key.del { background:transparent; border-color:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:18px; }
+.pin-err { font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--red); margin-top:16px; min-height:16px; opacity:0; transition:opacity 0.2s; }
+.pin-err.show { opacity:1; }
+
+#app { display:none; }
+#app.active { display:block; }
+
+/* HEADER */
+.header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; position:sticky; top:0; z-index:100; }
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-badge { width:32px; height:32px; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:11px; color:var(--white); }
+.logo-text { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.12em; }
+.logo-sub { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); margin-top:-2px; }
+.header-tag { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); border:1px solid var(--border); padding:3px 10px; }
+
+/* LAYOUT */
+.layout { display:flex; }
+.sidebar { width:200px; background:var(--surface); border-right:1px solid var(--border); padding:16px 0; position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto; flex-shrink:0; }
+.nav-label { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted2); padding:14px 16px 5px; }
+.nav-item { display:flex; align-items:center; gap:9px; padding:8px 16px; font-size:12px; color:var(--muted); cursor:pointer; transition:all 0.15s; border-left:2px solid transparent; touch-action:manipulation; }
+.nav-item:hover { color:var(--white); background:var(--surface2); }
+.nav-item.active { color:var(--white); background:var(--surface2); border-left-color:var(--gold); }
+.nav-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+/* MAIN */
+.main { flex:1; padding:28px 32px; max-width:860px; }
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* PAGE HEADER */
+.page-eyebrow { font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:5px; }
+.page-title { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:0.12em; line-height:1; margin-bottom:5px; }
+.page-sub { font-size:12px; color:var(--muted); margin-bottom:24px; }
+
+/* GRADING BANNER */
+.grading-banner { background:var(--surface2); border:1px solid var(--gold-dim); padding:20px 24px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.grading-eyebrow { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+.grading-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.08em; }
+.grading-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.grading-date { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:0.06em; color:var(--gold); }
+.grading-date-label { font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); text-align:right; }
+
+/* BELT STRIP */
+.belt-strip { display:flex; overflow-x:auto; margin-bottom:24px; }
+.belt-node { flex:1; min-width:72px; padding:12px 8px; text-align:center; border:1px solid var(--border); border-right:none; }
+.belt-node:last-child { border-right:1px solid var(--border); }
+.belt-swatch { width:24px; height:8px; margin:0 auto 6px; border-radius:1px; }
+.belt-name { font-size:8px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.belt-seq { font-family:'Bebas Neue',sans-serif; font-size:12px; color:var(--white); margin-top:2px; }
+
+/* FOUNDATIONAL */
+.found-block { background:var(--surface2); border:1px solid var(--border); margin-bottom:8px; overflow:hidden; }
+.found-header { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; cursor:pointer; user-select:none; touch-action:manipulation; }
+.found-header-title { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.1em; color:var(--white); }
+.found-header-score { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); }
+.found-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); }
+.found-block.open .found-body { display:block; }
+.found-chevron { font-size:10px; color:var(--muted); transition:transform 0.2s; }
+.found-block.open .found-chevron { transform:rotate(180deg); }
+
+.tech-item { padding:10px 0; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; }
+.tech-item:last-child { border-bottom:none; }
+.tech-num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--gold); flex-shrink:0; width:28px; }
+.tech-name { font-size:13px; font-weight:500; color:var(--white); margin-bottom:3px; }
+.tech-desc { font-size:12px; color:var(--muted); line-height:1.6; }
+
+.combo-belt { margin-top:14px; }
+.combo-belt-label { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid var(--gold-dim); }
+.combo-item { display:flex; gap:10px; align-items:flex-start; padding:6px 0; }
+.combo-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); flex-shrink:0; margin-top:5px; }
+.combo-text { font-size:13px; color:var(--muted); line-height:1.6; }
+
+/* SEQUENCES */
+.sequence-block { background:var(--surface2); border:1px solid var(--border); margin-bottom:6px; overflow:hidden; }
+.sequence-header { display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; user-select:none; touch-action:manipulation; }
+.sequence-num { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.1em; color:var(--gold); flex-shrink:0; width:54px; }
+.sequence-title { font-size:13px; font-weight:500; flex:1; }
+.belt-tag { width:11px; height:11px; border-radius:2px; flex-shrink:0; }
+.chevron { font-size:10px; color:var(--muted); transition:transform 0.2s; flex-shrink:0; }
+.sequence-block.open .chevron { transform:rotate(180deg); }
+.sequence-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); }
+.sequence-block.open .sequence-body { display:block; }
+
+/* SECTIONS */
+.chain-group { border-left:2px solid; padding:8px 10px 8px 12px; margin-bottom:4px; }
+.chain-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.actor-label { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.1em; flex-shrink:0; width:26px; }
+.flow-moves { display:flex; flex-wrap:wrap; gap:5px; align-items:center; flex:1; }
+.move-pill { display:inline-flex; align-items:center; background:var(--surface3); border:1px solid var(--border-light); padding:4px 10px; font-size:12px; cursor:pointer; transition:all 0.15s; touch-action:manipulation; }
+.move-pill:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-glow); }
+.move-pill.active { border-color:var(--gold); background:var(--gold-glow); color:var(--gold); }
+.move-arrow { color:var(--muted2); font-size:11px; }
+.move-breakdown { display:none; background:var(--surface); border:1px solid var(--gold-dim); padding:16px 18px; margin:8px 0; }
+.move-breakdown.active { display:block; }
+.breakdown-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.breakdown-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.1em; color:var(--gold); }
+.breakdown-close { font-size:14px; color:var(--muted); cursor:pointer; padding:2px 6px; background:var(--surface2); border:1px solid var(--border); touch-action:manipulation; }
+.breakdown-section { margin-bottom:12px; }
+.breakdown-section-label { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted2); margin-bottom:5px; }
+.breakdown-points { list-style:none; }
+.breakdown-points li { font-size:13px; color:var(--muted); padding:3px 0 3px 12px; position:relative; line-height:1.5; }
+.breakdown-points li::before { content:'—'; position:absolute; left:0; color:var(--gold-dim); font-size:10px; }
+.examiner-box { background:rgba(201,168,76,0.05); border:1px solid var(--gold-dim); padding:11px 14px; margin-top:6px; }
+.examiner-label { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:5px; }
+.examiner-points li { color:var(--white); }
+
+/* VIDEO */
+.video-slot { margin-top:12px; background:var(--black); border:1px solid var(--border); aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.video-slot iframe { width:100%; height:100%; border:none; position:absolute; inset:0; }
+.video-placeholder { text-align:center; }
+.video-placeholder-icon { font-size:24px; color:var(--muted2); margin-bottom:6px; }
+.video-placeholder-text { font-size:10px; color:var(--muted2); letter-spacing:0.1em; text-transform:uppercase; }
+
+/* CARDS */
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:22px; }
+.card { background:var(--surface2); border:1px solid var(--border); padding:16px 18px; }
+.card-label { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.card-value { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:0.05em; color:var(--gold); line-height:1; }
+.card-desc { font-size:10px; color:var(--muted2); margin-top:3px; }
+.divider { height:1px; background:var(--border); margin:20px 0; }
+.section-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.1em; color:var(--white); margin-bottom:12px; }
+.section-title span { color:var(--gold); }
+
+/* TOAST */
+#toast { position:fixed; bottom:20px; right:20px; background:var(--surface2); border:1px solid var(--gold-dim); color:var(--gold); padding:10px 18px; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+#toast.show { opacity:1; }
+
+@media(max-width:600px){
+  .layout { flex-direction:column; }
+  .sidebar { width:100%; height:auto; position:sticky; top:56px; display:flex; flex-direction:row; flex-wrap:nowrap; padding:0; gap:0; border-right:none; border-bottom:1px solid var(--border); background:var(--surface); z-index:50; }
+  .nav-label { display:none; }
+  .nav-item { flex:1; min-width:0; padding:10px 4px; font-size:10px; border-left:none; border-bottom:3px solid transparent; justify-content:center; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nav-item.active { border-bottom-color:var(--gold); border-left:none; background:var(--surface2); }
+  .nav-dot { display:none; }
+  .main { padding:16px 14px; }
+}
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-light); }
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-wrap">
+    <div class="pin-logo-badge">DS</div>
+    <div class="pin-title">EAGLE DS</div>
+    <div class="pin-sub">Junior Portal · Ages 7–12</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <div class="pin-key" onclick="pinPress('1')">1</div>
+      <div class="pin-key" onclick="pinPress('2')">2</div>
+      <div class="pin-key" onclick="pinPress('3')">3</div>
+      <div class="pin-key" onclick="pinPress('4')">4</div>
+      <div class="pin-key" onclick="pinPress('5')">5</div>
+      <div class="pin-key" onclick="pinPress('6')">6</div>
+      <div class="pin-key" onclick="pinPress('7')">7</div>
+      <div class="pin-key" onclick="pinPress('8')">8</div>
+      <div class="pin-key" onclick="pinPress('9')">9</div>
+      <div class="pin-key zero" onclick="pinPress('0')">0</div>
+      <div class="pin-key del" onclick="pinDel()">&#x232B;</div>
+    </div>
+    <div class="pin-err" id="pin-err">Incorrect PIN</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<header class="header">
+  <div class="logo">
+    <div class="logo-badge">JR</div>
+    <div>
+      <div class="logo-text">EAGLE DS</div>
+      <div class="logo-sub">Junior Portal · Ages 7–12</div>
+    </div>
+  </div>
+  <div class="header-tag">MMA · Junior Syllabus</div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="nav-label">My Pathway</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')">
+      <div class="nav-dot" style="background:var(--gold)"></div> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPanel('foundational')">
+      <div class="nav-dot" style="background:var(--red)"></div> Foundational
+    </div>
+    <div class="nav-item" onclick="showPanel('sequences')">
+      <div class="nav-dot" style="background:var(--gold)"></div> Sequences
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="page-eyebrow">Eagle DS · Junior MMA Programme</div>
+      <div class="page-title">JUNIOR PORTAL</div>
+      <div class="page-sub">East Tāmaki, Auckland · Ages 7–12</div>
+
+      <div class="grading-banner">
+        <div>
+          <div class="grading-eyebrow">Next Grading</div>
+          <div class="grading-title">Eagle DS Grading</div>
+          <div class="grading-sub" id="dash-note">17 Nandina Avenue, East Tāmaki</div>
+        </div>
+        <div>
+          <div class="grading-date" id="dash-date">TBA</div>
+          <div class="grading-date-label">Grading date</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card" onclick="showPanel('sequences')" style="cursor:pointer;">
+          <div class="card-label">Sequences</div>
+          <div class="card-value">4</div>
+          <div class="card-desc">White → Orange Belt</div>
+        </div>
+        <div class="card" onclick="showPanel('foundational')" style="cursor:pointer;">
+          <div class="card-label">Foundational</div>
+          <div class="card-value">10</div>
+          <div class="card-desc">Marks available</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Belt Grades</div>
+          <div class="card-value">4</div>
+          <div class="card-desc">White → Orange</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface2);border:1px solid var(--border);padding:18px 22px;margin-bottom:16px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Your Pathway</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+          You have four sequences to learn — one for each belt grade. You can study all four whenever you like, but at your grading you only perform the sequence for the belt you are going for. Train all of them. Grade one at a time.
+        </div>
+        <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
+          <div><div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">Sequence 1</div><div style="font-size:12px;">White Belt</div></div>
+          <div><div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">Sequence 2</div><div style="font-size:12px;">Yellow Belt</div></div>
+          <div><div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">Sequence 3</div><div style="font-size:12px;">Orange Stripe</div></div>
+          <div><div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">Sequence 4</div><div style="font-size:12px;">Orange Belt</div></div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface2);border:1px solid var(--border);padding:18px 22px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Grading Assessment</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface3);font-size:12px;"><span>Foundational Section</span><span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;">10</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface3);font-size:12px;"><span>Technical Application — Sequence</span><span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;">60</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface3);font-size:12px;"><span>Fitness &amp; Conditioning</span><span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;">20</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface3);font-size:12px;"><span>Sparring</span><span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;">22</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOUNDATIONAL -->
+    <div id="panel-foundational" class="panel">
+      <div class="page-eyebrow">Eagle DS · Junior Grading</div>
+      <div class="page-title">FOUNDATIONAL</div>
+      <div class="page-sub">The building blocks of your combat game — 10 marks at every grading</div>
+
+      <!-- STRIKING -->
+      <div class="found-block open" id="found-striking">
+        <div class="found-header" onclick="toggleFound('found-striking')">
+          <div class="found-header-title">Striking Techniques</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="found-chevron">▼</div>
+          </div>
+        </div>
+        <div class="found-body">
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;padding:12px 0 14px;">Your hands are your most important weapon. These five strikes must be clean, fast, and in the right order. The examiner is looking for correct technique — not power.</div>
+          <div class="tech-item">
+            <div class="tech-num">1</div>
+            <div>
+              <div class="tech-name">Jab</div>
+              <div class="tech-desc">Lead hand straight punch. Fast and snappy — it sets everything else up. Shoulder forward, chin down, return immediately.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">2</div>
+            <div>
+              <div class="tech-name">Cross</div>
+              <div class="tech-desc">Rear hand straight punch. This is your power hand. Drive from the back foot, rotate the hip, and punch through the target.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">3</div>
+            <div>
+              <div class="tech-name">Hook</div>
+              <div class="tech-desc">A punch that comes around the side. Elbow up at shoulder height, pivot on the front foot. Aim for the jaw.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">4</div>
+            <div>
+              <div class="tech-name">Rear Uppercut</div>
+              <div class="tech-desc">Rear hand punching upward from below. Drop your shoulder slightly, drive up from the legs. Elbow points down at the start.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">5</div>
+            <div>
+              <div class="tech-name">Lead Uppercut</div>
+              <div class="tech-desc">Lead hand punching upward. Same movement as the rear uppercut but from the front hand. Keep your guard up with the rear hand.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KICKS -->
+      <div class="found-block" id="found-kicks">
+        <div class="found-header" onclick="toggleFound('found-kicks')">
+          <div class="found-header-title">Kicks</div>
+          <div class="found-chevron">▼</div>
+        </div>
+        <div class="found-body">
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;padding:12px 0 14px;">Four kicks in the junior system. Every kick must show a proper chamber — knee up first — before the kick extends. This is what separates good technique from bad technique.</div>
+          <div class="tech-item">
+            <div class="tech-num">1</div>
+            <div>
+              <div class="tech-name">Rear Leg Roundhouse Kick</div>
+              <div class="tech-desc">The most powerful kick. Chamber the rear knee up and across, pivot on the front foot, and drive the shin through the target. Hip rotates fully. Return to stance immediately.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">2</div>
+            <div>
+              <div class="tech-name">Switch Kick</div>
+              <div class="tech-desc">Switch your feet quickly so your rear leg becomes your front leg, then kick with the new rear leg. The switch must be fast and disguised — opponent shouldn't see it coming.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">3</div>
+            <div>
+              <div class="tech-name">Front Kick</div>
+              <div class="tech-desc">Chamber the knee up, then push straight forward with the heel or ball of the foot. This kick stops an opponent in their tracks. Keep your balance and return to stance.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-num">4</div>
+            <div>
+              <div class="tech-name">Jumping Kick</div>
+              <div class="tech-desc">A roundhouse kick performed from a jump. Chamber while in the air, extend at the peak of the jump, land balanced. The jump must be deliberate — not a hop.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMBOS -->
+      <div class="found-block" id="found-combos">
+        <div class="found-header" onclick="toggleFound('found-combos')">
+          <div class="found-header-title">Combinations</div>
+          <div class="found-chevron">▼</div>
+        </div>
+        <div class="found-body">
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;padding:12px 0 14px;">Combinations are what make everything useful. Individual strikes are the vocabulary — combinations are the sentences. These build progressively through your belt levels.</div>
+
+          <div class="combo-belt">
+            <div class="combo-belt-label" style="color:#e8e8e8;">White Belt → Yellow Belt</div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">1 punch + kick</div></div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">2 punches + kick</div></div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">3 punches + kick</div></div>
+          </div>
+
+          <div class="combo-belt">
+            <div class="combo-belt-label" style="color:#e07020;">Orange Levels</div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">1–4 punch combinations with kick integration</div></div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">Punch → kick transitions</div></div>
+            <div class="combo-item"><div class="combo-dot"></div><div class="combo-text">Kick → punch transitions</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SEQUENCES -->
+    <div id="panel-sequences" class="panel">
+      <div class="page-eyebrow">Junior MMA · Technical Application</div>
+      <div class="page-title">SEQUENCES 1–4</div>
+      <div class="page-sub">Tap any sequence to expand · Tap any move for the full breakdown</div>
+      <div id="sequences-container">
+        <div style="color:var(--muted);padding:20px;font-size:13px;">Loading sequences…</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div><!-- end app -->
+
+<div id="toast"></div>
+
+<script>
+const EAGLE_FB_CONFIG = {
+  apiKey: "AIzaSyAOXZTzYEiWzuRUJMPBfsQ_cfyXCN4qZPQ",
+  authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
+  databaseURL: "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",
+  projectId: "taekwondo-scoreboard-e58ec"
+};
+if(!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
+const db = firebase.database();
+
+let SEQUENCES_DATA = null;
+const BELT_COLORS = {white:'#e8e8e8',yellow_stripe:'#f0c040',yellow:'#f0c040',orange_stripe:'#e07020',orange:'#e07020'};
+
+// ── PIN ──
+const PIN = '1234';
+let pinEntry = '';
+
+function pinPress(d){
+  if(pinEntry.length >= 4) return;
+  pinEntry += d;
+  updatePinDots();
+  if(pinEntry.length === 4) setTimeout(checkPin, 120);
+}
+
+function pinDel(){
+  if(!pinEntry.length) return;
+  pinEntry = pinEntry.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-err').classList.remove('show');
+}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d = document.getElementById('pd'+i);
+    d.classList.toggle('filled', i < pinEntry.length);
+    d.classList.remove('error');
+  }
+}
+
+function checkPin(){
+  if(pinEntry === PIN){
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    bootApp();
+  } else {
+    for(let i=0;i<4;i++){
+      document.getElementById('pd'+i).classList.remove('filled');
+      document.getElementById('pd'+i).classList.add('error');
+    }
+    document.getElementById('pin-err').classList.add('show');
+    setTimeout(()=>{ pinEntry=''; updatePinDots(); }, 600);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key>='0'&&e.key<='9') pinPress(e.key);
+  if(e.key==='Backspace') pinDel();
+});
+
+// ── BOOT ──
+async function bootApp(){
+  loadGradingDate();
+  loadSequences();
+}
+
+async function loadGradingDate(){
+  try {
+    const snap = await db.ref('portal_settings/next_grading').once('value');
+    const gd = snap.val();
+    if(gd && gd.date){
+      const d = new Date(gd.date);
+      document.getElementById('dash-date').textContent = d.toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'});
+      if(gd.note) document.getElementById('dash-note').textContent = gd.note;
+    }
+  } catch(e){}
+}
+
+async function loadSequences(){
+  try {
+    const snap = await db.ref('portal_sequences').once('value');
+    SEQUENCES_DATA = snap.val();
+  } catch(e){}
+  renderSequences();
+}
+
+function renderSequences(){
+  const container = document.getElementById('sequences-container');
+  if(!SEQUENCES_DATA){ container.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px;">Sequences loading — check back soon.</div>'; return; }
+
+  // Only sequences 1–4
+  const order = Object.keys(SEQUENCES_DATA)
+    .filter(key => SEQUENCES_DATA[key].num >= 1 && SEQUENCES_DATA[key].num <= 4)
+    .sort((a,b) => SEQUENCES_DATA[a].num - SEQUENCES_DATA[b].num);
+
+  if(!order.length){ container.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px;">No sequences available yet.</div>'; return; }
+
+  container.innerHTML = order.map(key => {
+    const s = SEQUENCES_DATA[key];
+    const beltColor = BELT_COLORS[s.belt] || '#888';
+    const sections = normaliseSections(s);
+    return `<div class="sequence-block" id="seqblock-${key}">
+      <div class="sequence-header" onclick="toggleSeq('${key}')">
+        <div class="sequence-num">SEQ ${String(s.num).padStart(2,'0')}</div>
+        <div class="sequence-title">${s.title||''}</div>
+        <div class="belt-tag" style="background:${beltColor};${s.belt==='white'?'border:1px solid #888':''}"></div>
+        <div class="chevron">▼</div>
+      </div>
+      <div class="sequence-body" id="seqbody-${key}">
+        <div style="padding-top:12px;">${renderSections(key, sections)}</div>
+        ${s.video
+          ?`<div class="video-slot"><iframe src="${getEmbedUrl(s.video)}" allowfullscreen></iframe></div>`
+          :`<div class="video-slot"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function normaliseSections(s){
+  if(s.sections && Array.isArray(s.sections)) return s.sections;
+  if(s.chain && Array.isArray(s.chain)){
+    const sections=[];
+    s.chain.forEach(move=>{
+      const last=sections[sections.length-1];
+      if(last&&last.actor===move.actor) last.moves.push(move);
+      else sections.push({actor:move.actor,moves:[move]});
+    });
+    return sections;
+  }
+  if(s.lines && Array.isArray(s.lines)){
+    return s.lines.map(l=>({actor:l.actor||'A',moves:(l.moves||[]).map(m=>({name:m.name||'',technical:m.technical||[],coaching:[],examiner:m.examiner||[],branches:[]}))}));
+  }
+  return [];
+}
+
+function renderSections(key, sections){
+  if(!sections.length) return '<div style="color:var(--muted);font-size:12px;">Flow not yet constructed.</div>';
+  return sections.map((sec,si)=>{
+    const isA = sec.actor==='A';
+    const actorColor = isA?'var(--blue-a)':'var(--red-b)';
+    const actorBg = isA?'rgba(91,155,213,0.07)':'rgba(224,112,96,0.07)';
+    const actorBorder = isA?'rgba(91,155,213,0.25)':'rgba(224,112,96,0.25)';
+    const moves = sec.moves||[];
+    const pills = moves.map((m,mi)=>{
+      const arrow = mi<moves.length-1?'<span class="move-arrow">→</span>':'';
+      return `<span class="move-pill" id="pill-${key}-${si}-${mi}" onclick="toggleBreakdown('${key}',${si},${mi})">${m.name||'Unnamed'}</span>${arrow}`;
+    }).join('');
+    const breakdowns = moves.map((_,mi)=>`<div class="move-breakdown" id="bd-${key}-${si}-${mi}"></div>`).join('');
+    return `<div class="chain-group" style="border-left:2px solid ${actorBorder};background:${actorBg};">
+      <div class="chain-row">
+        <span class="actor-label" style="color:${actorColor}">${sec.actor}</span>
+        <div class="flow-moves">${pills}</div>
+      </div>
+      ${breakdowns}
+    </div>`;
+  }).join('');
+}
+
+function toggleBreakdown(key, si, mi){
+  const sections = normaliseSections(SEQUENCES_DATA[key]);
+  const move = sections[si]?.moves?.[mi];
+  if(!move) return;
+  const bdId=`bd-${key}-${si}-${mi}`, pillId=`pill-${key}-${si}-${mi}`;
+  const bdEl=document.getElementById(bdId);
+  if(!bdEl) return;
+  document.querySelectorAll('.move-breakdown').forEach(el=>{if(el.id!==bdId){el.classList.remove('active');el.innerHTML='';}});
+  document.querySelectorAll('.move-pill').forEach(el=>el.classList.remove('active'));
+  if(bdEl.classList.contains('active')){bdEl.classList.remove('active');bdEl.innerHTML='';return;}
+  document.getElementById(pillId)?.classList.add('active');
+  const tech=(move.technical||[]).map(p=>`<li>${p}</li>`).join('');
+  const exam=(move.examiner||[]).map(p=>`<li>${p}</li>`).join('');
+  bdEl.innerHTML=`
+    <div class="breakdown-header">
+      <div class="breakdown-title">${move.name}</div>
+      <div class="breakdown-close" onclick="document.getElementById('${bdId}').classList.remove('active');document.getElementById('${bdId}').innerHTML='';document.getElementById('${pillId}')?.classList.remove('active');">✕</div>
+    </div>
+    ${tech?`<div class="breakdown-section"><div class="breakdown-section-label">Technical Requirements</div><ul class="breakdown-points">${tech}</ul></div>`:''}
+    ${exam?`<div class="examiner-box"><div class="examiner-label">What the Examiner Looks For</div><ul class="breakdown-points examiner-points">${exam}</ul></div>`:''}
+    ${!tech&&!exam?`<div style="color:var(--muted2);font-size:12px;font-style:italic;">Breakdown coming soon.</div>`:''}
+  `;
+  bdEl.classList.add('active');
+}
+
+function getEmbedUrl(url){
+  if(!url) return '';
+  if(url.includes('youtube.com/watch')) return url.replace('watch?v=','embed/');
+  if(url.includes('youtu.be/')) return url.replace('youtu.be/','youtube.com/embed/');
+  return url;
+}
+
+function toggleSeq(key){
+  document.getElementById(`seqblock-${key}`)?.classList.toggle('open');
+}
+
+function toggleFound(id){
+  document.getElementById(id)?.classList.toggle('open');
+}
+
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+}
+
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.className='show'; setTimeout(()=>el.className='',2800); }
+</script>
+</body>
+</html>
+
