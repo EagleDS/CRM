@@ -1243,45 +1243,35 @@ function updateBroadcastCount(){const sector=document.getElementById("b-sector")
 
 // ─── BROADCAST (with tracking) ───
 async function sendBroadcast(){
-  let k=RESEND_KEY_MEM;
-  if(!k){alert("No Resend key found. Go to Tools → System Config to save your key.");return;}
+  if(!EAGLE_TOKEN){alert("Not logged in.");return;}
   const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();
   if(!subject||!body){alert("Subject and message required.");return;}
   const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr);
   if(!targets.length){alert("No contacts match.");return;}
   if(!confirm("Send to "+targets.length+" contacts?"))return;
   const bid=generateBid();
-  const needsPersonal=body.includes("[FirstName]")||body.includes("[ChildName]")||subject.includes("[FirstName]");
   log("Sending to "+targets.length+"... (tracking ID: "+bid+")");
 
-  // Store broadcast record in Firebase
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
   await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
-  let sent=0;
-  if(needsPersonal){
-    for(const c of targets){
-      try{
-        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
-        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(subject,c,""),html})});
-        sent++;
-      }catch(e){}
+  try {
+    const res = await fetch("https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/broadcastEmail", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + EAGLE_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ contacts: targets, subject, body, bid })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      log("✓ Broadcast sent to "+data.sent+" contacts."+(data.failed?" ("+data.failed+" failed)":""),"ok");
+      document.getElementById("b-subject").value="";
+      document.getElementById("b-body").value="";
+    } else {
+      log("Broadcast failed: "+(data.error||res.status),"err");
     }
-    log("✓ Personalised broadcast sent to "+sent+" (tracked).","ok");
-  } else {
-    // For BCC sends we track per-recipient by sending individually with tracking
-    // This also means each person gets their own pixel — proper per-contact tracking
-    for(const c of targets){
-      try{
-        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
-        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject,html})});
-        sent++;
-      }catch(e){}
-    }
-    log("✓ Broadcast sent to "+sent+" with per-contact tracking.","ok");
+  } catch(e) {
+    log("Broadcast error: "+e.message,"err");
   }
-  document.getElementById("b-subject").value="";
-  document.getElementById("b-body").value="";
 }
 
 // ─── EMAIL ANALYTICS ───
@@ -1430,8 +1420,7 @@ function emailLead(email, name) {
 }
 
 async function sendSingleEmail() {
-  const k = RESEND_KEY_MEM;
-  if (!k) { alert("No Resend key found. Go to Tools → System Config to save your key."); return; }
+  if (!EAGLE_TOKEN) { alert("Not logged in."); return; }
   const email = document.getElementById("single-email-modal").dataset.recipient;
   const name  = document.getElementById("single-email-modal").dataset.name;
   const subject = document.getElementById("single-email-subject").value.trim();
@@ -1439,40 +1428,20 @@ async function sendSingleEmail() {
   const status  = document.getElementById("single-email-status");
   if (!subject || !body) { status.textContent = "Subject and message required."; status.style.color = "var(--red)"; return; }
   status.textContent = "Sending…"; status.style.color = "var(--muted)";
-  const greeting = name ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">Kia ora ${name},</p>` : "";
-  const html = `<div style="background:#0a0a0a;color:#f8f4ee;padding:40px 36px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td>
-      <div style="font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:#C8960C;text-transform:uppercase;">EAGLE DS</div>
-      <div style="font-family:monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Combat &amp; Wellness · East Tāmaki, Auckland</div>
-    </td></tr></table>
-    <div style="border-top:1px solid #1a1a1a;padding-top:20px;">
-      ${greeting}
-      ${body.split("\n").map(p => p.trim() ? `<p style="font-size:14px;color:#bbb;line-height:1.7;">${p}</p>` : "").join("")}
-    </div>
-    <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1a1a1a;">
-      <div style="font-family:monospace;font-size:9px;color:#444;line-height:1.8;letter-spacing:0.5px;">
-        <strong style="color:#666;">Dafydd Sanders</strong> — Founder &amp; Head Coach, Eagle DS<br>
-        17 Nandina Avenue, East Tāmaki, Auckland 2013<br>
-        <a href="tel:+64210902471" style="color:#555;text-decoration:none;">021 902 471</a> ·
-        <a href="mailto:info@eagleds.co.nz" style="color:#555;text-decoration:none;">info@eagleds.co.nz</a> ·
-        <a href="https://eagleds.co.nz" style="color:#C8960C;text-decoration:none;">eagleds.co.nz</a>
-      </div>
-    </div>
-  </div>`;
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/sendSingleEmail", {
       method: "POST",
-      headers: { "Authorization": "Bearer " + k, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to: email, subject, html })
+      headers: { "Authorization": "Bearer " + EAGLE_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ to: email, name, subject, body })
     });
-    if (res.ok) {
+    const data = await res.json();
+    if (res.ok && data.ok) {
       status.textContent = "✓ Sent to " + email;
       status.style.color = "var(--green)";
       log("Email sent to " + email, "ok");
       setTimeout(() => closeModal("single-email-modal"), 1500);
     } else {
-      const err = await res.json();
-      status.textContent = "Failed: " + (err.message || res.status);
+      status.textContent = "Failed: " + (data.error || res.status);
       status.style.color = "var(--red)";
     }
   } catch(e) {
