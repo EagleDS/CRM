@@ -1269,30 +1269,25 @@ async function sendBroadcast(){
   if(!targets.length){alert("No contacts match.");return;}
   if(!confirm("Send to "+targets.length+" contacts?"))return;
   const bid=generateBid();
-  log("Queueing "+targets.length+" emails…");
+  const status=document.getElementById("broadcast-status");
+  status.style.color="var(--muted)";status.textContent="Queuing broadcast…";
+  log("Queueing broadcast for "+targets.length+" contacts…");
 
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
   await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
-  let sent=0,failed=0;
-  for(const c of targets){
-    const payload={
-      type:"broadcast",
-      to:c.email,
-      name:c.name||"",
-      subject:replaceVars(subject,c,""),
-      body:replaceVars(body,c,""),
-      bid,
-      ts:new Date().toISOString()
-    };
-    try{
-      await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
-      sent++;
-    }catch(e){failed++;}
+  // Write ONE single event with all contacts — engine loops through server-side
+  const payload={type:"broadcast",contacts:targets,subject,body,bid,ts:new Date().toISOString()};
+  try{
+    await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
+    status.style.color="var(--green)";status.textContent="✓ Broadcast queued — engine is sending to "+targets.length+" contacts";
+    log("✓ Broadcast queued","ok");
+    document.getElementById("b-subject").value="";
+    document.getElementById("b-body").value="";
+  }catch(err){
+    status.style.color="var(--red)";status.textContent="Error: "+err.message;
+    log("Broadcast error: "+err.message,"err");
   }
-  log("✓ "+sent+" emails queued"+(failed?" ("+failed+" failed)":""),"ok");
-  document.getElementById("b-subject").value="";
-  document.getElementById("b-body").value="";
 }
 
 // ─── EMAIL ANALYTICS ───
@@ -1509,4 +1504,3 @@ eagleInitAuth();
 </script>
 </body>
 </html>
-
