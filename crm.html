@@ -1187,6 +1187,21 @@ function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierSt
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
 // ─── BROADCAST (with tracking) ───
+async function sendPreview(){
+  if(!EAGLE_TOKEN){alert("Not logged in.");return;}
+  const subject=document.getElementById("b-subject").value.trim();
+  const body=document.getElementById("b-body").value.trim();
+  if(!subject||!body){alert("Subject and message required.");return;}
+  const status=document.getElementById("broadcast-status");
+  status.style.color="var(--muted)";status.textContent="Sending preview…";
+  const payload={type:"broadcast",to:"info@eagleds.co.nz",name:"Dafydd",subject:"[PREVIEW] "+subject,body,ts:new Date().toISOString()};
+  try{
+    await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
+    status.style.color="var(--green)";status.textContent="✓ Preview queued — check info@eagleds.co.nz";
+    log("Preview queued","ok");
+  }catch(e){status.style.color="var(--red)";status.textContent="Error: "+e.message;log("Preview error: "+e.message,"err");}
+}
+
 async function sendBroadcast(){
   let k=localStorage.getItem("RESEND_KEY");
   if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
