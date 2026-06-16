@@ -1161,7 +1161,7 @@ async function eagleFetch(path, options = {}) {
 <script>
 
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
-const TRACK_BASE="https://eagleds.github.io/track.html";
+const TRACK_BASE="https://eagleds.github.io/CRM/track.html";
 let db={},pendingRows=[],pendingHeaders=[],emailAnalytics={};
 let RESEND_KEY_MEM = null;
 
@@ -1253,7 +1253,7 @@ async function sendPreview(){
   if(!subject||!body){alert("Subject and message required.");return;}
   const status=document.getElementById("broadcast-status");
   status.style.color="var(--muted)";status.textContent="Sending preview…";
-  const payload={type:"broadcast",to:"info@eagleds.co.nz",name:"Dafydd",subject:"[PREVIEW] "+subject,body,ts:new Date().toISOString()};
+  const payload={type:"broadcast",contacts:[{email:"info@eagleds.co.nz",name:"Dafydd"}],subject:"[PREVIEW] "+subject,body,ts:new Date().toISOString()};
   try{
     await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
     status.style.color="var(--green)";status.textContent="✓ Preview queued — check info@eagleds.co.nz";
