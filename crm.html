@@ -881,11 +881,7 @@ if (window.self !== window.top) {
             <div style="background:var(--black);border:1px solid rgba(200,150,12,.15);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:9px;color:var(--gold-dk);line-height:1.7;">
               ⚡ Open &amp; click tracking active — each recipient gets a unique tracked email. Results appear in Email Analytics tab.
             </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-ghost" onclick="sendPreview()"><span>Send Preview →</span></button>
-              <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
-            </div>
-            <div id="broadcast-status" style="font-family:var(--mono);font-size:10px;margin-top:10px;min-height:16px;"></div>
+            <button class="btn" onclick="sendBroadcast()"><span>Send Broadcast →</span></button>
           </div>
         </div>
         <div class="panel">
@@ -988,17 +984,9 @@ if (window.self !== window.top) {
           </div>
         </div>
       </div>
-      <div class="panel">
-        <div class="ph"><div class="pt">System Config</div></div>
-        <div class="pb">
-          <label>Resend API Key</label>
-          <input id="resend-key-input" type="password" placeholder="re_xxxxxxxxxxxx" style="width:100%;background:var(--grey);border:1px solid var(--border2);color:var(--text);padding:10px;font-family:var(--mono);font-size:11px;border-radius:var(--r);margin-bottom:10px;">
-          <div class="btn-row"><button class="btn" onclick="saveResendKey()"><span>Save Key to Firebase</span></button></div>
-          <div id="resend-key-status" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;"></div>
-        </div>
-      </div>
     </div>
   </div>
+  <footer class="site-footer">
     <span class="sf-brand">EAGLE DS</span>
     <div class="sf-links">
       <a href="crm.html">CRM</a><a href="events.html">Events</a>
@@ -1064,32 +1052,6 @@ if (window.self !== window.top) {
   </div>
 </div>
 
-<!-- SINGLE EMAIL MODAL -->
-<div class="modal" id="single-email-modal">
-  <div class="mbox">
-    <div class="mh">
-      <div>
-        <div class="mt" id="single-email-title">Reply to Lead</div>
-        <div id="single-email-to" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px;"></div>
-      </div>
-      <button class="mc" onclick="closeModal('single-email-modal')">✕</button>
-    </div>
-    <div class="mb">
-      <label>Subject</label>
-      <input type="text" id="single-email-subject" placeholder="e.g. Re: your enquiry to Eagle DS" style="margin-bottom:14px;">
-      <label>Message</label>
-      <textarea id="single-email-body" style="min-height:180px;" placeholder="Write your reply here…"></textarea>
-      <div id="single-email-status" style="font-family:var(--mono);font-size:9px;margin-top:8px;min-height:14px;"></div>
-    </div>
-    <div class="mf">
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="closeModal('single-email-modal')"><span>Cancel</span></button>
-        <button class="btn" onclick="sendSingleEmail()"><span>Send →</span></button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ═══ EAGLE DS SHARED AUTH MODULE ═══
    Real Firebase Authentication — replaces the MD5 passcode gate.
@@ -1122,7 +1084,6 @@ function eagleInitAuth() {
       if (gate) gate.style.display = "none";
       if (app)  app.style.display  = "block";
       if (typeof onAuthReady === "function") onAuthReady();
-      loadResendKey();
     } else {
       EAGLE_USER = null; EAGLE_TOKEN = null;
       const gate = document.getElementById("gate");
@@ -1161,31 +1122,8 @@ async function eagleFetch(path, options = {}) {
 <script>
 
 const FB="https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com",HASH="81dc9bdb52d04dc20036dbd8313ed055",FROM="info@eagleds.co.nz";
-const TRACK_BASE="https://eagleds.github.io/track.html";
+const TRACK_BASE="https://eagleds.github.io/CRM/track.html";
 let db={},pendingRows=[],pendingHeaders=[],emailAnalytics={};
-let RESEND_KEY_MEM = null;
-
-async function loadResendKey() {
-  try {
-    const r = await eagleFetch(FB + "/portal_config/resend_key.json");
-    const val = await r.json();
-    if (val) { RESEND_KEY_MEM = val; log("Resend key loaded.", "ok"); }
-    else { log("No Resend key found in Firebase — set one in Tools → System Config.", "info"); }
-  } catch(e) { log("Could not load Resend key.", "info"); }
-}
-
-async function saveResendKey() {
-  const k = document.getElementById("resend-key-input").value.trim();
-  if (!k) { alert("Paste your Resend API key first."); return; }
-  try {
-    await eagleFetch(FB + "/portal_config/resend_key.json", { method: "PUT", body: JSON.stringify(k) });
-    RESEND_KEY_MEM = k;
-    document.getElementById("resend-key-input").value = "";
-    document.getElementById("resend-key-status").textContent = "✓ Saved — key is active";
-    document.getElementById("resend-key-status").style.color = "var(--green)";
-    log("Resend key saved to Firebase.", "ok");
-  } catch(e) { alert("Save failed: " + e.message); }
-}
 
 // ─── HELPERS ───
 function getTier(r){const s=r.lastActivity||r.added||null;if(!s)return"new";const d=(Date.now()-new Date(s))/86400000;if(d<=30)return"hot";if(d<=180)return"warm";if(d<=730)return"cold";return"dormant";}
@@ -1218,7 +1156,7 @@ function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,
 
 // ─── AUTOMATION ───
 async function checkAutomationQueue(){try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
-async function runAutomation(){let k=RESEND_KEY_MEM;if(!k){alert("No Resend key found. Go to Tools → System Config to save your key.");return;}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
+async function runAutomation(){let k=localStorage.getItem("RESEND_KEY");if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
 function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
 
 // ─── IMPORT ───
@@ -1246,48 +1184,46 @@ function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierSt
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
 // ─── BROADCAST (with tracking) ───
-async function sendPreview(){
-  if(!EAGLE_TOKEN){alert("Not logged in.");return;}
-  const subject=document.getElementById("b-subject").value.trim();
-  const body=document.getElementById("b-body").value.trim();
-  if(!subject||!body){alert("Subject and message required.");return;}
-  const status=document.getElementById("broadcast-status");
-  status.style.color="var(--muted)";status.textContent="Sending preview…";
-  const payload={type:"broadcast",to:"info@eagleds.co.nz",name:"Dafydd",subject:"[PREVIEW] "+subject,body,ts:new Date().toISOString()};
-  try{
-    await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
-    status.style.color="var(--green)";status.textContent="✓ Preview queued — check info@eagleds.co.nz";
-    log("Preview queued","ok");
-  }catch(e){status.style.color="var(--red)";status.textContent="Error: "+e.message;log("Preview error: "+e.message,"err");}
-}
-
 async function sendBroadcast(){
-  if(!EAGLE_TOKEN){alert("Not logged in.");return;}
+  let k=localStorage.getItem("RESEND_KEY");
+  if(!k){k=prompt("Enter Resend API key:");if(!k)return;localStorage.setItem("RESEND_KEY",k.trim());k=k.trim();}
   const subject=document.getElementById("b-subject").value.trim(),body=document.getElementById("b-body").value.trim();
   if(!subject||!body){alert("Subject and message required.");return;}
   const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr);
   if(!targets.length){alert("No contacts match.");return;}
   if(!confirm("Send to "+targets.length+" contacts?"))return;
   const bid=generateBid();
-  const status=document.getElementById("broadcast-status");
-  status.style.color="var(--muted)";status.textContent="Queuing broadcast…";
-  log("Queueing broadcast for "+targets.length+" contacts…");
+  const needsPersonal=body.includes("[FirstName]")||body.includes("[ChildName]")||subject.includes("[FirstName]");
+  log("Sending to "+targets.length+"... (tracking ID: "+bid+")");
 
+  // Store broadcast record in Firebase
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
   await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
-  // Write ONE single event with all contacts — engine loops through server-side
-  const payload={type:"broadcast",contacts:targets,subject,body,bid,ts:new Date().toISOString()};
-  try{
-    await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
-    status.style.color="var(--green)";status.textContent="✓ Broadcast queued — engine is sending to "+targets.length+" contacts";
-    log("✓ Broadcast queued","ok");
-    document.getElementById("b-subject").value="";
-    document.getElementById("b-body").value="";
-  }catch(err){
-    status.style.color="var(--red)";status.textContent="Error: "+err.message;
-    log("Broadcast error: "+err.message,"err");
+  let sent=0;
+  if(needsPersonal){
+    for(const c of targets){
+      try{
+        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(subject,c,""),html})});
+        sent++;
+      }catch(e){}
+    }
+    log("✓ Personalised broadcast sent to "+sent+" (tracked).","ok");
+  } else {
+    // For BCC sends we track per-recipient by sending individually with tracking
+    // This also means each person gets their own pixel — proper per-contact tracking
+    for(const c of targets){
+      try{
+        const html=buildTrackedEmail(replaceVars(body,c,""),bid,c.email);
+        await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject,html})});
+        sent++;
+      }catch(e){}
+    }
+    log("✓ Broadcast sent to "+sent+" with per-contact tracking.","ok");
   }
+  document.getElementById("b-subject").value="";
+  document.getElementById("b-body").value="";
 }
 
 // ─── EMAIL ANALYTICS ───
@@ -1324,7 +1260,6 @@ async function loadEmailAnalytics(){
         +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+openColor+';">'+opens+'</span><span style="font-family:var(--mono);font-size:9px;color:'+openColor+';margin-left:4px;">'+openRate+'%</span></td>'
         +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+clickColor+';">'+clicks+'</span><span style="font-family:var(--mono);font-size:9px;color:'+clickColor+';margin-left:4px;">'+clickRate+'%</span></td>'
         +'<td><button class="btn btn-ghost btn-sm" onclick="showEngaged(\''+encodeURIComponent(bid)+'\')"><span>Who opened →</span></button></td>'
-        +'<td><button class="btn btn-red btn-sm" onclick="deleteBroadcast(\''+encodeURIComponent(bid)+'\')"><span>Delete</span></button></td>'
         +'</tr>';
     }).join("");
   }catch(e){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--red);">Failed to load analytics.</td></tr>';log("Analytics error: "+e.message,"err");}
@@ -1352,15 +1287,6 @@ async function showEngaged(bidEncoded){
     }).join("");
     modal.classList.add("open");
   }catch(e){log("Could not load engagements: "+e.message,"err");}
-}
-
-// ─── DIRECTORY ───
-async function deleteBroadcast(bidEncoded){
-  if(!confirm("Delete this broadcast record?"))return;
-  await eagleFetch(FB+"/email_broadcasts/"+bidEncoded+".json",{method:"DELETE"});
-  await eagleFetch(FB+"/email_tracking/"+bidEncoded+".json",{method:"DELETE"});
-  log("Broadcast record deleted.","warn");
-  loadEmailAnalytics();
 }
 
 // ─── DIRECTORY ───
@@ -1392,17 +1318,11 @@ async function loadLeads(){
     if(keys.length){badge.style.display="inline-block";badge.textContent=keys.length;}else badge.style.display="none";
     if(!keys.length){el.innerHTML='<p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:24px;">No new enquiries. When someone books a trial on your site, it appears here.</p>';return;}
     keys.sort((a,b)=>(webLeads[b].submittedAt||"").localeCompare(webLeads[a].submittedAt||""));
-    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;border-bottom:1px solid var(--border);margin-bottom:12px;">'
-      +'<label style="font-family:var(--mono);font-size:9px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;">'
-      +'<input type="checkbox" id="leads-select-all" onchange="toggleAllLeads(this)"> Select all</label>'
-      +'<button class="btn btn-red btn-sm" onclick="deleteSelectedLeads()"><span>Delete selected</span></button>'
-      +'</div>'
-      +keys.map(k=>{
+    el.innerHTML=keys.map(k=>{
       const l=webLeads[k];
       const arms=(l.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join("");
       const when=l.submittedAt?new Date(l.submittedAt).toLocaleString("en-NZ",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
       return'<div class="panel" style="margin-bottom:2px;"><div class="pb" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">'
-        +'<input type="checkbox" class="lead-cb" data-key="'+k+'" style="margin-top:4px;flex-shrink:0;">'
         +'<div style="flex:1;min-width:200px;">'
         +'<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:2px;">'+(l.name||l.email)+'</div>'
         +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:8px;">'+l.email+(l.phone?" · "+l.phone:"")+'</div>'
@@ -1412,7 +1332,7 @@ async function loadLeads(){
         +'</div>'
         +'<div style="display:flex;flex-direction:column;gap:2px;width:160px;">'
         +'<button class="btn btn-sm" onclick="ingestLead(\''+k+'\')"><span>+ Add to Directory</span></button>'
-        +'<button class="btn btn-ghost btn-sm" onclick="emailLead(\''+(l.email)+'\',\''+(l.name||'')+'\')"><span>Email</span></button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="emailLead(\''+(l.email)+'\')"><span>Email</span></button>'
         +'<button class="btn btn-red btn-sm" onclick="dismissLead(\''+k+'\')"><span>Dismiss</span></button>'
         +'</div>'
         +'</div></div>';
@@ -1439,61 +1359,7 @@ async function ingestLead(k){
   await pushToCloud();updateStats();loadLeads();
 }
 async function dismissLead(k){if(!confirm("Dismiss this enquiry?"))return;await eagleFetch(FB+"/web_leads/"+k+".json",{method:"DELETE"});delete webLeads[k];loadLeads();log("Lead dismissed.","warn");}
-
-function toggleAllLeads(cb){document.querySelectorAll(".lead-cb").forEach(el=>el.checked=cb.checked);}
-
-async function deleteSelectedLeads(){
-  const selected=[...document.querySelectorAll(".lead-cb:checked")].map(el=>el.dataset.key);
-  if(!selected.length){alert("No leads selected.");return;}
-  if(!confirm("Delete "+selected.length+" lead(s)?"))return;
-  const updates={};
-  selected.forEach(k=>{updates["/web_leads/"+k]=null;delete webLeads[k];});
-  await eagleFetch(FB+"/.json",{method:"PATCH",body:JSON.stringify(updates)});
-  log("Deleted "+selected.length+" lead(s).","warn");
-  loadLeads();
-}
-function emailLead(email, name) {
-  document.getElementById("single-email-title").textContent = "Email " + (name || email);
-  document.getElementById("single-email-to").textContent = "To: " + email;
-  document.getElementById("single-email-subject").value = "";
-  document.getElementById("single-email-body").value = "";
-  document.getElementById("single-email-status").textContent = "";
-  document.getElementById("single-email-modal").dataset.recipient = email;
-  document.getElementById("single-email-modal").dataset.name = name || "";
-  document.getElementById("single-email-modal").classList.add("open");
-  setTimeout(() => document.getElementById("single-email-subject").focus(), 100);
-}
-
-async function sendSingleEmail() {
-  if (!EAGLE_TOKEN) { alert("Not logged in."); return; }
-  const email = document.getElementById("single-email-modal").dataset.recipient;
-  const name  = document.getElementById("single-email-modal").dataset.name;
-  const subject = document.getElementById("single-email-subject").value.trim();
-  const body    = document.getElementById("single-email-body").value.trim();
-  const status  = document.getElementById("single-email-status");
-  if (!subject || !body) { status.textContent = "Subject and message required."; status.style.color = "var(--red)"; return; }
-  status.textContent = "Sending…"; status.style.color = "var(--muted)";
-  try {
-    const res = await fetch("https://us-central1-taekwondo-scoreboard-e58ec.cloudfunctions.net/sendSingleEmail", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + EAGLE_TOKEN, "Content-Type": "application/json" },
-      body: JSON.stringify({ to: email, name, subject, body })
-    });
-    const data = await res.json();
-    if (res.ok && data.ok) {
-      status.textContent = "✓ Sent to " + email;
-      status.style.color = "var(--green)";
-      log("Email sent to " + email, "ok");
-      setTimeout(() => closeModal("single-email-modal"), 1500);
-    } else {
-      status.textContent = "Failed: " + (data.error || res.status);
-      status.style.color = "var(--red)";
-    }
-  } catch(e) {
-    status.textContent = "Error: " + e.message;
-    status.style.color = "var(--red)";
-  }
-}
+function emailLead(email){document.getElementById("b-sector").value="all";switchTab("broadcast",document.querySelectorAll(".tab")[3]);document.getElementById("b-subject").focus();log("Compose an email — recipient: "+email,"info");}
 
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target);}});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
