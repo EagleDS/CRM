@@ -359,3 +359,4 @@ exports.broadcastEmail = onRequest(
     res.status(200).json({ ok: true, sent, failed });
   }
 );
+
