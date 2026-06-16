@@ -155,9 +155,6 @@ exports.engine = onValueCreated(
         break;
       }
 
-      default:
-        await log("unknown event type — logged only");
-
       case "broadcast": {
         if (e.to && e.subject && e.body) {
           const html = shell(
@@ -175,6 +172,9 @@ exports.engine = onValueCreated(
         }
         break;
       }
+
+      default:
+        await log("unknown event type — logged only");
     }
   }
 );
@@ -359,5 +359,4 @@ exports.broadcastEmail = onRequest(
     res.status(200).json({ ok: true, sent, failed });
   }
 );
-
 
