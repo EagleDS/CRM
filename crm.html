@@ -11,7 +11,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
-/* ═══ EAGLE DS SHARED DESIGN SYSTEM ═══ */
 :root {
   --black:    #0a0a0a;
   --black-2:  #0f0f0f;
@@ -53,7 +52,6 @@ body {
   min-height: 100vh;
 }
 
-/* Film grain */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -65,7 +63,6 @@ body::before {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 1px; }
 
-/* GATE */
 #gate {
   position: fixed; inset: 0;
   background: var(--black);
@@ -122,7 +119,6 @@ body::before {
   color: var(--red); margin-top: 10px; height: 14px;
 }
 
-/* NAV */
 #app { display: none; }
 .topbar {
   position: sticky; top: 0; z-index: 200;
@@ -178,10 +174,8 @@ body::before {
 .sdot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .sdot.err  { background: var(--red); }
 
-/* WORKSPACE */
 .ws { max-width: 1360px; margin: 0 auto; padding: 32px; }
 
-/* PAGE HEADER */
 .page-hd { margin-bottom: 32px; }
 .section-label {
   font-family: var(--mono); font-size: 9px;
@@ -202,7 +196,6 @@ body::before {
   color: var(--muted); font-weight: 300;
 }
 
-/* GOLD DIVIDER */
 .gold-divider {
   width: 100%; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(200,150,12,0.25), transparent);
@@ -210,7 +203,6 @@ body::before {
 }
 .gold-line { width: 48px; height: 2px; background: var(--gold); margin-bottom: 20px; }
 
-/* TABS */
 .tabs {
   display: flex; gap: 0;
   border-bottom: 1px solid var(--border);
@@ -239,7 +231,6 @@ body::before {
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
 
-/* STAT CARDS */
 .stat-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
@@ -273,7 +264,6 @@ body::before {
   letter-spacing: 1.5px; margin-top: 4px;
 }
 
-/* TIER ROW */
 .tier-row {
   display: grid; grid-template-columns: repeat(4,1fr);
   gap: 2px; margin-bottom: 2px;
@@ -297,7 +287,6 @@ body::before {
   color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* PANELS */
 .panel {
   background: var(--grey);
   border: 1px solid var(--border);
@@ -320,7 +309,6 @@ body::before {
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
 @media(max-width:768px){ .grid2,.grid3 { grid-template-columns: 1fr; } }
 
-/* FORMS */
 label {
   display: block;
   font-family: var(--mono); font-size: 9px;
@@ -347,7 +335,6 @@ textarea {
 select:focus, input:focus, textarea:focus { border-color: var(--gold-dk); }
 textarea { resize: vertical; min-height: 90px; }
 
-/* BUTTONS */
 .btn {
   display: inline-block;
   background: var(--gold-dk); color: #000;
@@ -383,7 +370,6 @@ textarea { resize: vertical; min-height: 90px; }
 .btn-row { display: flex; gap: 2px; }
 .btn-row .btn { flex: 1; }
 
-/* SECTOR TILES */
 .sector-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 14px; }
 .stile {
   border: 1px solid var(--border2);
@@ -403,8 +389,11 @@ textarea { resize: vertical; min-height: 90px; }
 .stile.on-cgs    { border-color: var(--red);  color: #ff7070; background: #1c0808; }
 .stile.on-school { border-color: var(--purple); color: #c080ff; background: #110820; }
 .stile.on-corp   { border-color: var(--green); color: #50e07a; background: #061410; }
+/* TEST SECTOR START - delete this block to remove */
+.stile.on-test   { border-color: #999; color: #ddd; background: #1a1a1a; }
+.b-test { background: #1a1a1a; color: #ccc; border: 1px solid #444; }
+/* TEST SECTOR END */
 
-/* BADGES */
 .badge {
   display: inline-block; padding: 2px 7px;
   border-radius: 1px;
@@ -417,7 +406,6 @@ textarea { resize: vertical; min-height: 90px; }
 .b-school { background: #110820; color: #c080ff; border: 1px solid #481a6a; }
 .b-corp   { background: #061410; color: #50e07a; border: 1px solid #185a2a; }
 
-/* TIER BADGES */
 .tb {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 2px 8px; border-radius: 20px;
@@ -431,11 +419,9 @@ textarea { resize: vertical; min-height: 90px; }
 .tb-dormant { background: #111111; color: var(--muted); border: 1px solid var(--border2); } .tb-dormant::before { background: var(--muted); }
 .tb-new     { background: #071410; color: #60e080; border: 1px solid #1a5a2a; } .tb-new::before     { background: var(--green); }
 
-/* PARENT/CHILD */
 .p-badge { display:inline-block;padding:1px 7px;border-radius:20px;font-family:var(--mono);font-size:8px;border:1px solid #5a3000;color:#ffa060;background:#180b00;margin-left:4px; }
 .c-badge { display:inline-block;padding:1px 7px;border-radius:20px;font-family:var(--mono);font-size:8px;border:1px solid #481a6a;color:#c080ff;background:#0e0620;margin-left:4px; }
 
-/* CONSOLE */
 .console {
   background: var(--black);
   border: 1px solid var(--border);
@@ -449,7 +435,6 @@ textarea { resize: vertical; min-height: 90px; }
 .l-info { color: var(--muted2); }
 .l-gold { color: var(--gold); }
 
-/* TABLE */
 .tbar {
   display: flex; gap: 10px;
   padding: 10px 16px;
@@ -482,7 +467,6 @@ tbody tr:last-child td { border-bottom: none; }
 .edit-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 4px 8px; transition: all .15s; }
 .edit-btn:hover { color: var(--gold); }
 
-/* MODAL */
 .modal {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.92);
@@ -519,7 +503,6 @@ tbody tr:last-child td { border-bottom: none; }
   border-top: 1px solid var(--border);
 }
 
-/* AUTO BANNER */
 .auto-banner {
   background: var(--grey);
   border: 1px solid rgba(200,150,12,0.2);
@@ -537,7 +520,6 @@ tbody tr:last-child td { border-bottom: none; }
 .ab-txt { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
 .ab-count { font-family: var(--cormorant); font-size: 14px; font-weight: 600; color: var(--gold); }
 
-/* FIX ROWS */
 .fix-row {
   display: flex; align-items: center;
   justify-content: space-between;
@@ -547,7 +529,6 @@ tbody tr:last-child td { border-bottom: none; }
 .fix-info strong { color: var(--text); display: block; font-family: var(--mono); font-size: 10px; }
 .fix-info span   { color: var(--muted2); font-family: var(--mono); font-size: 9px; }
 
-/* MAP MODAL ROWS */
 .map-r { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .map-l { font-family: var(--mono); font-size: 9px; color: var(--muted2); text-transform: uppercase; width: 80px; flex-shrink: 0; }
 .map-r select { margin-bottom: 0; flex: 1; }
@@ -571,7 +552,6 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .fp-tag.match { border-color: var(--green); color: var(--green); background: rgba(34,182,74,0.06); }
 
-/* VAR CHIPS */
 .var-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .var-chip {
   font-family: var(--mono); font-size: 9px;
@@ -581,13 +561,11 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .var-chip:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,150,12,0.1); }
 
-/* FAMILY INSIGHT */
 .family-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 .family-stat { background: var(--black); padding: 18px 20px; text-align: center; }
 .family-stat .fn { font-family: var(--bebas); font-size: 38px; line-height: 1; }
 .family-stat .fl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-/* NOTIFY TOGGLE */
 .notify-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .toggle { width: 36px; height: 20px; background: var(--border2); border-radius: 10px; cursor: pointer; position: relative; transition: background .2s; flex-shrink: 0; }
 .toggle.on { background: var(--gold-dk); }
@@ -595,7 +573,6 @@ tbody tr:last-child td { border-bottom: none; }
 .toggle.on::after { left: 19px; }
 .toggle-label { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
 
-/* EDITOR TOOLBAR */
 .editor-toolbar { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 10px; }
 .tb-btn {
   background: var(--black); border: 1px solid var(--border2);
@@ -604,7 +581,6 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .tb-btn:hover { border-color: var(--gold-dk); color: var(--gold); }
 
-/* PREVIEW */
 .preview-wrap {
   background: var(--black); border: 1px solid var(--border);
   padding: 24px; min-height: 200px;
@@ -622,7 +598,6 @@ tbody tr:last-child td { border-bottom: none; }
 .preview-wrap hr { border: none; border-top: 1px solid var(--border2); margin: 18px 0; }
 .preview-wrap ul { margin: 0 0 12px 20px; color: var(--muted); }
 
-/* POST CARD */
 .post-card {
   background: var(--black); border: 1px solid var(--border);
   padding: 18px; margin-bottom: 2px;
@@ -636,7 +611,6 @@ tbody tr:last-child td { border-bottom: none; }
 .tag-published { background: rgba(34,182,74,0.08); color: var(--green); border: 1px solid rgba(34,182,74,0.3); padding: 1px 7px; font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: .5px; }
 .tag-draft     { background: rgba(224,112,32,0.08); color: var(--orange); border: 1px solid rgba(224,112,32,0.3); padding: 1px 7px; font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: .5px; }
 
-/* EVENT CARD */
 .event-card {
   background: var(--grey); border: 1px solid var(--border);
   overflow: hidden; transition: border-color .2s;
@@ -665,20 +639,17 @@ tbody tr:last-child td { border-bottom: none; }
 .step-dot.due  { background: var(--gold); animation: abpulse 1.5s infinite; }
 .step-dot.upcoming { background: var(--muted); }
 
-/* QUEUE STATUS */
 .q-status { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 9px; padding: 2px 8px; }
 .qs-pending { background: rgba(224,112,32,0.08); color: var(--orange); border: 1px solid rgba(224,112,32,0.3); }
 .qs-sent    { background: rgba(34,182,74,0.06); color: var(--green); border: 1px solid rgba(34,182,74,0.25); }
 .qs-due     { background: rgba(200,150,12,0.1); color: var(--gold); border: 1px solid rgba(200,150,12,0.4); animation: abpulse .9s infinite; }
 .qs-skipped { background: var(--black); color: var(--muted); border: 1px solid var(--border); }
 
-/* TEMPLATE CARD */
 .template-card { background: var(--black); border: 1px solid var(--border); padding: 16px; margin-bottom: 2px; cursor: pointer; transition: border-color .2s; }
 .template-card:hover { border-color: var(--gold-dk); }
 .tc-name { font-family: var(--cormorant); font-size: 17px; font-weight: 600; color: var(--gold); margin-bottom: 4px; }
 .tc-meta { font-family: var(--mono); font-size: 9px; color: var(--muted2); }
 
-/* CONTENT IDEAS */
 .idea-item {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 0; border-bottom: 1px solid var(--border);
@@ -689,7 +660,6 @@ tbody tr:last-child td { border-bottom: none; }
 .idea-item::before { content: '→'; color: var(--gold); font-family: var(--mono); font-size: 10px; flex-shrink: 0; }
 .idea-item:last-child { border-bottom: none; }
 
-/* WATERMARK */
 .section-watermark {
   position: absolute; pointer-events: none;
   font-family: var(--bebas); font-size: 180px;
@@ -698,7 +668,6 @@ tbody tr:last-child td { border-bottom: none; }
   right: -20px; top: 50%; transform: translateY(-50%) rotate(90deg);
 }
 
-/* FOOTER */
 .site-footer {
   background: var(--black-2);
   border-top: 1px solid rgba(200,150,12,0.1);
@@ -713,23 +682,19 @@ tbody tr:last-child td { border-bottom: none; }
 .sf-links a:hover { color: var(--gold); }
 .sf-copy { font-family: var(--mono); font-size: 9px; color: var(--muted2); letter-spacing: 1px; }
 
-/* SCROLL REVEAL */
 .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
-/* ANIMATIONS */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: translateY(0);} }
 @keyframes breathe { 0%,100%{opacity:.9;transform:scale(1);}50%{opacity:1;transform:scale(1.015);} }
 @keyframes expand  { from{width:0;opacity:0;}to{width:48px;opacity:1;} }
 
-/* Analytics bar chart */
 .rate-bar { height: 6px; background: var(--border2); border-radius: 1px; margin-top: 6px; overflow: hidden; }
 .rate-fill { height: 100%; border-radius: 1px; transition: width .6s ease; }
 </style>
 </head>
 <body>
 <script>
-// Inside the Eagle DS OS shell? Suppress the login flash — the shell already authed.
 if (window.self !== window.top) {
   document.addEventListener('DOMContentLoaded', function(){
     var g = document.getElementById('gate'); if (g) g.style.display = 'none';
@@ -862,6 +827,9 @@ if (window.self !== window.top) {
               <option value="cgs">⚔ CGS Circuit</option>
               <option value="school">🏫 Institutional</option>
               <option value="corp">💼 Commercial</option>
+              <!-- TEST SECTOR START - delete this line to remove -->
+              <option value="test">🧪 Test</option>
+              <!-- TEST SECTOR END -->
             </select>
             <label>Engagement Filter</label>
             <select id="b-tier" onchange="updateBroadcastCount()">
@@ -1047,6 +1015,9 @@ if (window.self !== window.top) {
         <div class="stile" data-s="cgs" onclick="toggleEditSector(this)">⚔ CGS Circuit</div>
         <div class="stile" data-s="school" onclick="toggleEditSector(this)">🏫 Institutional</div>
         <div class="stile" data-s="corp" onclick="toggleEditSector(this)">💼 Commercial</div>
+        <!-- TEST SECTOR START - delete this line to remove -->
+        <div class="stile" data-s="test" onclick="toggleEditSector(this)" style="border-color:#666;color:#aaa;">🧪 Test</div>
+        <!-- TEST SECTOR END -->
       </div>
     </div>
     <div class="mf"><div class="btn-row"><button class="btn btn-ghost" onclick="closeModal('edit-modal')"><span>Cancel</span></button><button class="btn" onclick="saveEdit()"><span>Save Changes</span></button></div></div>
@@ -1091,11 +1062,6 @@ if (window.self !== window.top) {
 </div>
 
 <script>
-/* ═══ EAGLE DS SHARED AUTH MODULE ═══
-   Real Firebase Authentication — replaces the MD5 passcode gate.
-   Include on every internal tool (crm, events, scheduler, blog).
-   Requires Firebase Auth enabled in console + email/password account created. */
-
 const EAGLE_FB_CONFIG = {
   apiKey: "AIzaSyAOXZTzYEiWzuRUJMPBfsQ_cfyXCN4qZPQ",
   authDomain: "taekwondo-scoreboard-e58ec.firebaseapp.com",
@@ -1106,16 +1072,13 @@ const EAGLE_FB_CONFIG = {
 let EAGLE_USER = null;
 let EAGLE_TOKEN = null;
 
-// Initialise Firebase Auth (compat SDK loaded via CDN in each page)
 function eagleInitAuth() {
   if (!firebase.apps.length) firebase.initializeApp(EAGLE_FB_CONFIG);
-  // LOCAL persistence — session shares across the Eagle DS OS shell and survives reloads
   try { firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){}
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
       EAGLE_USER = user;
       EAGLE_TOKEN = await user.getIdToken();
-      // Refresh token every 50 min (tokens expire at 60)
       setInterval(async () => { if (EAGLE_USER) EAGLE_TOKEN = await EAGLE_USER.getIdToken(true); }, 50 * 60 * 1000);
       const gate = document.getElementById("gate");
       const app  = document.getElementById("app");
@@ -1149,8 +1112,6 @@ async function eagleLogin() {
 
 function eagleLogout() { firebase.auth().signOut(); }
 
-// Authenticated fetch — appends the auth token to every Firebase request.
-// Use this INSTEAD of plain fetch() for all Firebase calls so security rules pass.
 async function eagleFetch(path, options = {}) {
   const sep = path.includes("?") ? "&" : "?";
   const url = EAGLE_TOKEN ? `${path}${sep}auth=${EAGLE_TOKEN}` : path;
@@ -1187,7 +1148,6 @@ async function saveResendKey() {
   } catch(e) { alert("Save failed: " + e.message); }
 }
 
-// ─── HELPERS ───
 function getTier(r){const s=r.lastActivity||r.added||null;if(!s)return"new";const d=(Date.now()-new Date(s))/86400000;if(d<=30)return"hot";if(d<=180)return"warm";if(d<=730)return"cold";return"dormant";}
 function tierBadge(t){const m={hot:"Hot",warm:"Warm",cold:"Cold",dormant:"Dormant",new:"New"};return`<span class="tb tb-${t}">${m[t]||t}</span>`;}
 function calcAge(dob){if(!dob)return null;const d=new Date(dob);if(isNaN(d))return null;return Math.floor((Date.now()-d.getTime())/31557600000);}
@@ -1196,12 +1156,10 @@ function isParent(r){return!!(r.children&&r.children.length>0);}
 function buildFamilyLinks(){const em={};for(const k in db){const e=db[k].email;if(!em[e])em[e]=[];em[e].push(k);}for(const e in em){const keys=em[e];if(keys.length<2)continue;keys.sort((a,b)=>(calcAge(db[b].dob)||0)-(calcAge(db[a].dob)||0));db[keys[0]].children=keys.slice(1).map(k=>db[k].name||db[k].email);}}
 function generateBid(){return"bcast_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);}
 
-// ─── TRACKING ───
 function trackPixel(bid,email){const cid=encodeURIComponent(email);return`<img src="${TRACK_BASE}?bid=${encodeURIComponent(bid)}&cid=${cid}&type=open" width="1" height="1" style="display:none;" alt="">`;}
 function wrapLinks(htmlBody,bid,email){const cid=encodeURIComponent(email);return htmlBody.replace(/href="(https?:\/\/[^"]+)"/g,(match,url)=>{const wrapped=`${TRACK_BASE}?bid=${encodeURIComponent(bid)}&cid=${cid}&type=click&url=${encodeURIComponent(url)}`;return`href="${wrapped}"`;}); }
 function buildTrackedEmail(rawBody,bid,email){let html=rawBody.replace(/\n/g,"<br>");html=wrapLinks(html,bid,email);html+=trackPixel(bid,email);return html;}
 
-// ─── GATE / UI ───
 function unlock(){eagleLogin();}
 function log(msg,type="info"){const b=document.getElementById("console"),s=document.createElement("span");s.className="l-"+type;s.textContent="["+new Date().toLocaleTimeString()+"] "+msg+"\n";b.appendChild(s);b.scrollTop=b.scrollHeight;}
 function clearLog(){document.getElementById("console").innerHTML="";}
@@ -1209,19 +1167,15 @@ function setStatus(s,t){document.getElementById("sdot").className="sdot"+(s?" "+
 function switchTab(id,btn){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");if(id==="broadcast")updateBroadcastCount();if(id==="directory")renderTable();if(id==="analytics")loadEmailAnalytics();if(id==="leads")loadLeads();}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
 
-// ─── FIREBASE ───
 async function syncFromCloud(){setStatus("","syncing…");try{const r=await eagleFetch(FB+"/directory_crm_master.json"),data=await r.json();db=data||{};buildFamilyLinks();setStatus("live","live");log(Object.keys(db).length+" contacts loaded.","ok");updateStats();renderTable();checkAutomationQueue();}catch(e){setStatus("err","offline");log("Firebase connection failed.","err");}}
 async function pushToCloud(){try{const r=await eagleFetch(FB+"/directory_crm_master.json",{method:"PUT",body:JSON.stringify(db)});if(!r.ok)throw new Error("HTTP "+r.status);}catch(e){log("Push failed: "+e.message,"err");}}
 
-// ─── STATS ───
 function updateStats(){let t={master:0,gym:0,cgs:0,school:0,corp:0,hot:0,warm:0,cold:0,dormant:0,parents:0,minors:0,multi:0,adults:0};for(const k in db){t.master++;const arms=db[k].arms||[];if(arms.includes("gym"))t.gym++;if(arms.includes("cgs"))t.cgs++;if(arms.includes("school"))t.school++;if(arms.includes("corp"))t.corp++;const tier=getTier(db[k]);if(t[tier]!==undefined)t[tier]++;const age=calcAge(db[k].dob);if(age!==null&&age<18)t.minors++;else if(age!==null&&age>=18)t.adults++;if(db[k].children&&db[k].children.length>0){t.parents++;if(db[k].children.length>1)t.multi++;}}["master","gym","cgs","school","corp","hot","warm","cold","dormant","parents","minors","multi","adults"].forEach(k=>{const el=document.getElementById("cnt-"+k);if(el)el.textContent=t[k];});}
 
-// ─── AUTOMATION ───
 async function checkAutomationQueue(){try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(k=>{const d=new Date(queue[k].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[k].status==="pending";});if(due.length){document.getElementById("auto-banner").style.display="flex";document.getElementById("auto-due-count").textContent=due.length+" email"+(due.length>1?"s":"")+" due today";log("Automation: "+due.length+" email(s) ready.","gold");}}catch(e){}}
 async function runAutomation(){let k=RESEND_KEY_MEM;if(!k){alert("No Resend key found. Go to Tools → System Config to save your key.");return;}try{const r=await eagleFetch(FB+"/automation_queue.json"),queue=await r.json()||{};const today=new Date();today.setHours(0,0,0,0);const due=Object.keys(queue).filter(i=>{const d=new Date(queue[i].sendAt);d.setHours(0,0,0,0);return d<=today&&queue[i].status==="pending";});if(!due.length){log("Nothing due.","info");return;}let fired=0;for(const i of due){const item=queue[i],targets=getTargetEmails(item.sector,item.tier);if(!targets.length){queue[i].status="skipped";continue;}const bid=generateBid();try{for(const c of targets){await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+k,"Content-Type":"application/json"},body:JSON.stringify({from:FROM,to:c.email,subject:replaceVars(item.subject,c,""),html:buildTrackedEmail(replaceVars(item.body,c,""),bid,c.email)})});}queue[i].status="sent";queue[i].sentAt=new Date().toISOString();queue[i].bid=bid;fired++;}catch(e){queue[i].status="error";}}await eagleFetch(FB+"/automation_queue.json",{method:"PUT",body:JSON.stringify(queue)});log("Automation fired "+fired+" email(s).","ok");document.getElementById("auto-banner").style.display="none";}catch(e){log("Automation error: "+e.message,"err");}}
 function replaceVars(text,c,ev){const name=c.name||(c.email||"").split("@")[0],first=name.split(" ")[0],child=(c.children&&c.children[0])||first,cc=(c.children&&c.children.length)||1;return(text||"").replace(/\[FirstName\]/gi,first).replace(/\[FullName\]/gi,name).replace(/\[ChildName\]/gi,child).replace(/\[ChildCount\]/gi,cc).replace(/\[EventName\]/gi,ev||"");}
 
-// ─── IMPORT ───
 const COL={name:["name","student","fighter","athlete","first","full name","fullname","contact","participant"],email:["email","e-mail","mail","email address"],phone:["phone","mobile","cell","contact number","tel"],dob:["date of birth","dob","birth","birthday","born","mm/dd","dd/mm"],ts:["timestamp","date","time","submitted","registered","created"]};
 const SECTOR_FP={cgs:["weight","division","martial art","style","rank","competing","registration","fighter","tournament","competition"],gym:["belt","grade","membership","fee","attendance","stripe","grading"],school:["school","teacher","class","year group","programme","block","trust"],corp:["company","organisation","business","corporate","seminar","invoice"]};
 function scoreCol(h,kws){const hl=h.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();let b=0;for(const kw of kws){if(hl===kw)b=Math.max(b,100);else if(hl.includes(kw))b=Math.max(b,60);else if(kw.split(" ").some(w=>w.length>3&&hl.includes(w)))b=Math.max(b,30);}return b;}
@@ -1241,11 +1195,9 @@ function openMapModal(colMap,fp){const noneOpt='<option value="-1">— not in th
 function confirmMap(){const colMap={name:parseInt(document.getElementById("m-name").value),email:parseInt(document.getElementById("m-email").value),phone:parseInt(document.getElementById("m-phone").value),dob:parseInt(document.getElementById("m-dob").value),ts:parseInt(document.getElementById("m-ts").value)},sector=document.getElementById("m-sector").value,label=document.getElementById("m-profile").value.trim();if(colMap.email===-1){alert("Email column required.");return;}if(label)saveProfile(label,pendingHeaders,colMap,sector);closeModal("map-modal");runImport(colMap,sector);}
 async function runImport(colMap,sector){let added=0,merged=0,skipped=0;for(const cells of pendingRows){const rawEmail=colMap.email>=0&&cells[colMap.email]?cells[colMap.email].trim():"";if(!rawEmail||!rawEmail.includes("@")){skipped++;continue;}const email=rawEmail.toLowerCase(),key=email.replace(/\./g,"%2E");let name="";if(colMap.name>=0&&cells[colMap.name])name=cells[colMap.name].trim();else{const fi=pendingHeaders.findIndex(h=>/\bfirst\b/i.test(h)),li=pendingHeaders.findIndex(h=>/\b(last|surname)\b/i.test(h));if(fi>=0&&cells[fi])name=cells[fi].trim();if(li>=0&&cells[li])name+=(name?" ":"")+cells[li].trim();}const phone=colMap.phone>=0&&cells[colMap.phone]?cells[colMap.phone].trim():"",dob=parseDOB(colMap.dob>=0&&cells[colMap.dob]?cells[colMap.dob].trim():""),ts=parseTS(colMap.ts>=0&&cells[colMap.ts]?cells[colMap.ts].trim():"");if(db[key]){if(!db[key].arms.includes(sector)){db[key].arms.push(sector);merged++;}if(name&&!db[key].name)db[key].name=name;if(phone&&!db[key].phone)db[key].phone=phone;if(dob&&!db[key].dob)db[key].dob=dob;if(ts&&(!db[key].lastActivity||ts>db[key].lastActivity))db[key].lastActivity=ts;}else{db[key]={email,name,phone,dob,arms:[sector],lastActivity:ts||null,added:new Date().toISOString()};added++;}}buildFamilyLinks();log("Import: "+added+" new, "+merged+" merged, "+skipped+" skipped.","ok");document.getElementById("sheet-input").value="";updateStats();renderTable();await pushToCloud();switchTab("dashboard",document.querySelector(".tab"));}
 
-// ─── TARGETING ───
 function getTargetEmails(sector,tierStr){const tiers=tierStr==="all"?null:tierStr.split(",");return Object.values(db).filter(r=>{if(!r.email||!r.email.includes("@"))return false;const inS=sector==="all"||(r.arms||[]).includes(sector);if(tierStr==="parents")return inS&&isParent(r);if(tierStr==="adults"){const a=calcAge(r.dob);return inS&&(a===null||a>=18)&&!isParent(r);}return inS&&(!tiers||tiers.includes(getTier(r)));});}
 function updateBroadcastCount(){const sector=document.getElementById("b-sector").value,tierStr=document.getElementById("b-tier").value,targets=getTargetEmails(sector,tierStr),el=document.getElementById("b-count");el.textContent="→ "+targets.length+" recipients";el.style.color=targets.length>0?"var(--green)":"var(--red)";const prev=document.getElementById("b-preview");if(!targets.length){prev.textContent="No contacts match.";return;}const tiers={};targets.forEach(r=>{const t=getTier(r);tiers[t]=(tiers[t]||0)+1;});const pCount=targets.filter(r=>isParent(r)).length;prev.innerHTML='<div style="font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--text);margin-bottom:12px;">'+targets.length+' recipients</div>'+Object.entries(tiers).map(([t,n])=>'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+tierBadge(t)+'<span style="font-family:var(--mono);font-size:10px;color:var(--muted2);">'+n+'</span></div>').join("")+(pCount?'<div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--orange);">👨‍👧 '+pCount+' parent contacts — [ChildName] variable available</div>':'')+'<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.9;">'+targets.slice(0,5).map(r=>r.email).join("<br>")+(targets.length>5?"<br>+ "+(targets.length-5)+" more…":"")+'</div>';}
 
-// ─── BROADCAST (with tracking) ───
 async function sendPreview(){
   if(!EAGLE_TOKEN){alert("Not logged in.");return;}
   const subject=document.getElementById("b-subject").value.trim();
@@ -1276,7 +1228,6 @@ async function sendBroadcast(){
   const broadcastRecord={bid,subject,sector,tier:tierStr,sentAt:new Date().toISOString(),recipients:targets.length,opens:0,clicks:0};
   await eagleFetch(FB+"/email_broadcasts/"+encodeURIComponent(bid)+".json",{method:"PUT",body:JSON.stringify(broadcastRecord)});
 
-  // Write ONE single event with all contacts — engine loops through server-side
   const payload={type:"broadcast",contacts:targets,subject,body,bid,ts:new Date().toISOString()};
   try{
     await eagleFetch(FB+"/events.json",{method:"POST",body:JSON.stringify(payload)});
@@ -1290,7 +1241,6 @@ async function sendBroadcast(){
   }
 }
 
-// ─── EMAIL ANALYTICS ───
 async function loadEmailAnalytics(){
   const el=document.getElementById("analytics-body");
   el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>';
@@ -1299,7 +1249,6 @@ async function loadEmailAnalytics(){
     const broadcasts=await br.json()||{};
     const tracking=await tr.json()||{};
 
-    // Compute opens/clicks per broadcast from tracking data
     const bids=Object.keys(broadcasts);
     if(!bids.length){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">No broadcasts sent yet.</td></tr>';return;}
 
@@ -1354,7 +1303,6 @@ async function showEngaged(bidEncoded){
   }catch(e){log("Could not load engagements: "+e.message,"err");}
 }
 
-// ─── DIRECTORY ───
 async function deleteBroadcast(bidEncoded){
   if(!confirm("Delete this broadcast record?"))return;
   await eagleFetch(FB+"/email_broadcasts/"+bidEncoded+".json",{method:"DELETE"});
@@ -1363,14 +1311,12 @@ async function deleteBroadcast(bidEncoded){
   loadEmailAnalytics();
 }
 
-// ─── DIRECTORY ───
-function renderTable(){const tbody=document.getElementById("dir-body"),q=(document.getElementById("dir-search")||{value:""}).value.toLowerCase().trim(),sf=(document.getElementById("dir-sector")||{value:"all"}).value,tf=(document.getElementById("dir-tier")||{value:"all"}).value,ff=(document.getElementById("dir-family")||{value:"all"}).value,keys=Object.keys(db);const filtered=keys.filter(k=>{const r=db[k];if(sf!=="all"&&!(r.arms||[]).includes(sf))return false;if(tf!=="all"&&getTier(r)!==tf)return false;if(ff==="parents"&&!isParent(r))return false;if(ff==="minors"&&!isMinor(r))return false;if(ff==="adults"){const a=calcAge(r.dob);if(a!==null&&a<18)return false;}if(!q)return true;return(r.name||"").toLowerCase().includes(q)||(r.email||"").toLowerCase().includes(q)||(r.arms||[]).join(" ").includes(q);});document.getElementById("dir-count").textContent=filtered.length+" / "+keys.length;if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">'+(keys.length?"No matches.":"No contacts yet.")+'</td></tr>';return;}filtered.sort((a,b)=>(db[b].lastActivity||db[b].added||"").localeCompare(db[a].lastActivity||db[a].added||""));tbody.innerHTML=filtered.map(k=>{const r=db[k],badges=(r.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join(""),tier=getTier(r),age=calcAge(r.dob);let fh="";if(r.children&&r.children.length>0)fh='<span class="p-badge">Parent · '+r.children.length+' child'+(r.children.length>1?"ren":"")+'</span>';else if(age!==null&&age<18)fh='<span class="c-badge">Minor · '+age+'y</span>';else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";return'<tr><td class="nc"><strong>'+(r.name||'<span style="color:var(--muted)">No name</span>')+'</strong><span>'+r.email+'</span>'+(r.phone?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+r.phone+'</span>':'')+'</td><td>'+badges+'</td><td>'+tierBadge(tier)+'</td><td>'+fh+'</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td><td style="white-space:nowrap;"><button class="edit-btn" onclick="openEdit(\''+k+'\')" title="Edit">✎</button><button class="dbtn" onclick="deleteContact(\''+k+'\')" title="Remove">✕</button></td></tr>';}).join("");}
+function renderTable(){const tbody=document.getElementById("dir-body"),q=(document.getElementById("dir-search")||{value:""}).value.toLowerCase().trim(),sf=(document.getElementById("dir-sector")||{value:"all"}).value,tf=(document.getElementById("dir-tier")||{value:"all"}).value,ff=(document.getElementById("dir-family")||{value:"all"}).value,keys=Object.keys(db);const filtered=keys.filter(k=>{const r=db[k];if(sf!=="all"&&!(r.arms||[]).includes(sf))return false;if(tf!=="all"&&getTier(r)!==tf)return false;if(ff==="parents"&&!isParent(r))return false;if(ff==="minors"&&!isMinor(r))return false;if(ff==="adults"){const a=calcAge(r.dob);if(a!==null&&a<18)return false;}if(!q)return true;return(r.name||"").toLowerCase().includes(q)||(r.email||"").toLowerCase().includes(q)||(r.arms||[]).join(" ").includes(q);});document.getElementById("dir-count").textContent=filtered.length+" / "+keys.length;if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">'+(keys.length?"No matches.":"No contacts yet.")+'</td></tr>';return;}filtered.sort((a,b)=>(db[b].lastActivity||db[b].added||"").localeCompare(db[a].lastActivity||db[a].added||""));tbody.innerHTML=filtered.map(k=>{const r=db[k],badges=(r.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":a==="corp"?"Corp":/* TEST SECTOR */a==="test"?"Test":a)+'</span>').join(""),tier=getTier(r),age=calcAge(r.dob);let fh="";if(r.children&&r.children.length>0)fh='<span class="p-badge">Parent · '+r.children.length+' child'+(r.children.length>1?"ren":"")+'</span>';else if(age!==null&&age<18)fh='<span class="c-badge">Minor · '+age+'y</span>';else if(age!==null)fh='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+age+'y</span>';const act=r.lastActivity||r.added,dateStr=act?new Date(act).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"2-digit"}):"—";return'<tr><td class="nc"><strong>'+(r.name||'<span style="color:var(--muted)">No name</span>')+'</strong><span>'+r.email+'</span>'+(r.phone?'<span style="font-family:var(--mono);font-size:9px;color:var(--muted);">'+r.phone+'</span>':'')+'</td><td>'+badges+'</td><td>'+tierBadge(tier)+'</td><td>'+fh+'</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;">'+dateStr+'</td><td style="white-space:nowrap;"><button class="edit-btn" onclick="openEdit(\''+k+'\')" title="Edit">✎</button><button class="dbtn" onclick="deleteContact(\''+k+'\')" title="Remove">✕</button></td></tr>';}).join("");}
 async function deleteContact(key){if(!confirm("Remove this contact?"))return;const n=db[key]?.name||db[key]?.email;delete db[key];updateStats();renderTable();await pushToCloud();log("Removed: "+n,"warn");}
 function openEdit(key){const r=db[key];document.getElementById("edit-key").value=key;document.getElementById("edit-modal-name").textContent=r.name||r.email;document.getElementById("edit-name").value=r.name||"";document.getElementById("edit-email").value=r.email||"";document.getElementById("edit-phone").value=r.phone||"";document.querySelectorAll(".sector-tiles .stile").forEach(el=>{el.className="stile";if((r.arms||[]).includes(el.dataset.s))el.classList.add("on-"+el.dataset.s);});document.getElementById("edit-modal").classList.add("open");}
 function toggleEditSector(el){const s=el.dataset.s;if(el.classList.contains("on-"+s))el.className="stile";else{el.className="stile";el.classList.add("on-"+s);}}
 async function saveEdit(){const key=document.getElementById("edit-key").value,arms=[];document.querySelectorAll(".sector-tiles .stile").forEach(el=>{const s=el.dataset.s;if(el.classList.contains("on-"+s))arms.push(s);});db[key].name=document.getElementById("edit-name").value.trim();db[key].phone=document.getElementById("edit-phone").value.trim();db[key].arms=arms;closeModal("edit-modal");updateStats();renderTable();await pushToCloud();log("Updated: "+db[key].name,"ok");}
 
-// ─── TOOLS ───
 function previewFix(){const from=document.getElementById("fix-from").value,scope=document.getElementById("fix-scope").value,n=Object.values(db).filter(r=>{const arms=r.arms||[];return scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);}).length;document.getElementById("fix-preview").textContent=n+" contacts will be affected.";}
 async function executeFix(){const from=document.getElementById("fix-from").value,to=document.getElementById("fix-to").value,scope=document.getElementById("fix-scope").value;let count=0;for(const k in db){const arms=db[k].arms||[],m=scope==="only"?(arms.length===1&&arms[0]===from):arms.includes(from);if(!m)continue;db[k].arms=arms.filter(a=>a!==from);if(!db[k].arms.includes(to))db[k].arms.push(to);count++;}if(!count){alert("No contacts matched.");return;}if(!confirm("Move "+count+" contacts: "+from+" → "+to+"?"))return;updateStats();renderTable();await pushToCloud();log("Fixed "+count+": "+from+" → "+to,"ok");}
 function previewStrip(){const s=document.getElementById("strip-sector").value,n=Object.values(db).filter(r=>(r.arms||[]).includes(s)).length;document.getElementById("strip-preview").textContent=n+" contacts have ["+s+"] tag.";}
@@ -1378,7 +1324,6 @@ async function executeStrip(){const s=document.getElementById("strip-sector").va
 function exportCSV(){const rows=[["Name","Email","Phone","DOB","Age","Sectors","Tier","Family","Last Activity","Added"]];for(const k in db){const r=db[k],age=calcAge(r.dob);rows.push([r.name||"",r.email||"",r.phone||"",r.dob||"",age!==null?age:"",(r.arms||[]).join(";"),getTier(r),isParent(r)?"Parent":(age!==null&&age<18?"Minor":"Adult"),r.lastActivity||"",r.added||""]);}const csv=rows.map(r=>r.map(c=>'"'+(c||"").replace(/"/g,'""')+'"').join(",")).join("\n"),a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="eagle-ds-"+new Date().toISOString().slice(0,10)+".csv";a.click();log("CSV exported.","ok");}
 async function nukeConfirm(){const c=prompt("Type DELETE to wipe:");if(c!=="DELETE")return;db={};await pushToCloud();updateStats();renderTable();log("Database wiped.","err");}
 
-// ─── WEB LEADS INBOX ───
 let webLeads={};
 async function loadLeads(){
   const el=document.getElementById("leads-list");
@@ -1399,7 +1344,7 @@ async function loadLeads(){
       +'</div>'
       +keys.map(k=>{
       const l=webLeads[k];
-      const arms=(l.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":"Corp")+'</span>').join("");
+      const arms=(l.arms||[]).map(a=>'<span class="badge b-'+a+'">'+(a==="gym"?"Gym":a==="cgs"?"CGS":a==="school"?"School":a==="corp"?"Corp":/* TEST SECTOR */a==="test"?"Test":a)+'</span>').join("");
       const when=l.submittedAt?new Date(l.submittedAt).toLocaleString("en-NZ",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
       return'<div class="panel" style="margin-bottom:2px;"><div class="pb" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">'
         +'<input type="checkbox" class="lead-cb" data-key="'+k+'" style="margin-top:4px;flex-shrink:0;">'
@@ -1423,7 +1368,6 @@ async function ingestLead(k){
   const l=webLeads[k];if(!l)return;
   const email=(l.email||"").toLowerCase();const key=email.replace(/\./g,"%2E");const ts=l.submittedAt||new Date().toISOString();
   if(db[key]){
-    // merge sectors
     (l.arms||[]).forEach(a=>{if(!db[key].arms.includes(a))db[key].arms.push(a);});
     if(l.phone&&!db[key].phone)db[key].phone=l.phone;
     if((!db[key].lastActivity||ts>db[key].lastActivity))db[key].lastActivity=ts;
@@ -1433,7 +1377,6 @@ async function ingestLead(k){
     log("New contact from web lead: "+(l.name||email),"ok");
   }
   buildFamilyLinks();
-  // mark lead ingested
   webLeads[k].status="ingested";
   await eagleFetch(FB+"/web_leads/"+k+"/status.json",{method:"PUT",body:JSON.stringify("ingested")});
   await pushToCloud();updateStats();loadLeads();
