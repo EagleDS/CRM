@@ -2595,6 +2595,34 @@ function renderPoomsaeSteps(pKey, steps){
 }
 
 
+function renderPrearranged(){
+  const container = document.getElementById('prearranged-container');
+  if(!container) return;
+  let currentStance = '';
+  container.innerHTML = TKD_PREARRANGED.map(pa => {
+    const videoUrl = TKD_DATA.prearranged?.[pa.key]?.video || '';
+    const blockId = `pa-block-${pa.key}`;
+    let stanceHeader = '';
+    if(pa.stance !== currentStance){
+      currentStance = pa.stance;
+      stanceHeader = `<div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:16px 0 8px;padding-left:2px;">${pa.stance}</div>`;
+    }
+    return `${stanceHeader}<div class="sequence-block" id="${blockId}" style="margin-bottom:6px;">
+      <div class="sequence-header" onclick="toggleTkdBlock('${blockId}')">
+        <div class="sequence-num" style="width:auto;margin-right:8px;">PA ${pa.num}</div>
+        <div class="sequence-title">${pa.desc}</div>
+        <div class="chevron">▼</div>
+      </div>
+      <div class="sequence-body" id="body-${blockId}">
+        ${videoUrl
+          ?`<div class="video-slot" style="margin-top:12px;"><iframe src="${getEmbedUrl(videoUrl)}" allowfullscreen></iframe></div>`
+          :`<div class="video-slot" style="margin-top:12px;"><div class="video-placeholder"><div class="video-placeholder-icon">▶</div><div class="video-placeholder-text">Video coming</div></div></div>`}
+        ${ADMIN_MODE ? renderSeqMeta_tkd(pa.key, videoUrl, 'prearranged') : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function toggleTkdBreakdown(pKey, si){
   const steps = TKD_DATA.poomsae?.[pKey]?.steps || TKD_POOMSAE.find(p=>p.key===pKey)?.steps || [];
   const step = steps[si];
@@ -2685,12 +2713,12 @@ async function confirmAddTkdStep(pKey){
   document.getElementById(`steps-${pKey}`).innerHTML = renderPoomsaeSteps(pKey, steps);
 }
 
-function renderSeqMeta_tkd(pKey, videoUrl){
+function renderSeqMeta_tkd(pKey, videoUrl, section='poomsae'){
   return `<div class="edit-section" style="margin-bottom:12px;">
     <div class="edit-section-title">Video URL</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <input class="edit-input" style="flex:1;min-width:200px;margin:0;" id="tkd-url-poomsae-${pKey}" value="${videoUrl}" placeholder="Cloudflare Stream URL…">
-      <button class="edit-btn save" onclick="saveTkdVideo('poomsae','${pKey}')">Save Video</button>
+      <input class="edit-input" style="flex:1;min-width:200px;margin:0;" id="tkd-url-${section}-${pKey}" value="${videoUrl}" placeholder="Cloudflare Stream URL…">
+      <button class="edit-btn save" onclick="saveTkdVideo('${section}','${pKey}')">Save Video</button>
     </div>
   </div>`;
 }
@@ -3109,3 +3137,6 @@ document.getElementById('li-email')?.addEventListener('keydown', e => { if(e.key
 </script>
 </body>
 </html>
+
+
+
