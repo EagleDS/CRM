@@ -18,9 +18,10 @@ const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
 
   if (bid && cid && type) {
     const email = decodeURIComponent(cid);
-    const key = email.replace(/\./g, "%2E").replace(/@/g, "%40");
+    const trackKey = email.trim().toLowerCase().replace(/\./g, "_").replace(/@/g, "_at_");
+    const contactKey = email.toLowerCase().replace(/\./g, "%2E");
     const ts = new Date().toISOString();
-    const node = FB + "/email_tracking/" + encodeURIComponent(bid) + "/" + type + "/" + key + ".json";
+    const node = FB + "/email_tracking/" + encodeURIComponent(bid) + "/" + type + "/" + trackKey + ".json";
 
     try {
       const res = await fetch(node, {
@@ -35,7 +36,7 @@ const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
 
       // Also update contact's lastActivity in CRM
       if (type === "click") {
-        const contactNode = FB + "/directory_crm_master/" + key + "/lastActivity.json";
+        const contactNode = FB + "/directory_crm_master/" + contactKey + "/lastActivity.json";
         await fetch(contactNode, { method: "PUT", body: JSON.stringify(ts) });
       }
     } catch(e) {
@@ -60,4 +61,3 @@ const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1" alt="">
 </body>
 </html>
-
