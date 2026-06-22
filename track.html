@@ -23,17 +23,27 @@ const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
     const node = FB + "/email_tracking/" + encodeURIComponent(bid) + "/" + type + "/" + key + ".json";
 
     try {
-      await fetch(node, {
+      const res = await fetch(node, {
         method: "PUT",
         body: JSON.stringify({ email, ts, bid })
       });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        document.title = "Eagle DS - write failed " + res.status;
+        console.error("Tracking write failed", res.status, errText, node);
+      }
 
       // Also update contact's lastActivity in CRM
       if (type === "click") {
         const contactNode = FB + "/directory_crm_master/" + key + "/lastActivity.json";
         await fetch(contactNode, { method: "PUT", body: JSON.stringify(ts) });
       }
-    } catch(e) { /* silent fail — don't block redirect */ }
+    } catch(e) {
+      document.title = "Eagle DS - write error";
+      console.error("Tracking write exception", e, node);
+    }
+  } else {
+    console.error("Tracking pixel missing required params", { bid, cid, type });
   }
 
   // Redirect or serve transparent pixel
@@ -50,3 +60,4 @@ const FB = "https://taekwondo-scoreboard-e58ec-default-rtdb.firebaseio.com";
 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="1" height="1" alt="">
 </body>
 </html>
+
