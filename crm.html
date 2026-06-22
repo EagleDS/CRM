@@ -890,11 +890,12 @@ if (window.self !== window.top) {
                 <th>Recipients</th>
                 <th>Opens</th>
                 <th>Clicks</th>
+                <th>Unsubs</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="analytics-body">
-              <tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>
+              <tr><td colspan="8" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1243,14 +1244,14 @@ async function sendBroadcast(){
 
 async function loadEmailAnalytics(){
   const el=document.getElementById("analytics-body");
-  el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>';
+  el.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">Loading…</td></tr>';
   try{
     const[br,tr]=await Promise.all([eagleFetch(FB+"/email_broadcasts.json"),eagleFetch(FB+"/email_tracking.json")]);
     const broadcasts=await br.json()||{};
     const tracking=await tr.json()||{};
 
     const bids=Object.keys(broadcasts);
-    if(!bids.length){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">No broadcasts sent yet.</td></tr>';return;}
+    if(!bids.length){el.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--muted);">No broadcasts sent yet.</td></tr>';return;}
 
     bids.sort((a,b)=>(broadcasts[b].sentAt||"").localeCompare(broadcasts[a].sentAt||""));
 
@@ -1259,6 +1260,7 @@ async function loadEmailAnalytics(){
       const td=tracking[encodeURIComponent(bid)]||tracking[bid]||{};
       const opens=Object.keys(td.open||{}).length;
       const clicks=Object.keys(td.click||{}).length;
+      const unsubs=Object.keys(td.unsubscribe||{}).length;
       const recipients=b.recipients||1;
       const openRate=recipients>0?Math.round((opens/recipients)*100):0;
       const clickRate=opens>0?Math.round((clicks/opens)*100):0;
@@ -1272,11 +1274,12 @@ async function loadEmailAnalytics(){
         +'<td style="font-family:var(--bebas);font-size:22px;color:var(--muted2);">'+recipients+'</td>'
         +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+openColor+';">'+opens+'</span><span style="font-family:var(--mono);font-size:9px;color:'+openColor+';margin-left:4px;">'+openRate+'%</span></td>'
         +'<td><span style="font-family:var(--bebas);font-size:22px;color:'+clickColor+';">'+clicks+'</span><span style="font-family:var(--mono);font-size:9px;color:'+clickColor+';margin-left:4px;">'+clickRate+'%</span></td>'
+        +'<td style="font-family:var(--bebas);font-size:22px;color:var(--muted2);">'+unsubs+'</td>'
         +'<td><button class="btn btn-ghost btn-sm" onclick="showEngaged(\''+encodeURIComponent(bid)+'\')"><span>Who opened →</span></button></td>'
         +'<td><button class="btn btn-red btn-sm" onclick="deleteBroadcast(\''+encodeURIComponent(bid)+'\')"><span>Delete</span></button></td>'
         +'</tr>';
     }).join("");
-  }catch(e){el.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--red);">Failed to load analytics.</td></tr>';log("Analytics error: "+e.message,"err");}
+  }catch(e){el.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;font-family:var(--mono);font-size:10px;color:var(--red);">Failed to load analytics.</td></tr>';log("Analytics error: "+e.message,"err");}
 }
 
 async function showEngaged(bidEncoded){
